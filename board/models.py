@@ -1,6 +1,6 @@
 from enum import Enum
 from pony.orm import Required, PrimaryKey
-from ..database.db import db 
+from database.db import db
 
 class ColorEnum(Enum):
     RED = "red"
@@ -10,7 +10,7 @@ class ColorEnum(Enum):
 
 class Box(db.Entity):
     id =  PrimaryKey(int, auto = True)
-    color =  Required(ColorEnum)
+    color =  Required(str)
     posX = Required(int)
     posY = Required(int)
     idGame = Required(int)
