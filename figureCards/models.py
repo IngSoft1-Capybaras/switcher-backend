@@ -1,8 +1,7 @@
 from enum import Enum
 from pony.orm import Required, PrimaryKey
-from ..database.db import db 
-from ..player.models import Player
-from ..game.models import Game
+from database.db import db
+
 
 #class Figures(Enum):
 
@@ -17,5 +16,4 @@ class FigureCard(db.Entity):
     id =  PrimaryKey(int, auto = True)
     show =  Required(bool)
     difficulty =  Required(DifficultyEnum)
-    idPlayer =  Required(Player)
-    idGame =  Required(Game)
+    idPlayer =  Required("Player")
