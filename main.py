@@ -1,5 +1,14 @@
+from enum import Enum
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from database.db import db
+from board.models import Box, ColorEnum
+from figureCards.models import FigureCard, DifficultyEnum
+from game.models import Game
+from gameState.models import GameState, StateEnum
+from movementCards.models import MovementCard
+from player.models import Player
+from database.converter import EnumConverter
 
 app = FastAPI()
 
@@ -18,3 +27,10 @@ app.add_middleware(
 async def root():
     return {"message": "El Switcher"}
 
+# Bindear la database
+db.bind(provider="sqlite", filename="db.sqlite", create_db=True) # ver filename
+
+db.provider.converter_classes.append((Enum, EnumConverter))
+
+# Generar los mappings y crear las tables
+db.generate_mapping(create_tables=True)
