@@ -8,11 +8,10 @@ from ..player.models import Player
 class Game(db.Entity):
     id =  PrimaryKey(int, auto = True)    
     name =  Required(str)
-    maxPlayer =  Required(int) 
-    minPlayer =  Required(int)
-    gameState =  Required(GameState, unique='True')
-    players = Set(Player)
+    maxPlayers =  Required(int) 
+    minPlayers =  Required(int)
+    gameState =  Optional("GameState")
+    players = Set("Player")
     #private =  Required(bool)
     #password
-    
     
