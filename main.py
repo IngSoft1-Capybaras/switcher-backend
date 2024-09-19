@@ -1,14 +1,19 @@
 from enum import Enum
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database.db import db
+
 from board.models import Box, ColorEnum
 from figureCards.models import FigureCard, DifficultyEnum
 from game.models import Game
 from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
 from player.models import Player
+
 from database.converter import EnumConverter
+
+from game.endpoints import game_router
 
 app = FastAPI()
 
@@ -22,6 +27,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
+
+app.include_router(game_router)
 
 @app.get("/")
 async def root():
