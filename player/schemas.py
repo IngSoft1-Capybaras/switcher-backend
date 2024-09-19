@@ -13,15 +13,19 @@ class turnEnum(str,Enum):
 
 
 # schema de jugador
-class Player(BaseModel):
-    id: int
+class PlayerInDB(BaseModel):
+    id: Optional[int]
     name: str
     turn: turnEnum
-    idGame: int
-    idGameStatus: int
-    figureCards: List[FigureCard] = []
-    movementCards: List[MovementCard] = []
+    game_id: int
+    game_state_id: int
+    host: bool
+
+    class Config:
+        from_attributes = True
+
 
 class PlayerCreateMatch(BaseModel):
     name: str
     host: Optional[bool] = True
+    turn: Optional[turnEnum] = None
