@@ -6,8 +6,8 @@ from database.db import db
 class Game(db.Entity):
     id =  PrimaryKey(int, auto = True)    
     name =  Required(str)
-    maxPlayer =  Required(int) 
-    minPlayer =  Required(int)
+    maxPlayers =  Required(int) 
+    minPlayers =  Required(int)
     gameState =  Optional("GameState")
     players = Set("Player")
     #private =  Required(bool)

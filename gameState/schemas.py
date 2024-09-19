@@ -1,8 +1,9 @@
 from enum import Enum
+from typing import Optional
 from pydantic import BaseModel
 
 # Schema del estado de la partida
-class StateEnum(Enum):
+class StateEnum(str, Enum):
     PLAYING  = "playing"
     WAITING  = "waiting"
     FINISHED = "finished"
@@ -15,4 +16,8 @@ class GameState(BaseModel):
     currentPlayer: int
     #mazo movimiento falta
 
+class GameStateCreate(BaseModel):
+    state        : StateEnum
+    currentPlayer: Optional[int]
+    #mazo movimiento falta
     
