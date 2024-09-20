@@ -9,12 +9,12 @@ class DifficultyEnum(Enum):
     HARD: "hard"
 
 # Schema de cartas de figura
-class FigureCard(BaseModel):
+class FigureCardSchema(BaseModel):
     #FALTA TIPO
     show: bool
     difficulty: DifficultyEnum
-    idPlayer: int
-    idGame :  int
+    player_id: int
+    game_id :  int
     
     
     
