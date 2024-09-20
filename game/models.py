@@ -1,16 +1,19 @@
 from enum import Enum
-from pony.orm import Required, PrimaryKey, Set, Optional
-from database.db import db
+from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, ForeignKey
+from sqlalchemy.orm import relationship
+from database.db import Base
 
 # Modelo de partida
-class Game(db.Entity):
-    id =  PrimaryKey(int, auto = True)    
-    name =  Required(str)
-    maxPlayer =  Required(int) 
-    minPlayer =  Required(int)
-    gameState =  Optional("GameState")
-    players = Set("Player")
-    #private =  Required(bool)
-    #password
+class Game(Base):
+    __tablename__ = 'games'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    maxPlayers = Column(Integer, nullable=False)
+    minPlayers = Column(Integer, nullable=False)
+    game_state = relationship("GameState", back_populates="game", uselist=False)
+    players = relationship("Player", back_populates="game")
+    boxes = relationship("Box", back_populates="game")
+
     
     

@@ -2,14 +2,21 @@ from typing import Optional
 from pydantic import BaseModel
 
 # Schema de partida
-class Game(BaseModel):
+class GameInDB(BaseModel):
     id: int
     name: str
-    maxPlayer: int 
-    minPlayer: int
-    private: bool
-    password: str | None = None
+    maxPlayers: int 
+    minPlayers: int
+    # private: bool
+    # password: str | None = None
     
-    
-    
-    
+    class Config:
+        from_attributes = True
+        orm_mode = True
+
+class GameCreate(BaseModel):
+    name: str
+    maxPlayers: int
+    minPlayers: int
+    # private: bool
+    # password: str | None = None

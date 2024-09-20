@@ -1,18 +1,19 @@
 from enum import Enum
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database.db import db
-from board.models import Box, ColorEnum
-from figureCards.models import FigureCard, DifficultyEnum
+from database.db import engine, Base
+from board.models import Box
 from game.models import Game
-from gameState.models import GameState, StateEnum
-from movementCards.models import MovementCard
+from gameState.models import GameState
 from player.models import Player
-from database.converter import EnumConverter
+from figureCards.models import FigureCard
+from movementCards.models import MovementCard
+# Rutas
+from game.endpoints import game_router
 
 app = FastAPI()
 
-#Allow cross-origin requests (Needed to connect to React app)
+# Permitir conexiones externas
 origins = ["*"]
 
 app.add_middleware(
@@ -23,14 +24,12 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+# Registrar rutas
+app.include_router(game_router)
+
 @app.get("/")
 async def root():
     return {"message": "El Switcher"}
 
-# Bindear la database
-db.bind(provider="sqlite", filename="db.sqlite", create_db=True) # ver filename
-
-db.provider.converter_classes.append((Enum, EnumConverter))
-
-# Generar los mappings y crear las tables
-db.generate_mapping(create_tables=True)
+# Create the database tables
+Base.metadata.create_all(bind=engine)

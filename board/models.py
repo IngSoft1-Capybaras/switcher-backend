@@ -1,17 +1,21 @@
 from enum import Enum
-from pony.orm import Required, PrimaryKey
-from database.db import db
+from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, ForeignKey
+from sqlalchemy.orm import relationship
+from database.db import Base
 
 class ColorEnum(Enum):
-    RED = "red"
-    GREEN = "green"
-    BLUE = "blue"
-    YELLOW = "yellow"
+    RED = "RED"
+    GREEN = "GREEN"
+    BLUE = "BLUE"
+    YELLOW = "YELLOW"
 
-class Box(db.Entity):
-    id =  PrimaryKey(int, auto = True)
-    color =  Required(str)
-    posX = Required(int)
-    posY = Required(int)
-    idGame = Required(int)
+class Box(Base):
+    __tablename__ = 'boxes'
     
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    color = Column(SQLAEnum(ColorEnum), nullable=False)
+    posX = Column(Integer, nullable=False)
+    posY = Column(Integer, nullable=False)
+    idGame = Column(Integer, ForeignKey('games.id'), nullable=False)
+
+    game = relationship("Game", back_populates="boxes")
