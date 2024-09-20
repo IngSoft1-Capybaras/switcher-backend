@@ -10,6 +10,7 @@ from figureCards.models import FigureCard
 from movementCards.models import MovementCard
 # Rutas
 from game.endpoints import game_router
+from board.endpoints import board_router
 
 app = FastAPI()
 
@@ -26,6 +27,7 @@ app.add_middleware(
 
 # Registrar rutas
 app.include_router(game_router)
+app.include_router(board_router)
 
 @app.get("/")
 async def root():
