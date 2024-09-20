@@ -1,7 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel
 from typing import List, Optional
-from figureCards.schemas import FigureCard
+from figureCards.schemas import FigureCardSchema
 from movementCards.schemas import MovementCard
 
 # schema del enum de turnos
