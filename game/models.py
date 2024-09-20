@@ -14,6 +14,6 @@ class Game(Base):
     game_state = relationship("GameState", back_populates="game", uselist=False)
     players = relationship("Player", back_populates="game")
     boxes = relationship("Box", back_populates="game")
-
+    board = relationship("Board", back_populates="game")
     
     
