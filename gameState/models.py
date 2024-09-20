@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from database.db import Base
 
 # enum de estados de partida
-class StateEnum(Enum):
+class StateEnum(str,Enum):
     PLAYING = "PLAYING"
     WAITING = "WAITING"
     FINISHED = "FINISHED"
