@@ -11,7 +11,6 @@ class FigureCardsRepository:
         try:
             # Fetch figure cards associated with the player and game
             figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id,
-                                                       FigureCard.player_id == player_id,
                                                        FigureCard.player.has(game_id=game_id)).all()
 
             if not figure_cards:
