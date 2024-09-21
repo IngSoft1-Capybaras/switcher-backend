@@ -1,8 +1,8 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi import HTTPException
 from sqlalchemy.orm.exc import NoResultFound
-from .repositories.figure_card_repository import FigureCardsRepository
+from .figure_cards_repository import FigureCardsRepository
 from .models import FigureCard
 from .schemas import FigureCardSchema
 

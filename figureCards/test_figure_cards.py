@@ -1,10 +1,10 @@
 import pytest
-from fastapi.testclient import TestClient, patch
-from unittest.mock import MagicMock
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
 from .endpoints import figure_cards_router
 from .figure_cards_repository import FigureCardsRepository
-from app.schemas import FigureCardSchema
+from .schemas import FigureCardSchema
 from main import app
 
 app.include_router(figure_cards_router)
