@@ -8,36 +8,27 @@ from player.models import Player
 from player.schemas import PlayerCreateMatch, PlayerInDB
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
+from .game_repository import GameRepository
 
 game_router = APIRouter()
 
 # Crear partida
 @game_router.post("/games", status_code=status.HTTP_201_CREATED)
-async def create_game(game: GameCreate, player: PlayerCreateMatch, db: Session = Depends(get_db)):
-    game_instance = Game(**game.model_dump())
-    db.add(game_instance)
-    db.commit()
-    db.refresh(game_instance)
+async def create_game(game: GameCreate, 
+                      player: PlayerCreateMatch, 
+                      db: Session = Depends(get_db), 
+                      repo: GameRepository = Depends()):
+    
+    return repo.create_game(game, player, db)
+    
 
-    game_status_instance = GameState(idGame=game_instance.id ,state=StateEnum.WAITING)
-    db.add(game_status_instance)
-    db.commit()
-    db.refresh(game_status_instance)
+# Obtener todas las partidas
+@game_router.get("/games")
+async def get_games(db: Session = Depends(get_db), repo: GameRepository = Depends()):
+    return repo.get_games(db)
 
-    player_instance = Player(
-        id=random.randint(1, 1000),
-        game_id=game_instance.id, 
-        name=player.name,
-        game_state_id=game_status_instance.id,
-        turn="primero",
-        host=True
-    )
-    db.add(player_instance)
-    db.commit()
-    db.refresh(player_instance)
 
-    return {
-    "game": GameInDB.model_validate(game_instance),
-    "player": PlayerInDB.model_validate(player_instance),
-    "gameState": GameStateInDB.model_validate(game_status_instance)
-}
+# Obtener partida segun id
+@game_router.get("/games/{game_id}")
+async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
+    return repo.get_game_by_id(game_id, db)
