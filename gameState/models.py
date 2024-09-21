@@ -16,7 +16,7 @@ class GameState(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     state = Column(SQLAEnum(StateEnum), nullable=False)
     game_id = Column(Integer, ForeignKey('games.id'), unique=True, nullable=False)
-    currentPlayer = Column(Integer, ForeignKey('players.id'), nullable=True)
+    current_player = Column(Integer, ForeignKey('players.id'), nullable=True)
     
     game = relationship("Game", back_populates="game_state", uselist=False)
     players = relationship("Player", back_populates="game_state", foreign_keys="[Player.game_state_id]")
