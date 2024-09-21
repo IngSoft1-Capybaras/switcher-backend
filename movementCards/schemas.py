@@ -1,13 +1,11 @@
-from re import I
 from pydantic import BaseModel
 
-#class type
-
-class MovementCard(BaseModel):
-    #tipo
+class MovementCardSchema(BaseModel):
+    id: int
     description: str
     used: bool
-    idPlayer: int
-    idGame: int
+    player_id: int
+    game_id: int
     
-    
+    class Config:
+        from_attributes = True
