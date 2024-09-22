@@ -7,7 +7,7 @@ class MovementCard(BaseModel):
     #tipo
     description: str
     used: bool
-    idPlayer: int
-    idGame: int
+    player_id: int
+    game_id: int
     
     

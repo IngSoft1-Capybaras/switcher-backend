@@ -1,15 +1,15 @@
 from enum import Enum
 from pydantic import BaseModel
 from typing import List, Optional
-from figureCards.schemas import FigureCard
+from figureCards.schemas import FigureCardSchema
 from movementCards.schemas import MovementCard
 
 # schema del enum de turnos
 class turnEnum(str,Enum):
-    PRIMERO = "primero"
-    SEGUNDO = "segundo"
-    TERCERO = "tercero"
-    CUARTO  = "cuarto"
+    PRIMERO = "PRIMERO"
+    SEGUNDO = "SEGUNDO"
+    TERCERO = "TERCERO"
+    CUARTO  = "CUARTO"
 
 
 # schema de jugador
