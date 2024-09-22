@@ -14,13 +14,13 @@ class MovementCard(BaseModel):
     type : typeEnum
     description: str
     used: bool
-    idPlayer: int
-    idGame: int
+    player_id: int
+    game_id: int
 
 class MovementCardOut(BaseModel):
     type : typeEnum
     description: str
     used: bool
-    idPlayer: int
+    player_id: int
     
     

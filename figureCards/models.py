@@ -23,6 +23,6 @@ class FigureCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     show = Column(Boolean, nullable=False)
     difficulty = Column(SQLAEnum(DifficultyEnum), nullable=True)
-    idPlayer = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=False)
+    player_id = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=False)
     type = Column(SQLAEnum(typeEnum), nullable=False)
     player = relationship("Player", back_populates="figure_cards")

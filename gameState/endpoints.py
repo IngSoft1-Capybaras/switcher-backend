@@ -62,18 +62,18 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
 
 #NO SUBIR A DEV , ENDPOINT DE FACU
 @game_state_router.get("/current-player/{gameId}", status_code=status.HTTP_200_OK)
-async def getCurrentPlayer(gameId: int, db: Session = Depends(get_db)):
+async def getcurrent_player(gameId: int, db: Session = Depends(get_db)):
     # Buscamos GameState con el id
-    gameStateInstance = db.query(GameState).filter(GameState.idGame == gameId).first()
+    gameStateInstance = db.query(GameState).filter(GameState.game_id == gameId).first()
     if not gameStateInstance:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No Game State found for game with id {gameId}")
     
     # Obtenemos el id de quien esta jugando
-    currentPlayer = gameStateInstance.currentPlayer
-    if not currentPlayer:
+    current_player = gameStateInstance.current_player
+    if not current_player:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No current player found for game with id {gameId}")
     
     # Return the current player's info
     return {
-        "id": currentPlayer
+        "id": current_player
     }

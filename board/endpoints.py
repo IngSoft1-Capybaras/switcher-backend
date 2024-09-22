@@ -21,7 +21,7 @@ async def get_game_board(game_id: int, db: Session = Depends(get_db), board_repo
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No board for game of id {game_id}")
 
     #Si existe obtenemos los elementos del mismo
-    boxes = db.query(Box).filter(Box.idBoard == board.id).all()
+    boxes = db.query(Box).filter(Box.board_id == board.id).all()
     if not boxes:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No boxes found for board of id {board.id}")
     

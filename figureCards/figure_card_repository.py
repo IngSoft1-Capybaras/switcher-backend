@@ -14,7 +14,7 @@ class FigureCardRepository:
             new_card = FigureCard(
                 type=figure,
                 show=False,
-                idPlayer=player_id
+                player_id=player_id
             )
             session.add(new_card)
             session.commit()

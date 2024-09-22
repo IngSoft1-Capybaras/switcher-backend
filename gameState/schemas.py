@@ -8,8 +8,8 @@ from gameState.models import GameState, StateEnum
 class GameStateInDB(BaseModel):
     id           : int
     state        : StateEnum
-    idGame       : int
-    currentPlayer: Optional[int]
+    game_id       : int
+    current_player: Optional[int]
     #mazo movimiento falta
 
     class Config:
@@ -17,6 +17,6 @@ class GameStateInDB(BaseModel):
 
 class GameStateCreate(BaseModel):
     state        : StateEnum
-    currentPlayer: Optional[int]
+    current_player: Optional[int]
     #mazo movimiento falta
     

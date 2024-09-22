@@ -11,7 +11,7 @@ class MovementCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(String, nullable=False)
     used = Column(Boolean, nullable=False)
-    idPlayer = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=True)
+    player_id = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=True)
     game_id = Column(Integer, ForeignKey('games.id', use_alter=True))
     type = Column(SQLAEnum(typeEnum), nullable=False)
     

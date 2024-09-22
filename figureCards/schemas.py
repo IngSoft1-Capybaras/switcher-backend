@@ -7,8 +7,8 @@ class FigureCardSchema(BaseModel):
     type: typeEnum
     show: bool
     difficulty: DifficultyEnum
-    idPlayer: int
-    idGame :  int
+    player_id: int
+    game_id :  int
     
     
     

@@ -35,7 +35,7 @@ def test_create_new_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        N_boards = session.query(Board).filter(Board.id_game == 1).count()
+        N_boards = session.query(Board).filter(Board.game_id == 1).count()
     finally:
         session.close()
     
@@ -44,7 +44,7 @@ def test_create_new_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        assert session.query(Board).filter(Board.id_game == 1).count() == N_boards + 1
+        assert session.query(Board).filter(Board.game_id == 1).count() == N_boards + 1
     finally:
         session.close()
         
@@ -63,7 +63,7 @@ def test_add_box_to_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        N_boxes = session.query(Box).filter(Box.idBoard == 1).count()
+        N_boxes = session.query(Box).filter(Box.board_id == 1).count()
     finally:
         session.close()
     
@@ -72,7 +72,7 @@ def test_add_box_to_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        assert session.query(Box).filter(Box.idBoard == 1).count() == N_boxes + 1
+        assert session.query(Box).filter(Box.board_id == 1).count() == N_boxes + 1
     finally:
         session.close()
         
@@ -81,7 +81,7 @@ def test_configure_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        N_boxes = session.query(Box).filter(Box.idGame == 2).count()
+        N_boxes = session.query(Box).filter(Box.game_id == 2).count()
     finally:
         session.close()
     
@@ -90,7 +90,7 @@ def test_configure_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        assert session.query(Box).filter(Box.idGame == 2).count() == N_boxes + 36
+        assert session.query(Box).filter(Box.game_id == 2).count() == N_boxes + 36
     finally:
         session.close()
 

@@ -16,7 +16,7 @@ class GameStateRepository:
     def update_game_state(self, game_id: int, state: StateEnum ):
         session = Session()
         try:
-            game_state_instance = session.query(GameState).filter(GameState.idGame == game_id).first()
+            game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
 
             game_state_instance.state = state
 
@@ -30,9 +30,9 @@ class GameStateRepository:
         session = Session()
         
         try: 
-            game_state_instance = session.query(GameState).filter(GameState.idGame == game_id).first()
+            game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
 
-            game_state_instance.currentPlayer = first_player_id
+            game_state_instance.current_player = first_player_id
             session.commit()
         except NoResultFound:
             raise ValueError("Game State does not exist")
@@ -43,7 +43,7 @@ class GameStateRepository:
         session = Session()
         try:
             
-            game_state_in_db = session.query(GameState).filter(GameState.idGame == game_id).first()
+            game_state_in_db = session.query(GameState).filter(GameState.game_id == game_id).first()
 
             if game_state_in_db:
                 return GameStateInDB.model_validate(game_state_in_db)

@@ -35,7 +35,7 @@ def test_create_new_figure_card(figure_card_repository: FigureCardRepository):
     session = Session()
     
     try:
-        N_cards = session.query(FigureCard).filter(FigureCard.idPlayer == 1).count()
+        N_cards = session.query(FigureCard).filter(FigureCard.player_id == 1).count()
     finally:
         session.close()
     
@@ -44,6 +44,6 @@ def test_create_new_figure_card(figure_card_repository: FigureCardRepository):
     session = Session()
     
     try:
-        assert session.query(FigureCard).filter(FigureCard.idPlayer == 1).count() == N_cards + 1
+        assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
     finally:
         session.close()

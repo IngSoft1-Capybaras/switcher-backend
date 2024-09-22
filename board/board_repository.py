@@ -12,7 +12,7 @@ class BoardRepository:
     def get_existing_board(self, game_id: int):
         session = Session()
         try:
-            board = session.query(Board).filter(Board.id_game == game_id).first()
+            board = session.query(Board).filter(Board.game_id == game_id).first()
             if board:
                 return BoardOut.model_validate(board)
         finally:
@@ -22,7 +22,7 @@ class BoardRepository:
     def create_new_board(self, game_id: int):
         session = Session()
         try:
-            new_board = Board(id_game=game_id)
+            new_board = Board(game_id=game_id)
             session.add(new_board)
             session.commit()
             session.refresh(new_board)
@@ -36,10 +36,10 @@ class BoardRepository:
         try:
             new_box = Box(
                 color=color,
-                posX=pos_x,
-                posY=pos_y,
-                idGame=game_id,
-                idBoard=board_id
+                pos_x=pos_x,
+                pos_y=pos_y,
+                game_id=game_id,
+                board_id=board_id
             )    
             session.add(new_box)
             session.commit()
