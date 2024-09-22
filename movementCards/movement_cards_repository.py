@@ -1,44 +1,48 @@
-from sqlalchemy.orm import sessionmaker, Session
-from fastapi import Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
 from .models import MovementCard
-from .schemas import MovementCardOut, typeEnum
-from player.models import Player
-from game.models import Game
-from database.db import engine
-
-# Crea una sesion
-Session = sessionmaker(bind=engine)
+from .schemas import MovementCardSchema
+from database.db import get_db
 
 class MovementCardsRepository:
-    #NO MODIFICAR
-    def get_movement_cards(self, game_id: int, player_id: int, db: Session) -> dict:
-        # session = _Session()
+
+    def get_movement_cards(self, game_id: int, player_id: int, db: Session = Depends(get_db)) -> list:
         try:
-            # Fetch the game
-            game = db.query(Game).filter(Game.id == game_id).first()
-            
-            if not game:
-                raise HTTPException(status_code=404, detail="Game not found")
+            # Fetch figure cards associated with the player and game
+            movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id,
+                                                       MovementCard.player.has(game_id=game_id)).all()
 
-            # Fetch the player in the game
-            player = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).first()
+            if not movement_cards:
+                raise HTTPException(status_code=404, detail="There no movement cards associated with this game and player")
 
-            if not player:
-                raise HTTPException(status_code=404, detail="Player not found")
-
-            # Fetch figure cards associated with the player
-            movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id).all()
-
-            # Convert figure cards to a list of dictionaries using SQLAlchemy’s ORM
-            # figure_cards_list = [card.__dict__ for card in movement_cards]
-            movement_cards_list = [MovementCardOut.from_orm(card) for card in movement_cards]
+            # Convert movement cards to a list of schemas
+            movement_cards_list = [MovementCardSchema.from_orm(card) for card in movement_cards]
 
         finally:
             db.close()
+
         return movement_cards_list
     
-    def create_movement_card(self, game_id: int, type: typeEnum):
+    def get_movement_card_by_id(self, game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db)) -> MovementCardSchema:
+        try:
+            # Fetch the specific movement card by its id, player_id and game_id
+            try:
+                movement_card = db.query(MovementCard).filter(MovementCard.id == card_id, 
+                                                          MovementCard.player_id == player_id,
+                                                          MovementCard.player.has(game_id=game_id)).one()
+            except NoResultFound:
+                raise HTTPException(status_code=404, detail="Movement card not found")
+
+            # Convert the movement card to a schema
+            movement_card_schema = MovementCardSchema.from_orm(movement_card)
+
+        finally:
+            db.close()
+
+        return movement_card_schema
+      
+   def create_movement_card(self, game_id: int, type: typeEnum):
         session = Session()
         try:
             new_card = MovementCard(
@@ -53,4 +57,3 @@ class MovementCardsRepository:
         
         finally:
             session.close()
-            

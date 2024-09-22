@@ -1,5 +1,5 @@
 from enum import Enum
-from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, ForeignKey
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from database.db import Base
 
@@ -17,5 +17,6 @@ class Game(Base):
     boxes = relationship("Box", back_populates="game")
     board = relationship("Board", back_populates="game")
     movement_cards = relationship("MovementCard", back_populates="game")
+    figure_cards = relationship("FigureCard", back_populates="game")
     
     

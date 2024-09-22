@@ -25,4 +25,8 @@ class FigureCard(Base):
     difficulty = Column(SQLAEnum(DifficultyEnum), nullable=True)
     player_id = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=False)
     type = Column(SQLAEnum(typeEnum), nullable=False)
+
+    game_id = Column(Integer, ForeignKey('games.id'), nullable=False)
+
     player = relationship("Player", back_populates="figure_cards")
+    game = relationship("Game", back_populates="figure_cards")

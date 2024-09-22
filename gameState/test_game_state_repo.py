@@ -2,11 +2,14 @@ import pytest
 from sqlalchemy.orm import sessionmaker
 from .game_state_repo import GameStateRepository
 from board.models import Board, Box
+
 from figureCards.models import FigureCard
 from game.models import Game
 from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
-from player.models import Player
+
+from player.models import Player, turnEnum
+
 
 from database.db import engine, Base
 import os
@@ -80,4 +83,29 @@ def test_update_current_player(game_state_repository: GameStateRepository):
         
     finally:
         session.close()
-
+        
+def test_get_next_player_id(game_state_repository: GameStateRepository):
+    session = Session()
+    
+    try:
+        game_id = 3
+        current_player_id = 1
+        game_state = GameState(game_id=game_id, state=StateEnum.PLAYING, currentPlayer=current_player_id)
+        
+        players = [
+            Player(name = "player1", game_id=game_id, turn=turnEnum.PRIMERO, host=False),
+            Player(name = "player2", game_id=game_id, turn=turnEnum.TERCERO, host=True),
+            Player(name = "player3", game_id=game_id, turn=turnEnum.SEGUNDO, host=False)
+        ]
+        
+        session.add(game_state)
+        session.add_all(players)
+        session.commit()
+        
+        result = game_state_repository.get_next_player_id(game_id)
+        
+        assert result == 3
+        
+    finally:
+        session.close()
+        

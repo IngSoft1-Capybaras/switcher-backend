@@ -10,7 +10,8 @@ class typeEnum(str, Enum):
     EN_L_DER = "EN_L_DER"
     EN_L_IZQ = "EN_L_IZQ"
     LINEAL_AL_LAT = "LINEAL_AL_LAT"
-class MovementCard(BaseModel):
+    
+class MovementCardSchema(BaseModel):
     type : typeEnum
     description: str
     used: bool
@@ -23,4 +24,5 @@ class MovementCardOut(BaseModel):
     used: bool
     player_id: int
     
-    
+    class Config:
+        from_attributes = True

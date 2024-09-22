@@ -60,20 +60,14 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     
     return {"message": "Game status updated, ur playing!"}
 
-#NO SUBIR A DEV , ENDPOINT DE FACU
-@game_state_router.get("/current-player/{gameId}", status_code=status.HTTP_200_OK)
-async def getcurrent_player(gameId: int, db: Session = Depends(get_db)):
-    # Buscamos GameState con el id
-    gameStateInstance = db.query(GameState).filter(GameState.game_id == gameId).first()
-    if not gameStateInstance:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No Game State found for game with id {gameId}")
+
+@game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
+async def finish_turn(game_id: int, db: Session = Depends(get_db)):
+    game_state_repo =  GameStateRepository()
     
-    # Obtenemos el id de quien esta jugando
-    current_player = gameStateInstance.current_player
-    if not current_player:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No current player found for game with id {gameId}")
+    next_player_id = game_state_repo.get_next_player_id(game_id)
     
-    # Return the current player's info
-    return {
-        "id": current_player
-    }
+    game_state_repo.update_current_player(game_id, next_player_id)
+    
+    return {"message": "Current player successfully updated"}
+    
