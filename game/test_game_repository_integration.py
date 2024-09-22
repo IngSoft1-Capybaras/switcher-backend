@@ -45,7 +45,7 @@ def test_get_game_by_id(game_repository: GameRepository):
         session.add(game)
         session.commit()
         
-        game = game_repository.get_game_by_id(1)
+        game = game_repository.get_game_by_id(1, session)
         assert game.id == 1
         
     finally:

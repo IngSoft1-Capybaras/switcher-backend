@@ -39,7 +39,7 @@ def test_create_new_board(board_repository: BoardRepository):
     finally:
         session.close()
     
-    board_repository.create_new_board(1)
+    board_repository.create_new_board(1,session)
     
     session = Session()
     
@@ -53,7 +53,7 @@ def test_get_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        board = board_repository.get_existing_board(1)
+        board = board_repository.get_existing_board(1, session)
         assert board is not None
     finally:
         session.close()
@@ -67,7 +67,7 @@ def test_add_box_to_board(board_repository: BoardRepository):
     finally:
         session.close()
     
-    board_repository.add_box_to_board(1,1,ColorEnum.YELLOW, 4, 3)
+    board_repository.add_box_to_board(1,1,ColorEnum.YELLOW, 4, 3, session)
     
     session = Session()
     
@@ -85,7 +85,7 @@ def test_configure_board(board_repository: BoardRepository):
     finally:
         session.close()
     
-    board_repository.configure_board(2)
+    board_repository.configure_board(2, session)
     
     session = Session()
     

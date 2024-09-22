@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
-from .figure_card_repository import FigureCardRepository
+from .figure_cards_repository import FigureCardsRepository
 from board.models import  Board, Box
 from figureCards.models import FigureCard, typeEnum
 from game.models import Game
@@ -27,11 +27,11 @@ def setup_and_teardown_db():
 
 
 @pytest.fixture
-def figure_card_repository():
-    return FigureCardRepository()
+def figure_cards_repository():
+    return FigureCardsRepository()
 
 
-def test_create_new_figure_card(figure_card_repository: FigureCardRepository):
+def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository):
     session = Session()
     
     try:
@@ -39,7 +39,7 @@ def test_create_new_figure_card(figure_card_repository: FigureCardRepository):
     finally:
         session.close()
     
-    figure_card_repository.create_figure_card(1,1,typeEnum.TYPE_4)
+    figure_cards_repository.create_figure_card(1,1,typeEnum.TYPE_4, db)
     
     session = Session()
     

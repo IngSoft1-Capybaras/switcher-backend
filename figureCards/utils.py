@@ -2,7 +2,7 @@ import random
 from sqlalchemy.orm import Session
 from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
-from .figure_card_repository import FigureCardRepository
+from .figure_cards_repository import FigureCardsRepository
 from game.models import Game
 from player.player_repository import PlayerRepository
 
@@ -10,14 +10,14 @@ from player.player_repository import PlayerRepository
 
 class FigureCardUtils:
     def __init__(
-        self, fig_card_repo: FigureCardRepository, player_repo: PlayerRepository
+        self, fig_card_repo: FigureCardsRepository, player_repo: PlayerRepository
     ):
         self.fig_card_repo = fig_card_repo
         self.player_repo = player_repo
     
     def create_fig_deck(self, db: Session, game_id: int):
 
-        players = self.player_repo.get_players_in_game(game_id)
+        players = self.player_repo.get_players_in_game(game_id,db)
         #PREGUNTAR DUDA ARMAR MAZO FIGURAS
         #Creamos una lista con los tipos de cartas de figuras
         fig_list = (
@@ -35,7 +35,7 @@ class FigureCardUtils:
             random.shuffle(fig_list)
 
             for figure in fig_list:
-                self.fig_card_repo.create_figure_card(player.id, game_id, figure)
+                self.fig_card_repo.create_figure_card(player.id, game_id, figure, db)
 
         return {"message": "Figure deck created"}
     

@@ -19,7 +19,7 @@ class BoxOut(BaseModel):
     color: ColorEnum
     pos_x: int
     pos_y: int
-    class ConfigDict:
+    class Config:
         from_attributes = True
     
 class BoardOut(BaseModel):

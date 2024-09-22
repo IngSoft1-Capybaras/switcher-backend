@@ -46,7 +46,7 @@ def test_get_game_state_by_id(game_state_repository: GameStateRepository):
         session.add(new_game_state)
         session.commit()
         
-        game_state = game_state_repository.get_game_state_by_id(1)
+        game_state = game_state_repository.get_game_state_by_id(1, session)
         assert game_state  is not None
     finally:
         session.close()
@@ -57,7 +57,7 @@ def test_update_game_state(game_state_repository: GameStateRepository):
     
     try:
         game_state_repository.update_game_state(1, StateEnum.PLAYING)
-        game_state = game_state_repository.get_game_state_by_id(1)
+        game_state = game_state_repository.get_game_state_by_id(1,session)
         
         assert game_state.state is StateEnum.PLAYING
     finally:
@@ -75,7 +75,7 @@ def test_update_current_player(game_state_repository: GameStateRepository):
         session.add(game_state)
         session.commit()
         
-        game_state_repository.update_current_player(game_id=1, first_player_id=2)
+        game_state_repository.update_current_player(game_id=1, first_player_id=2, db=session)
         
         updated_game_state = session.query(GameState).filter(GameState.game_id == 1).first()
         
@@ -102,7 +102,7 @@ def test_get_next_player_id(game_state_repository: GameStateRepository):
         session.add_all(players)
         session.commit()
         
-        result = game_state_repository.get_next_player_id(game_id)
+        result = game_state_repository.get_next_player_id(game_id, session)
         
         assert result == 3
         

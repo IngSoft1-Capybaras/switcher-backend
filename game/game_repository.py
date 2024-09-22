@@ -8,10 +8,10 @@ from player.schemas import PlayerCreateMatch, PlayerInDB, turnEnum
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
 
-
 class GameRepository:
 
-    def get_games(self, db: Session) -> list:
+    def get_games(self, db : Session) -> list:
+        
         # Fetch games
         games = db.query(Game).all()
         
@@ -19,11 +19,12 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
         # Conveert games to a list of shemas
-        games_list = [GameInDB.from_orm(game) for game in games]
+        games_list = [GameInDB.model_validate(game) for game in games]
         
         return games_list
     
-    def get_game_by_id(self, game_id: int, db: Session) -> GameInDB:
+    def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
+        
         # Fetch the specifc game by its id
         try:
             game = db.query(Game).filter(Game.id == game_id).one()
@@ -31,11 +32,13 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "Game not found")
         
         # Convert game to schema
-        game_schema = GameInDB.from_orm(game)
+        game_schema = GameInDB.model_validate(game)
         
         return game_schema
     
-    def create_game(self, game: GameCreate, player: PlayerCreateMatch, db: Session):
+        # Fetch the specifc game by its id
+    def create_game(self, game: GameCreate, player: PlayerCreateMatch,db : Session ):
+                
         # Create game instance
         game_instance = Game(**game.model_dump())
         db.add(game_instance)
@@ -59,7 +62,7 @@ class GameRepository:
         db.refresh(player_instance)
 
         return {
-            "game": GameInDB.from_orm(game_instance),
-            "player": PlayerInDB.from_orm(player_instance),
-            "gameState": GameStateInDB.from_orm(game_status_instance)
+            "game": GameInDB.model_validate(game_instance),
+            "player": PlayerInDB.model_validate(player_instance),
+            "gameState": GameStateInDB.model_validate(game_status_instance)
         }

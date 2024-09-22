@@ -46,7 +46,7 @@ def test_get_player_by_id(player_repo: PlayerRepository):
         session.add(player)
         session.commit()
         
-        player_in_db = player_repo.get_player_by_id(player.game.id, player.id)
+        player_in_db = player_repo.get_player_by_id(player.game_id, player.id, session)
         
         assert player_in_db.name == player.name
         
@@ -65,7 +65,7 @@ def test_get_players_in_game(player_repo: PlayerRepository):
         
         N_players = session.query(Player).filter(Player.game_id == 1).count()
     
-        players_in_game = player_repo.get_players_in_game(1)
+        players_in_game = player_repo.get_players_in_game(1, session)
 
         assert len(players_in_game) == N_players
 
@@ -85,7 +85,7 @@ def test_assign_turn_player(player_repo: PlayerRepository):
     finally:
         session.close()
     
-    player_repo.assign_turn_player(player.game.id, player_id, turnEnum.SEGUNDO)
+    player_repo.assign_turn_player(player.game_id, player_id, turnEnum.SEGUNDO, session)
     
     session = Session()
     

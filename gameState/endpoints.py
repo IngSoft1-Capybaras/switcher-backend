@@ -11,7 +11,7 @@ from .game_state_repo import GameStateRepository
 from player.player_repository import PlayerRepository
 from board.board_repository import BoardRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
-from figureCards.figure_card_repository import FigureCardRepository
+from figureCards.figure_cards_repository import FigureCardsRepository
 
 from player.utils import PlayerUtils
 from movementCards.utils import MovementCardUtils
@@ -31,23 +31,20 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     player_utils = PlayerUtils(player_repo)
     board_repo = BoardRepository()
     mov_cards_utils = MovementCardUtils(MovementCardsRepository())
-    fig_cards_utils = FigureCardUtils(FigureCardRepository(), player_repo)
+    fig_cards_utils = FigureCardUtils(FigureCardsRepository(), player_repo)
     
     #Verificar que existan jugadores en la partida
-    players = player_repo.get_players_in_game(game_id)
+    players = player_repo.get_players_in_game(game_id, db)
     
     # Asignar turnos aleatoriamente cada jugador y obtener primer jugador
     first_player_id = player_utils.assign_random_turns(players,db)
     
     #Crear tablero
-    board_creation_result = board_repo.configure_board(game_id)
-    if "error" in board_creation_result:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=board_creation_result["error"])
+    board_creation_result = board_repo.configure_board(game_id, db)
     
     #Crear Mazo Movimientos
-    mov_deck_creation = mov_cards_utils.create_mov_deck(db, game_id)
-    if "error" in mov_deck_creation:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Unable to create movement deck")
+    mov_deck_creation = mov_cards_utils.create_mov_deck(game_id, db)
+
     
     #Crear Mazo Figuras para cada jugador
     fig_deck_creation = fig_cards_utils.create_fig_deck(db, game_id)
@@ -55,8 +52,8 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Unable to create figure deck")
     
     # Cambiar estado de la partida
-    game_state_repo.update_game_state(game_id, StateEnum.PLAYING)
-    game_state_repo.update_current_player(game_id, first_player_id)
+    game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
+    game_state_repo.update_current_player(game_id, first_player_id, db)
     
     return {"message": "Game status updated, ur playing!"}
 
@@ -65,9 +62,9 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
 async def finish_turn(game_id: int, db: Session = Depends(get_db)):
     game_state_repo =  GameStateRepository()
     
-    next_player_id = game_state_repo.get_next_player_id(game_id)
+    next_player_id = game_state_repo.get_next_player_id(game_id, db)
     
-    game_state_repo.update_current_player(game_id, next_player_id)
+    game_state_repo.update_current_player(game_id, next_player_id, db)
     
     return {"message": "Current player successfully updated"}
     

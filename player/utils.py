@@ -16,7 +16,7 @@ class PlayerUtils:
         firstPlayer = None
         
         for player, turn in zip(players, randomTurns):
-            self.player_repo.assign_turn_player(player.game.id, player.id, turnMapping[turn], db)
+            self.player_repo.assign_turn_player(player.game_id, player.id, turnMapping[turn], db)
             if turn == 1:
                 firstPlayer = player
         

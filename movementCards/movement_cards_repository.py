@@ -3,11 +3,10 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
 from .models import MovementCard
 from .schemas import MovementCardSchema, typeEnum
-from database.db import get_db
 
 class MovementCardsRepository:
 
-    def get_movement_cards(self, game_id: int, player_id: int, db: Session = Depends(get_db)) -> list:
+    def get_movement_cards(self, game_id: int, player_id: int, db : Session) -> list:
         # Fetch figure cards associated with the player and game
         movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id,
                                                     MovementCard.player.has(game_id=game_id)).all()
@@ -20,7 +19,8 @@ class MovementCardsRepository:
 
         return movement_cards_list
     
-    def get_movement_card_by_id(self, game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db)) -> MovementCardSchema:
+    def get_movement_card_by_id(self, game_id: int, player_id: int, card_id: int, db : Session) -> MovementCardSchema:
+        
         # Fetch the specific movement card by its id, player_id and game_id
         try:
             movement_card = db.query(MovementCard).filter(MovementCard.id == card_id, 
@@ -33,15 +33,18 @@ class MovementCardsRepository:
         movement_card_schema = MovementCardSchema.from_orm(movement_card)
 
         return movement_card_schema
-      
-    def create_movement_card(self, game_id: int, type: typeEnum, db: Session = Depends(get_db)):
+    
+    def create_movement_card(self, game_id: int, type: typeEnum, db : Session):
+        
+        try:
+            new_card = MovementCard(
+                description = "",
+                used = False,
+                game_id = game_id,
+                type = type 
+            )
 
-        new_card = MovementCard(
-            description = "",
-            used = False,
-            game_id = game_id,
-            type = type 
-        )
-
-        db.add(new_card)
-        db.commit()
+            db.add(new_card)
+            db.commit()
+        finally:
+            db.close()

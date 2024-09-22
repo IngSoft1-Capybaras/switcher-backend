@@ -1,4 +1,4 @@
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import GameState, StateEnum
@@ -6,71 +6,85 @@ from .schemas import GameStateInDB
 from database.db import get_db
 from player.models import Player, turnEnum
 
-from database.db import engine
 
 
-Session = sessionmaker(bind=engine)
 
 class GameStateRepository:
     
-    def update_game_state(self, game_id: int, state: StateEnum ):
-        session = Session()
+    def update_game_state(self, game_id: int, state: StateEnum, db : Session ):
         try:
-            game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
+            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
 
+            if not game_state_instance:
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game State not found"
+            )
             game_state_instance.state = state
-
-            session.commit()
-        except NoResultFound:
-            raise ValueError("Game State does not exist")
+            db.commit()
+        
         finally:
-            session.close()
+            db.close()
     
-    def update_current_player(self, game_id: int, first_player_id: int):
-        session = Session()
+    def update_current_player(self, game_id: int, first_player_id: int, db : Session):
         
         try: 
-            game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
+            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
+
+            if not game_state_instance:
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game State not found"
+                )
 
             game_state_instance.current_player = first_player_id
-            session.commit()
-        except NoResultFound:
-            raise ValueError("Game State does not exist")
+            db.commit()
         finally:
-            session.close()
+            db.close()
     
-    def get_game_state_by_id(self, game_id: int) -> GameStateInDB:
-        session = Session()
+    def get_game_state_by_id(self, game_id: int, db : Session) -> GameStateInDB:
         try:
             
-            game_state_in_db = session.query(GameState).filter(GameState.game_id == game_id).first()
+            game_state_in_db = db.query(GameState).filter(GameState.game_id == game_id).first()
 
-            if game_state_in_db:
-                return GameStateInDB.model_validate(game_state_in_db)
-
+            if not game_state_in_db:
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game State not found"
+                )
         finally:
-            session.close()
+            db.close()
         
+        return GameStateInDB.model_validate(game_state_in_db)
 
-    def get_next_player_id(self, game_id: int) -> int:
-        session = Session()
+
+    def get_next_player_id(self, game_id: int, db : Session) -> int:
         
         try:
-            game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
+            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
             
             if not game_state_instance:
-                raise ValueError("Game State does not exist")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game State not found"
+                )
             current_player_id = game_state_instance.currentPlayer
             
-            players = session.query(Player).filter(Player.game_id == game_id).all()
+            players = db.query(Player).filter(Player.game_id == game_id).all()
         
             if not players:
-                raise ValueError("No players found for game")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Players not found"
+                )
             
             current_player = next((player for player in players if player.id == current_player_id), None)
             
             if not current_player:
-                raise ValueError("Current player not found")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Current player not found"
+                )
             
             current_turn = current_player.turn
             
@@ -87,10 +101,13 @@ class GameStateRepository:
             next_player = next((player for player in players if player.turn == next_turn), None)
             
             if not next_player:
-                raise ValueError("Next player not found")
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Next player not found"
+                )
             
             return next_player.id
             
             
         finally: 
-            session.close()
+            db.close()

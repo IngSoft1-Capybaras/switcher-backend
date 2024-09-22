@@ -1,38 +1,33 @@
-from sqlalchemy.orm import sessionmaker
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
 from .models import Board, Box, ColorEnum
 from .schemas import BoardOut
-from database.db import engine
 import random
-
-
-Session = sessionmaker(bind=engine)
 
 class BoardRepository:
     
-    def get_existing_board(self, game_id: int):
-        session = Session()
-        try:
-            board = session.query(Board).filter(Board.game_id == game_id).first()
-            if board:
-                return BoardOut.model_validate(board)
-        finally:
-            session.close()
+    def get_existing_board(self, game_id: int, db: Session):
         
+        try:
+            board = db.query(Board).filter(Board.game_id == game_id).first()
+        finally:
+            db.close()
+        return BoardOut.model_validate(board) if board else None
     
-    def create_new_board(self, game_id: int):
-        session = Session()
+    def create_new_board(self, game_id: int, db: Session):
+        
         try:
             new_board = Board(game_id=game_id)
-            session.add(new_board)
-            session.commit()
-            session.refresh(new_board)
+            db.add(new_board)
+            db.commit()
+            db.refresh(new_board)
             return new_board
         
         finally:
-            session.close()
+            db.close()
         
-    def add_box_to_board(self, board_id: int, game_id: int, color: ColorEnum, pos_x: int, pos_y: int):
-        session = Session()
+    def add_box_to_board(self, board_id: int, game_id: int, color: ColorEnum, pos_x: int, pos_y: int, db: Session):
+
         try:
             new_box = Box(
                 color=color,
@@ -41,22 +36,22 @@ class BoardRepository:
                 game_id=game_id,
                 board_id=board_id
             )    
-            session.add(new_box)
-            session.commit()
+            db.add(new_box)
+            db.commit()
             
         finally:
-            session.close()
+            db.close()
             
-    def configure_board(self, game_id: int):
+    def configure_board(self, game_id: int, db: Session):
         
         #Nos aseguramos que un tablero no haya sido creado
-        existing_board = self.get_existing_board(game_id)
+        existing_board = self.get_existing_board(game_id, db)
         
         if existing_board:
-            return {"error": "Ya se ha creado un tablero para esta partida"}
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Board already exists")
         
         #Creamos un nuevo tablero
-        new_board = self.create_new_board(game_id)
+        new_board = self.create_new_board(game_id, db)
         
         #Creamos una lista con los colores de las casillas
         colors = [ColorEnum.BLUE] * 9 + [ColorEnum.GREEN] * 9 + [ColorEnum.RED] * 9 + [ColorEnum.YELLOW] * 9
@@ -66,5 +61,5 @@ class BoardRepository:
         for i, color in enumerate(colors):
                 pos_x = i % 6
                 pos_y = i // 6
-                self.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y)
+                self.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y, db)
         return {"message": "Board created successfully"}

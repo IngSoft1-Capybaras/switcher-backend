@@ -40,7 +40,7 @@ def test_create_new_movement_card(movement_card_repository: MovementCardsReposit
     finally:
         session.close()
     
-    movement_card_repository.create_movement_card(1, typeEnum.EN_L_DER)
+    movement_card_repository.create_movement_card(1, typeEnum.EN_L_DER, session)
     
     session = Session()
     

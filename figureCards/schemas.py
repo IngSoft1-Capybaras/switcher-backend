@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from pydantic import BaseModel
 from .models import typeEnum, DifficultyEnum
 
@@ -7,7 +8,7 @@ class FigureCardSchema(BaseModel):
     id: int
     type: typeEnum
     show: bool
-    difficulty: DifficultyEnum
+    difficulty: Optional[DifficultyEnum] = None
     player_id: int
     game_id :  int
     

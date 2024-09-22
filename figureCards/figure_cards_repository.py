@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
-from .models import FigureCard
+from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
-from database.db import get_db
+
 
 class FigureCardsRepository:
 
-    def get_figure_cards(self, game_id: int, player_id: int, db: Session = Depends(get_db)) -> dict:
+    def get_figure_cards(self, game_id: int, player_id: int, db : Session) -> dict:
+        
         try:
             # Fetch figure cards associated with the player and game
             figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id,
@@ -24,7 +25,8 @@ class FigureCardsRepository:
             db.close()
         return figure_cards_list
     
-    def get_figure_card_by_id(self, game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db)) -> FigureCardSchema:
+    def get_figure_card_by_id(self, game_id: int, player_id: int, card_id: int, db : Session) -> FigureCardSchema:
+
         try:
             # Fetch the specific figure card by its id, player_id and game_id
             try:
@@ -40,3 +42,17 @@ class FigureCardsRepository:
         finally:
             db.close()
         return figure_card_schema
+    
+    def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, db : Session):
+
+        try:
+            new_card = FigureCard(
+                type=figure,
+                show=False,
+                game_id= game_id,
+                player_id=player_id
+            )
+            db.add(new_card)
+            db.commit()
+        finally:
+            db.close()
