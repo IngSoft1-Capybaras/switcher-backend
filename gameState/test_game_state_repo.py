@@ -38,7 +38,7 @@ def test_get_game_state_by_id(game_state_repository: GameStateRepository):
     try:
         new_game_state = GameState(
             state = StateEnum.WAITING,
-            idGame = 1
+            game_id = 1
         )
         session.add(new_game_state)
         session.commit()
@@ -65,7 +65,7 @@ def test_update_current_player(game_state_repository: GameStateRepository):
     
     try:
         game_state = GameState(
-            idGame=2,
+            game_id=2,
             state= StateEnum.WAITING, 
             currentPlayer=0
         )
@@ -74,7 +74,7 @@ def test_update_current_player(game_state_repository: GameStateRepository):
         
         game_state_repository.update_current_player(game_id=1, first_player_id=2)
         
-        updated_game_state = session.query(GameState).filter(GameState.idGame == 1).first()
+        updated_game_state = session.query(GameState).filter(GameState.game_id == 1).first()
         
         assert updated_game_state.currentPlayer == 2
         
@@ -87,7 +87,7 @@ def test_get_next_player_id(game_state_repository: GameStateRepository):
     try:
         game_id = 3
         current_player_id = 1
-        game_state = GameState(idGame=game_id, state=StateEnum.PLAYING, currentPlayer=current_player_id)
+        game_state = GameState(game_id=game_id, state=StateEnum.PLAYING, currentPlayer=current_player_id)
         
         players = [
             Player(name = "player1", game_id=game_id, turn=turnEnum.PRIMERO, host=False),

@@ -5,8 +5,8 @@ from database.db import Base
 
 # Definir un enum de dificultades
 class DifficultyEnum(Enum):
-    EASY = "easy"
-    HARD = "hard"
+    EASY = "EASY"
+    HARD = "HARD"
 
 # Modelo de carta de figura
 class FigureCard(Base):
@@ -15,6 +15,6 @@ class FigureCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     show = Column(Boolean, nullable=False)
     difficulty = Column(SQLAEnum(DifficultyEnum), nullable=False)
-    idPlayer = Column(Integer, ForeignKey('players.id'), nullable=False)
+    player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
     
     player = relationship("Player", back_populates="figure_cards")

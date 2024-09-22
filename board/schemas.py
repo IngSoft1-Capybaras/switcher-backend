@@ -9,6 +9,6 @@ class ColorEnum(Enum):
     
 class Box(BaseModel):
     color: ColorEnum
-    posX: int
-    posY: int
-    idGame: int
+    pos_x: int
+    pos_y: int
+    game_id: int

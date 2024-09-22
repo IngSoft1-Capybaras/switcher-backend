@@ -19,7 +19,7 @@ async def create_game(game: GameCreate, player: PlayerCreateMatch, db: Session =
     db.commit()
     db.refresh(game_instance)
 
-    game_status_instance = GameState(idGame=game_instance.id ,state=StateEnum.WAITING)
+    game_status_instance = GameState(game_id=game_instance.id ,state=StateEnum.WAITING)
     db.add(game_status_instance)
     db.commit()
     db.refresh(game_status_instance)
