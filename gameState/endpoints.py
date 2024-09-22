@@ -60,6 +60,7 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     
     return {"message": "Game status updated, ur playing!"}
 
+
 @game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
 async def finish_turn(game_id: int, db: Session = Depends(get_db)):
     game_state_repo =  GameStateRepository()
@@ -70,5 +71,3 @@ async def finish_turn(game_id: int, db: Session = Depends(get_db)):
     
     return {"message": "Current player successfully updated"}
     
-
-

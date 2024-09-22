@@ -1,4 +1,3 @@
-from multiprocessing import Value
 from sqlalchemy.orm import sessionmaker
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
@@ -33,7 +32,7 @@ class GameStateRepository:
         try: 
             game_state_instance = session.query(GameState).filter(GameState.game_id == game_id).first()
 
-            game_state_instance.currentPlayer = first_player_id
+            game_state_instance.current_player = first_player_id
             session.commit()
         except NoResultFound:
             raise ValueError("Game State does not exist")
@@ -52,6 +51,7 @@ class GameStateRepository:
         finally:
             session.close()
         
+
     def get_next_player_id(self, game_id: int) -> int:
         session = Session()
         

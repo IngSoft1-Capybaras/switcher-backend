@@ -11,6 +11,8 @@ from movementCards.models import MovementCard
 
 # Rutas
 from game.endpoints import game_router
+from board.endpoints import board_router
+from gameState.endpoints import game_state_router
 from movementCards.endpoints import movement_cards_router
 from figureCards.endpoints import figure_cards_router
 
@@ -29,6 +31,8 @@ app.add_middleware(
 
 # Registrar rutas
 app.include_router(game_router)
+app.include_router(game_state_router)
+app.include_router(board_router)
 app.include_router(movement_cards_router)
 app.include_router(figure_cards_router)
 

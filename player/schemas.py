@@ -4,7 +4,6 @@ from typing import List, Optional
 from movementCards.schemas import MovementCardSchema
 from figureCards.schemas import FigureCardSchema
 
-
 # schema del enum de turnos
 class turnEnum(str,Enum):
     PRIMERO = "PRIMERO"
@@ -15,9 +14,9 @@ class turnEnum(str,Enum):
 
 # schema de jugador
 class PlayerInDB(BaseModel):
-    id: Optional[int]
+    id: int
     name: str
-    turn: turnEnum
+    turn: Optional[turnEnum] = None
     game_id: int
     game_state_id: int
     host: bool

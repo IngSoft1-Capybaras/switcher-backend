@@ -1,16 +1,19 @@
 import random
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database.db import get_db
 from .models import Game
 from .schemas import GameCreate, GameInDB
-from player.models import Player
+from player.models import Player, turnEnum
 from player.schemas import PlayerCreateMatch, PlayerInDB
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository
 
-game_router = APIRouter()
+
+game_router = APIRouter(
+    tags=['Game']
+)
 
 # Crear partida
 @game_router.post("/games", status_code=status.HTTP_201_CREATED)

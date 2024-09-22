@@ -9,7 +9,6 @@ class GameInDB(BaseModel):
     minPlayers: int
     # private: bool
     # password: str | None = None
-    
     class Config:
         from_attributes = True
 

@@ -1,12 +1,15 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
 from .game_state_repo import GameStateRepository
-from board.models import  Box
+from board.models import Board, Box
+
 from figureCards.models import FigureCard
 from game.models import Game
 from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
+
 from player.models import Player, turnEnum
+
 
 from database.db import engine, Base
 import os
@@ -67,7 +70,7 @@ def test_update_current_player(game_state_repository: GameStateRepository):
         game_state = GameState(
             game_id=2,
             state= StateEnum.WAITING, 
-            currentPlayer=0
+            current_player=0
         )
         session.add(game_state)
         session.commit()
@@ -76,7 +79,7 @@ def test_update_current_player(game_state_repository: GameStateRepository):
         
         updated_game_state = session.query(GameState).filter(GameState.game_id == 1).first()
         
-        assert updated_game_state.currentPlayer == 2
+        assert updated_game_state.current_player == 2
         
     finally:
         session.close()
