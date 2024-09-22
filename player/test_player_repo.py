@@ -46,7 +46,7 @@ def test_get_player_by_id(player_repo: PlayerRepository):
         session.add(player)
         session.commit()
         
-        player_in_db = player_repo.get_player_by_id(player.id)
+        player_in_db = player_repo.get_player_by_id(player.game.id, player.id)
         
         assert player_in_db.name == player.name
         
@@ -85,7 +85,7 @@ def test_assign_turn_player(player_repo: PlayerRepository):
     finally:
         session.close()
     
-    player_repo.assign_turn_player(player_id, turnEnum.SEGUNDO)
+    player_repo.assign_turn_player(player.game.id, player_id, turnEnum.SEGUNDO)
     
     session = Session()
     

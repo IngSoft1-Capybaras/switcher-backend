@@ -94,7 +94,7 @@ def populate_database():
         # Commit the session
         session.commit()
     except Exception as e:
-        print(f"Ocurrio un error: {e}")
+        print(f"An error ocurred: {e}")
         session.rollback()
         
 if __name__ == "__main__":
