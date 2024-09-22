@@ -20,9 +20,9 @@ class Player(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    game_id = Column(Integer, ForeignKey('games.id'))
+    game_id = Column(Integer, ForeignKey('games.id', use_alter=True))
     game = relationship("Game", back_populates="players")
-    game_state_id = Column(Integer, ForeignKey('game_state.id'), nullable=True)
+    game_state_id = Column(Integer, ForeignKey('game_state.id', use_alter=True), nullable=True)
     game_state = relationship("GameState", back_populates="players", foreign_keys="[Player.game_state_id]")
     turn = Column(SQLAEnum(turnEnum), nullable=True)
     host = Column(Boolean, nullable=False)
