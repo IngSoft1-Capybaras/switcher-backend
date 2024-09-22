@@ -1,0 +1,42 @@
+from sqlalchemy.orm import Session
+from fastapi import Depends, HTTPException
+from sqlalchemy.exc import NoResultFound
+from .models import MovementCard
+from .schemas import MovementCardSchema
+from database.db import get_db
+class MovementCardsRepository:
+
+    def get_movement_cards(self, game_id: int, player_id: int, db: Session = Depends(get_db)) -> list:
+        try:
+            # Fetch figure cards associated with the player and game
+            movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id,
+                                                       MovementCard.player.has(game_id=game_id)).all()
+
+            if not movement_cards:
+                raise HTTPException(status_code=404, detail="There no movement cards associated with this game and player")
+
+            # Convert movement cards to a list of schemas
+            movement_cards_list = [MovementCardSchema.from_orm(card) for card in movement_cards]
+
+        finally:
+            db.close()
+
+        return movement_cards_list
+    
+    def get_figure_card_by_id(self, game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db)) -> MovementCardSchema:
+        try:
+            # Fetch the specific movement card by its id, player_id and game_id
+            try:
+                movement_card = db.query(MovementCard).filter(MovementCard.id == card_id, 
+                                                          MovementCard.player_id == player_id,
+                                                          MovementCard.player.has(game_id=game_id)).one()
+            except NoResultFound:
+                raise HTTPException(status_code=404, detail="Movement card not found")
+
+            # Convert the movement card to a schema
+            movement_card_schema = MovementCardSchema.from_orm(movement_card)
+
+        finally:
+            db.close()
+
+        return movement_card_schema

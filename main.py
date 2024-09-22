@@ -1,7 +1,7 @@
 from enum import Enum
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database.db import engine, Base
+from database.db import engine, Base, session
 from board.models import Box
 from game.models import Game
 from gameState.models import GameState
@@ -11,6 +11,7 @@ from movementCards.models import MovementCard
 
 # Rutas
 from game.endpoints import game_router
+from movementCards.endpoints import movement_cards_router
 from figureCards.endpoints import figure_cards_router
 
 app = FastAPI()
@@ -28,6 +29,7 @@ app.add_middleware(
 
 # Registrar rutas
 app.include_router(game_router)
+app.include_router(movement_cards_router)
 app.include_router(figure_cards_router)
 
 @app.get("/")

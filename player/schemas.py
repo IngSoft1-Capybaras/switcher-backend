@@ -1,8 +1,9 @@
 from enum import Enum
 from pydantic import BaseModel
 from typing import List, Optional
+from movementCards.schemas import MovementCardSchema
 from figureCards.schemas import FigureCardSchema
-from movementCards.schemas import MovementCard
+
 
 # schema del enum de turnos
 class turnEnum(str,Enum):
