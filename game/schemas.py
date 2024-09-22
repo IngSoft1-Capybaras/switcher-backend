@@ -12,7 +12,6 @@ class GameInDB(BaseModel):
     
     class Config:
         from_attributes = True
-        orm_mode = True
 
 class GameCreate(BaseModel):
     name: str

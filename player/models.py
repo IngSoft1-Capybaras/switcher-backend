@@ -9,10 +9,10 @@ from movementCards.models import MovementCard
 
 # enum de los turnos
 class turnEnum(str,Enum):
-    PRIMERO = "primero"
-    SEGUNDO = "segundo"
-    TERCERO = "tercero"
-    CUARTO  = "cuarto"
+    PRIMERO = "PRIMERO"
+    SEGUNDO = "SEGUNDO"
+    TERCERO = "TERCERO"
+    CUARTO  = "CUARTO"
 
 # modelo de jugador
 class Player(Base):
