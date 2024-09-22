@@ -1,13 +1,26 @@
-from re import I
+from enum import Enum
 from pydantic import BaseModel
 
 #class type
-
+class typeEnum(str, Enum):
+    LINEAL_CONT = "LINEAL_CONT"
+    LINEAL_ESP = "LINEAL_ESP"
+    DIAGONAL_CONT = "DIAGONAL_CONT"
+    DIAGONAL_ESP = "DIAGONAL_ESP"
+    EN_L_DER = "EN_L_DER"
+    EN_L_IZQ = "EN_L_IZQ"
+    LINEAL_AL_LAT = "LINEAL_AL_LAT"
 class MovementCard(BaseModel):
-    #tipo
+    type : typeEnum
     description: str
     used: bool
     idPlayer: int
     idGame: int
+
+class MovementCardOut(BaseModel):
+    type : typeEnum
+    description: str
+    used: bool
+    idPlayer: int
     
     
