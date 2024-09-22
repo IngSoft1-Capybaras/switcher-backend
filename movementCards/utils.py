@@ -6,7 +6,7 @@ from .schemas import MovementCardOut, typeEnum
 from game.models import Game
 from game.game_repository import GameRepository
 from .movement_cards_repository import MovementCardsRepository
-
+from database.db import get_db
 
 #VER TEST
 class MovementCardUtils:
@@ -16,7 +16,7 @@ class MovementCardUtils:
     ):
         self.mov_card_repo = mov_card_repo
         
-    def create_mov_deck(self, db: Session, game_id: int):
+    def create_mov_deck(self, game_id: int, db: Session = Depends(get_db),):
         
         #Creamos una lista con los tipos de cartas de movimiento
         types_list = ([typeEnum.DIAGONAL_CONT] * 7 +
@@ -32,7 +32,7 @@ class MovementCardUtils:
         
         #
         for type in types_list:
-            self.mov_card_repo.create_movement_card(game_id, type)
+            self.mov_card_repo.create_movement_card(game_id, type, db)
         
         return {"message": "Movement deck created"}
     
