@@ -14,8 +14,8 @@ class Box(Base):
     
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     color = Column(SQLAEnum(ColorEnum), nullable=False)
-    posX = Column(Integer, nullable=False)
-    posY = Column(Integer, nullable=False)
-    game_id = Column(Integer, ForeignKey('games.id'), nullable=False)
+    pos_x = Column(Integer, nullable=False)
+    pos_y = Column(Integer, nullable=False)
+    game_id = Column(Integer, ForeignKey('games.id', use_alter=True), nullable=False)
 
     game = relationship("Game", back_populates="boxes")

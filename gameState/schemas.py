@@ -8,7 +8,7 @@ from gameState.models import GameState, StateEnum
 class GameStateInDB(BaseModel):
     id           : int
     state        : StateEnum
-    idGame       : int
+    game_id       : int
     currentPlayer: Optional[int]
     #mazo movimiento falta
 

@@ -27,7 +27,6 @@ async def create_game(game: GameCreate,
 async def get_games(db: Session = Depends(get_db), repo: GameRepository = Depends()):
     return repo.get_games(db)
 
-
 # Obtener partida segun id
 @game_router.get("/games/{game_id}")
 async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):

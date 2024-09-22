@@ -4,6 +4,7 @@ from pydantic import BaseModel
 #class Figures(Enum):
 
 # Schema del enum de dificultades
+
 class DifficultyEnum(str, Enum):
     EASY: "EASY"
     HARD: "HARD"

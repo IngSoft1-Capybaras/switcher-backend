@@ -10,6 +10,6 @@ class MovementCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     description = Column(String, nullable=False)
     used = Column(Boolean, nullable=False)
-    player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
+    player_id = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=False) # ver bien la necesidad de use_alter
     
     player = relationship("Player", back_populates="movement_cards")

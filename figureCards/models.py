@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from database.db import Base
 
 # Definir un enum de dificultades
-class DifficultyEnum(str, Enum):
+class DifficultyEnum(Enum):
     EASY = "EASY"
     HARD = "HARD"
 
