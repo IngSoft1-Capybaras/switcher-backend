@@ -3,6 +3,7 @@ from sqlalchemy.exc import NoResultFound
 from fastapi import Depends, HTTPException
 from .models import Player, turnEnum
 from .schemas import PlayerInDB
+from game.models import Game
 
 class PlayerRepository:
     
@@ -20,11 +21,16 @@ class PlayerRepository:
 
     
     def get_players_in_game(self, game_id: int, db : Session) -> dict:
+        try:
+            game = db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound :
+            raise HTTPException(status_code=404, detail="Game not found")
         
-        players = db.query(Player).filter(Player.game_id == game_id).all()
+        try:
+            players = db.query(Player).filter(Player.game_id == game_id).all()
         
-        if not players:
-            raise HTTPException(status_code = 404, detail = "Game not found")
+        except NoResultFound :
+            raise HTTPException(status_code = 404, detail = "No players in game")
         
         return [PlayerInDB.model_validate(player) for player in players]
 
@@ -36,7 +42,6 @@ class PlayerRepository:
                                                 Player.game_id== game_id).one()
             player.turn = turn
             db.commit()
-            db.refresh()
         except NoResultFound:
             raise HTTPException(status_code = 404, detail = "There is no such player")
 
