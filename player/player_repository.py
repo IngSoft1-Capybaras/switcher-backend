@@ -24,7 +24,7 @@ class PlayerRepository:
         players = db.query(Player).filter(Player.game_id == game_id).all()
         
         if not players:
-            raise HTTPException(status_code = 404, detail = "Game not found")
+            raise HTTPException(status_code = 404, detail = "No players in game not found")
         
         return [PlayerInDB.model_validate(player) for player in players]
 
@@ -36,7 +36,6 @@ class PlayerRepository:
                                                 Player.game_id== game_id).one()
             player.turn = turn
             db.commit()
-            db.refresh()
         except NoResultFound:
             raise HTTPException(status_code = 404, detail = "There is no such player")
 
