@@ -7,8 +7,6 @@ from database.db import get_db
 from player.models import Player, turnEnum
 
 
-
-
 class GameStateRepository:
     
     def update_game_state(self, game_id: int, state: StateEnum, db : Session ):
