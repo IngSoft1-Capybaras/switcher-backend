@@ -3,8 +3,6 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from database.db import init_db
 
-from connection_manager import ConnectionManager
-
 
 # Rutas
 from game.endpoints import game_router
