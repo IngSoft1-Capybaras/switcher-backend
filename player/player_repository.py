@@ -34,10 +34,12 @@ class PlayerRepository:
         try:
             player = db.query(Player).filter(Player.id == player_id,
                                                 Player.game_id== game_id).one()
-        
+            player.turn = turn
+            db.commit()
+            db.refresh()
         except NoResultFound:
             raise HTTPException(status_code = 404, detail = "There is no such player")
 
             
-        player.turn = turn
+        
             
