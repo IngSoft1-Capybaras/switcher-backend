@@ -26,7 +26,7 @@ class Player(Base):
     game_state = relationship("GameState", back_populates="players", foreign_keys="[Player.game_state_id]")
     turn = Column(SQLAEnum(turnEnum), nullable=True)
     host = Column(Boolean, nullable=False)
-    winner = Column(Boolean, nullable=False)
+    winner = Column(Boolean, nullable=False, unique=True)
 
     figure_cards = relationship("FigureCard", back_populates="player")
     movement_cards = relationship("MovementCard", back_populates="player")
