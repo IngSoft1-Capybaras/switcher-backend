@@ -1,5 +1,5 @@
 import random
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from database.db import get_db
 from .models import Game
@@ -27,7 +27,14 @@ async def create_game(game: GameCreate,
 
 # Obtener todas las partidas
 @game_router.get("/games")
-async def get_games(db: Session = Depends(get_db), repo: GameRepository = Depends()):
+async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, empieza en 1"),
+                    limit: int = Query(5, ge=1, descripton = "Limita el numero de partidas mostradas por pagina"),
+                    db: Session = Depends(get_db), 
+                    repo: GameRepository = Depends()):
+
+    # Calculo el offset segun la pagina y el limite
+    offset = (page - 1) * limit
+
     return repo.get_games(db)
 
 # Obtener partida segun id

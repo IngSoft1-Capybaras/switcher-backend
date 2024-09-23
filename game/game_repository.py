@@ -10,10 +10,9 @@ from gameState.schemas import GameStateInDB
 
 class GameRepository:
 
-    def get_games(self, db : Session) -> list:
-        
+    def get_games(self, db : Session, limit: int = 5, offset: int = 0) -> list:
         # Fetch games
-        games = db.query(Game).all()
+        games = db.query(Game).offset(offset).limit(limit).all()
         
         if not games:
             raise HTTPException(status_code = 404, detail = "There are no games available")
@@ -45,7 +44,7 @@ class GameRepository:
         db.flush()  # Flush to get the game_instance.id
 
         # Create game state instance
-        game_status_instance = GameState(idGame=game_instance.id, state=StateEnum.WAITING)
+        game_status_instance = GameState(game_id=game_instance.id, state=StateEnum.WAITING)
         db.add(game_status_instance)
         db.flush()  # Flush to get the game_status_instance.id
 
