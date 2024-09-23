@@ -5,9 +5,9 @@ from figureCards.models import FigureCard
 from board.models import  Board, Box
 from figureCards.models import FigureCard, typeEnum
 from game.models import Game
-from gameState.models import GameState
+from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
-from player.models import Player
+from player.models import Player, turnEnum
 
 from database.db import engine, Base
 import os
@@ -48,5 +48,40 @@ def test_get_game_by_id(game_repository: GameRepository):
         game = game_repository.get_game_by_id(1, session)
         assert game.id == 1
         
+    finally:
+        session.close()
+
+
+def test_get_game_winner(game_repository: GameRepository):
+    session = Session()
+
+    try:
+        game = Game(
+            id = 1,
+            name = "test_game",
+            maxPlayers = 3,
+            minPlayers = 2
+        )
+
+        game_state = GameState(
+            id = 1,
+            state = StateEnum.FINISHED,
+            game_id = 1,
+            current_player = 1
+        )
+
+        player = Player(
+            name = "test_player",
+            game_id = 1,
+            game_state_id = 1,
+            turn = turnEnum.PRIMERO,
+            host = True,
+            winner = True
+        )
+
+        winner = game_repository.get_game_winner(game.id, session)
+
+        assert winner.id == player.id
+
     finally:
         session.close()
