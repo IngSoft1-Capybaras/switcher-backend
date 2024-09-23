@@ -1,7 +1,6 @@
 import random
-
-from database.db import SessionLocal, engine
-
+from database.db import SessionLocal, engine, init_db
+from sqlalchemy.orm import sessionmaker
 from board.models import Box, Board, ColorEnum
 from figureCards.models import FigureCard, DifficultyEnum
 from game.models import Game
@@ -9,29 +8,47 @@ from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
 from player.models import Player, turnEnum
 
+init_db()
+Session = sessionmaker(bind=engine)
 
 def create_game(name, min_players, max_players):
-    game = Game(name=name, minPlayers=min_players, maxPlayers=max_players)
-    session.add(game)
-    session.flush()
+    session = Session()
+    try:
+        game = Game(name=name, minPlayers=min_players, maxPlayers=max_players)
+        session.add(game)
+        session.flush()
+    finally:
+        session.close()
     return game
 
 def create_game_state(game, state):
-    game_state = GameState(state=state, game_id=game.id)
-    session.add(game_state)
-    session.flush()
+    session = Session()
+    try:
+        game_state = GameState(state=state, game_id=game.id)
+        session.add(game_state)
+        session.flush()
+    finally:
+        session.close()
     return game_state
 
 def create_player(name, game, game_state, turn, host):
-    player = Player(name=name, game_id=game.id, game_state_id=game_state.id, turn=turn, host=host)
-    session.add(player)
-    session.flush()
+    session = Session()
+    try:
+        player = Player(name=name, game_id=game.id, game_state_id=game_state.id, turn=turn, host=host)
+        session.add(player)
+        session.flush()
+    finally:
+        session.close()
     return player
 
 def create_board(game):
-    board = Board(id_game=game.id)
-    session.add(board)
-    session.flush()
+    session = Session()
+    try:
+        board = Board(id_game=game.id)
+        session.add(board)
+        session.flush()
+    finally:
+        session.close()
     return board
 
 def create_box(color, pos_x, pos_y, game, board):
@@ -41,15 +58,23 @@ def create_box(color, pos_x, pos_y, game, board):
     return box
 
 def create_movement_card(description, used, player):
-    card = MovementCard(description=description, used=used, idPlayer=player.id)
-    session.add(card)
-    session.flush()
+    session = Session()
+    try:
+        card = MovementCard(description=description, used=used, idPlayer=player.id)
+        session.add(card)
+        session.flush()
+    finally:
+        session.close()
     return card
 
 def create_figure_card(show, difficulty, player, game):
-    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, game_id=game.id)
-    session.add(card)
-    session.flush()
+    session = Session()
+    try:
+        card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, game_id=game.id)
+        session.add(card)
+        session.flush()
+    finally:
+        session.close()
     return card
 
 # Populate the database with sample data

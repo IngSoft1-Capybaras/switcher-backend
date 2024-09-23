@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
-from .board_repository import BoardRepository
-from .models import  ColorEnum, Board, Box
+from board.board_repository import BoardRepository
+from board.models import  ColorEnum, Board, Box
 from figureCards.models import FigureCard
 from game.models import Game
 from gameState.models import GameState
@@ -14,23 +14,12 @@ import os
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
 
-@pytest.fixture(scope='session', autouse=True)
-def setup_and_teardown_db():
-    # Create all tables 
-    Base.metadata.create_all(engine)
-    yield
-    # Drop all tables after  tests
-    Base.metadata.drop_all(engine)
-    
-    if os.path.exists("db_test.sqlite"):
-        os.remove("db_test.sqlite")
-
 
 @pytest.fixture
 def board_repository():
     return BoardRepository()
 
-
+@pytest.mark.integration_test
 def test_create_new_board(board_repository: BoardRepository):
     session = Session()
     
@@ -48,7 +37,7 @@ def test_create_new_board(board_repository: BoardRepository):
     finally:
         session.close()
         
-
+@pytest.mark.integration_test
 def test_get_board(board_repository: BoardRepository):
     session = Session()
     
@@ -58,7 +47,7 @@ def test_get_board(board_repository: BoardRepository):
     finally:
         session.close()
 
-
+@pytest.mark.integration_test
 def test_add_box_to_board(board_repository: BoardRepository):
     session = Session()
     
@@ -76,21 +65,21 @@ def test_add_box_to_board(board_repository: BoardRepository):
     finally:
         session.close()
         
-
+@pytest.mark.integration_test
 def test_configure_board(board_repository: BoardRepository):
     session = Session()
     
     try:
-        N_boxes = session.query(Box).filter(Box.game_id == 2).count()
+        N_boxes = session.query(Box).filter(Box.game_id == 4).count()
     finally:
         session.close()
     
-    board_repository.configure_board(2, session)
+    board_repository.configure_board(4, session)
     
     session = Session()
     
     try:
-        assert session.query(Box).filter(Box.game_id == 2).count() == N_boxes + 36
+        assert session.query(Box).filter(Box.game_id == 4).count() == N_boxes + 36
     finally:
         session.close()
 

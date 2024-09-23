@@ -1,13 +1,10 @@
 from enum import Enum
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from database.db import engine, Base
-from board.models import Box
-from game.models import Game
-from gameState.models import GameState
-from player.models import Player
-from figureCards.models import FigureCard
-from movementCards.models import MovementCard
+from database.db import init_db
+
+from connection_manager import ConnectionManager
+
 
 # Rutas
 from game.endpoints import game_router
@@ -16,6 +13,8 @@ from gameState.endpoints import game_state_router
 from movementCards.endpoints import movement_cards_router
 from figureCards.endpoints import figure_cards_router
 from player.endpoints import player_router
+
+init_db()
 
 app = FastAPI()
 
@@ -41,6 +40,3 @@ app.include_router(player_router)
 @app.get("/")
 async def root():
     return {"message": "El Switcher"}
-
-# Create the database tables
-Base.metadata.create_all(bind=engine)

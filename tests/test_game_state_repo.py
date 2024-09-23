@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
-from .game_state_repo import GameStateRepository
+from gameState.game_state_repo import GameStateRepository
 from board.models import Board, Box
 
 from figureCards.models import FigureCard
@@ -34,7 +34,7 @@ def game_state_repository():
     return GameStateRepository()
 
         
-
+@pytest.mark.integration_test
 def test_get_game_state_by_id(game_state_repository: GameStateRepository):
     session = Session()
     

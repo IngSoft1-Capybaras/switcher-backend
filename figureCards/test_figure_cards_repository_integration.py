@@ -16,7 +16,7 @@ def figure_cards_repository():
     return FigureCardsRepository()
 
 
-@pytest.mark.integration_test
+
 def test_get_figure_cards_success(mock_db, figure_cards_repository):
 
     mock_figure_cards = [
@@ -32,7 +32,7 @@ def test_get_figure_cards_success(mock_db, figure_cards_repository):
     mock_db.query().filter().filter().all.assert_called_once()
 
 
-@pytest.mark.integration_test
+
 def test_get_figure_cards_not_found(mock_db, figure_cards_repository):
     mock_db.query().filter().filter().all.return_value = []
 
@@ -43,7 +43,7 @@ def test_get_figure_cards_not_found(mock_db, figure_cards_repository):
     assert exc_info.value.detail == "There no figure cards associated with this game and player"
 
 
-@pytest.mark.integration_test
+
 def test_get_figure_card_by_id_success(mock_db, figure_cards_repository):
     mock_figure_card = FigureCard(id=1, player_id=1)
     mock_db.query().filter().filter().one.return_value = mock_figure_card
@@ -54,7 +54,7 @@ def test_get_figure_card_by_id_success(mock_db, figure_cards_repository):
     assert result == expected_result
     mock_db.query().filter().filter().one.assert_called_once()
 
-@pytest.mark.integration_test
+
 def test_get_figure_card_by_id_not_found(mock_db, figure_cards_repository):
     mock_db.query().filter().filter().one.side_effect = NoResultFound
 

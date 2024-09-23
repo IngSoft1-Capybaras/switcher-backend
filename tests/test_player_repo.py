@@ -1,5 +1,5 @@
 import pytest
-from .player_repository import PlayerRepository
+from player.player_repository import PlayerRepository
 from sqlalchemy.orm import sessionmaker
 from board.models import  Board, Box
 from figureCards.models import FigureCard
@@ -9,30 +9,18 @@ from movementCards.models import MovementCard
 from figureCards.models import FigureCard
 from player.models import Player, turnEnum
 
-from database.db import engine, Base
-import os
+from database.db import engine
 
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
 
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_and_teardown_db():
-    # Create all tables 
-    Base.metadata.create_all(engine)
-    yield
-    # Drop all tables after  tests
-    Base.metadata.drop_all(engine)
-    
-    if os.path.exists("db_test.sqlite"):
-        os.remove("db_test.sqlite")
 
 @pytest.fixture
 def player_repo():
     return PlayerRepository()
 
 
-
+@pytest.mark.integration_test
 def test_get_player_by_id(player_repo: PlayerRepository):
     session = Session()
     
@@ -53,6 +41,7 @@ def test_get_player_by_id(player_repo: PlayerRepository):
     finally:
         session.close()
 
+@pytest.mark.integration_test
 def test_get_players_in_game(player_repo: PlayerRepository):
     session = Session()
     
@@ -71,12 +60,13 @@ def test_get_players_in_game(player_repo: PlayerRepository):
 
     finally:
         session.close()
-        
+
+@pytest.mark.integration_test     
 def test_assign_turn_player(player_repo: PlayerRepository):
     session = Session()
     
     try:
-        player = Player(name="player1", game_id=2, host=False)
+        player = Player(name="player1", game_id=5, host=False)
         session.add(player)
         session.commit()
         

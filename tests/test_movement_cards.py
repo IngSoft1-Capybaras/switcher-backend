@@ -2,9 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
-from .endpoints import movement_cards_router
-from .movement_cards_repository import MovementCardsRepository
-from .schemas import MovementCardSchema
+from movementCards.endpoints import movement_cards_router
+from movementCards.movement_cards_repository import MovementCardsRepository
+from movementCards.schemas import MovementCardSchema
 from main import app
 
 app.include_router(movement_cards_router)

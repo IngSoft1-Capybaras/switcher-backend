@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from .utils import MovementCardUtils
-from .models import typeEnum
+from movementCards.utils import MovementCardUtils
+from movementCards.models import typeEnum
 
 
 

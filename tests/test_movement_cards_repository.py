@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
-from .movement_cards_repository import MovementCardsRepository
+from movementCards.movement_cards_repository import MovementCardsRepository
 from board.models import  Board, Box
 from figureCards.models import FigureCard
 from game.models import Game
@@ -9,29 +9,16 @@ from movementCards.models import MovementCard, typeEnum
 from figureCards.models import FigureCard
 from player.models import Player
 
-from database.db import engine, Base
-import os
+from database.db import engine
 
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
-
-@pytest.fixture(scope='session', autouse=True)
-def setup_and_teardown_db():
-    # Create all tables 
-    Base.metadata.create_all(engine)
-    yield
-    # Drop all tables after  tests
-    Base.metadata.drop_all(engine)
-    
-    if os.path.exists("db_test.sqlite"):
-        os.remove("db_test.sqlite")
-
 
 @pytest.fixture
 def movement_card_repository():
     return MovementCardsRepository()
 
-
+@pytest.mark.integration_test
 def test_create_new_movement_card(movement_card_repository: MovementCardsRepository):
     session = Session()
     
