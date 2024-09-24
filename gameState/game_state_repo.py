@@ -66,7 +66,7 @@ class GameStateRepository:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Game State not found"
                 )
-            current_player_id = game_state_instance.currentPlayer
+            current_player_id = game_state_instance.current_player
             
             players = db.query(Player).filter(Player.game_id == game_id).all()
         
