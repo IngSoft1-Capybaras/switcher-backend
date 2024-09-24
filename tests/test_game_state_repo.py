@@ -56,8 +56,8 @@ def test_update_game_state(game_state_repository: GameStateRepository):
     session = Session()
     
     try:
-        game_state_repository.update_game_state(1, StateEnum.PLAYING)
-        game_state = game_state_repository.get_game_state_by_id(1,session)
+        game_state_repository.update_game_state(1, StateEnum.PLAYING, session)
+        game_state = game_state_repository.get_game_state_by_id(1, session)
         
         assert game_state.state is StateEnum.PLAYING
     finally:
@@ -90,7 +90,7 @@ def test_get_next_player_id(game_state_repository: GameStateRepository):
     try:
         game_id = 3
         current_player_id = 1
-        game_state = GameState(game_id=game_id, state=StateEnum.PLAYING, currentPlayer=current_player_id)
+        game_state = GameState(game_id=game_id, state=StateEnum.PLAYING, current_player=current_player_id)
         
         players = [
             Player(name = "player1", game_id=game_id, turn=turnEnum.PRIMERO, host=False),

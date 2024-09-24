@@ -12,11 +12,15 @@ class typeEnum(str, Enum):
     LINEAL_AL_LAT = "LINEAL_AL_LAT"
     
 class MovementCardSchema(BaseModel):
+    id: int
     type : typeEnum
     description: str
     used: bool
     player_id: int
     game_id: int
+
+    class Config:
+        from_attributes = True
 
 class MovementCardOut(BaseModel):
     type : typeEnum

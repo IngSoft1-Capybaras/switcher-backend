@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from figureCards.endpoints import figure_cards_router
 from figureCards.figure_cards_repository import FigureCardsRepository
 from figureCards.schemas import FigureCardSchema
+from figureCards.models import typeEnum, DifficultyEnum
 from main import app
 
 app.include_router(figure_cards_router)
@@ -23,22 +24,39 @@ def mock_repo():
     return MagicMock(spec=FigureCardsRepository)
 
 
-@patch('.figure_cards_repository.FigureCardsRepository')
-def test_get_figure_cards_success(mock_db, mock_repo):
+# Dependency override function
+def override_movement_cards_repo():
+    return mock_repo()
 
-    mock_figure_cards = [FigureCardSchema(id=1, player_id=1), FigureCardSchema(id=2, player_id=1)]
+# Apply the override before running the tests
+@pytest.fixture(autouse=True)
+def setup_dependency_override(mock_repo):
+    app.dependency_overrides[FigureCardsRepository] = lambda: mock_repo
+    yield
+    app.dependency_overrides = {}  # Clean up overrides after test
+
+
+@patch('figureCards.figure_cards_repository.FigureCardsRepository')
+def test_get_figure_cards_success(mock_repo, mock_db):
+
+    mock_figure_cards = [FigureCardSchema(id=1, type=typeEnum.TYPE_1, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1), 
+                         FigureCardSchema(id=2, type=typeEnum.TYPE_1, show=True, difficulty=DifficultyEnum.HARD , player_id=1, game_id=1)]
+    
     mock_repo.get_figure_cards.return_value = mock_figure_cards
 
     response = client.get("/deck/figure/1/1")
 
     assert response.status_code == 200
-    assert response.json() == [card.dict() for card in mock_figure_cards]
+    assert response.json() == [card.model_dump() for card in mock_figure_cards]
     mock_repo.get_figure_cards.assert_called_once_with(1, 1, mock_db)
 
 
-@patch('.figure_cards_repository.FigureCardsRepository')
-def test_get_figure_cards_not_found(mock_db, mock_repo):
-    mock_repo.get_figure_cards.side_effect = HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
+@patch('figureCards.figure_cards_repository.FigureCardsRepository')
+def test_get_figure_cards_not_found(mock_repo, mock_db):
+    mock_repo.get_figure_cards.side_effect = HTTPException(
+        status_code=404, 
+        detail="There no figure cards associated with this game and player"
+    )
 
     response = client.get("/deck/figure/1/1")
 
@@ -47,20 +65,21 @@ def test_get_figure_cards_not_found(mock_db, mock_repo):
     mock_repo.get_figure_cards.assert_called_once_with(1, 1, mock_db)
 
 
-@patch('.figure_cards_repository.FigureCardsRepository')
-def test_get_figure_card_by_id_success(mock_db, mock_repo):
-    mock_figure_card = FigureCardSchema(id=1, player_id=1)
+@patch('figureCards.figure_cards_repository.FigureCardsRepository')
+def test_get_figure_card_by_id_success(mock_repo, mock_db):
+    mock_figure_card = FigureCardSchema(
+        id=1, type=typeEnum.TYPE_1, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1)
     mock_repo.get_figure_card_by_id.return_value = mock_figure_card
 
     response = client.get("/deck/figure/1/1/1")
 
     assert response.status_code == 200
-    assert response.json() == mock_figure_card.dict()
+    assert response.json() == mock_figure_card.model_dump()
     mock_repo.get_figure_card_by_id.assert_called_once_with(1, 1, 1, mock_db)
 
 
-@patch('.figure_cards_repository.FigureCardsRepository')
-def test_get_figure_card_by_id_not_found(mock_db, mock_repo):
+@patch('figureCards.figure_cards_repository.FigureCardsRepository')
+def test_get_figure_card_by_id_not_found(mock_repo, mock_db):
     mock_repo.get_figure_card_by_id.side_effect = HTTPException(status_code=404, detail="Figure card not found")
 
     response = client.get("/deck/figure/1/1/1")
