@@ -15,7 +15,7 @@ class MovementCardsRepository:
             raise HTTPException(status_code=404, detail="There no movement cards associated with this game and player")
 
         # Convert movement cards to a list of schemas
-        movement_cards_list = [MovementCardSchema.from_orm(card) for card in movement_cards]
+        movement_cards_list = [MovementCardSchema.model_validate(card) for card in movement_cards]
 
         return movement_cards_list
     
@@ -30,7 +30,7 @@ class MovementCardsRepository:
             raise HTTPException(status_code=404, detail="Movement card not found")
 
         # Convert the movement card to a schema
-        movement_card_schema = MovementCardSchema.from_orm(movement_card)
+        movement_card_schema = MovementCardSchema.model_validate(movement_card)
 
         return movement_card_schema
     
@@ -48,3 +48,4 @@ class MovementCardsRepository:
             db.commit()
         finally:
             db.close()
+    
