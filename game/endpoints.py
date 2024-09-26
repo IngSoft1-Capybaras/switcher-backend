@@ -6,6 +6,7 @@ from .models import Game
 from .schemas import GameCreate, GameInDB
 from player.models import Player, turnEnum
 from player.schemas import PlayerCreateMatch, PlayerInDB
+from player.player_repository import PlayerRepository
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository
@@ -47,3 +48,9 @@ async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, 
 @game_router.get("/games/{game_id}")
 async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
     return repo.get_game_by_id(game_id, db)
+
+
+# Obtener ganador
+@game_router.get("/games/{game_id}/winner")
+async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
+    return repo.get_game_winner(game_id, db)
