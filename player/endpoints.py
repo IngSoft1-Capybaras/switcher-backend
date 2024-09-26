@@ -19,11 +19,11 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 
 @player_router.post("/players/join/{game_id}", status_code= status.HTTP_201_CREATED)
 async def join_game(game_id: int, player_name: str, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
-    repo.create_player(game_id, player_name, db)
+    player_id = repo.create_player(game_id, player_name, db)
     
     player_list_update = {
             f"{game_id}": "GAME_INFO_UPDATED"
         }
-    await manager.broadcast_game(pĺayer_list_update)
+    await manager.broadcast_game(game_id, player_list_update)
         
-    return {"type": "GAME_INFO_UPDATED"}
+    return player_id

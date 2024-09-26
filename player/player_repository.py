@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from .models import Player, turnEnum
 from .schemas import PlayerInDB
 from game.models import Game
-
+from gameState.models import GameState
 class PlayerRepository:
     
     def get_player_by_id(self, game_id: int, player_id: int, db : Session) -> PlayerInDB:   
@@ -45,6 +45,28 @@ class PlayerRepository:
         except NoResultFound:
             raise HTTPException(status_code = 404, detail = "There is no such player")
 
-            
+    def create_player(self, game_id: int, player_name: str, db : Session) -> int:
+        try:
+            game_status_id = db.query(GameState).filter(GameState.game_id == game_id).first()  
+        except NoResultFound:
+            raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail="No game status for game")
         
+        try:
+            new_player = Player(
+                name = player_name,
+                game_id = game_id,
+                game_state_id = game_status_id,
+                host = False, 
+                winner = False
+            )
+
+            db.add(new_player)
+            db.flush()
+            player_id = new_player.id
             
+            db.commit()
+        
+        finally:
+            db.close()
+            
+        return player_id
