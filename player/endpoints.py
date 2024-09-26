@@ -19,7 +19,7 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 
 
 # Abandonar juego
-@player_router.post("/players/leave")
+@player_router.post("/players/{player_id}/leave")
 async def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
     repo.leave_game(game_id, player_id, db)
 
