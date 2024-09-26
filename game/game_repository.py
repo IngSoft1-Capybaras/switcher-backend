@@ -54,7 +54,8 @@ class GameRepository:
             game_id=game_instance.id,
             game_state_id=game_status_instance.id,
             turn=player.turn or turnEnum.PRIMERO,  # Use provided turn or default to PRIMERO
-            host=player.host
+            host=player.host,
+            winner = False
         )
         db.add(player_instance)
         db.commit()
