@@ -47,7 +47,8 @@ class PlayerRepository:
 
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
-            game_status_id = db.query(GameState).filter(GameState.game_id == game_id).first()  
+            game_status = db.query(GameState).filter(GameState.game_id == game_id).first()  
+            game_status_id = game_status.id
         except NoResultFound:
             raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail="No game status for game")
         

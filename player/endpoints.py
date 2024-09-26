@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from database.db import get_db
 from .player_repository import PlayerRepository
+from .schemas import PlayerJoinRequest
 from connection_manager import manager
 
 player_router = APIRouter()
@@ -18,8 +19,8 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
     return repo.get_player_by_id(game_id, player_id, db)
 
 @player_router.post("/players/join/{game_id}", status_code= status.HTTP_201_CREATED)
-async def join_game(game_id: int, player_name: str, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
-    player_id = repo.create_player(game_id, player_name, db)
+async def join_game(game_id: int, player: PlayerJoinRequest, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
+    player_id = repo.create_player(game_id, player.player_name, db)
     
     player_list_update = {
             f"{game_id}": "GAME_INFO_UPDATED"
