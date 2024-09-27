@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from figureCards.endpoints import figure_cards_router
 from figureCards.figure_cards_repository import FigureCardsRepository
 from figureCards.schemas import FigureCardSchema
 from figureCards.models import typeEnum, DifficultyEnum
