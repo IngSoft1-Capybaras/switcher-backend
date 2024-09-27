@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 from movementCards.schemas import MovementCardSchema
 from figureCards.schemas import FigureCardSchema
@@ -21,8 +21,7 @@ class PlayerInDB(BaseModel):
     game_state_id: int
     host: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes = True)
 
 
 class PlayerCreateMatch(BaseModel):

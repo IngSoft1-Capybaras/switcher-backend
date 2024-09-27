@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 # Schema de partida
 class GameInDB(BaseModel):
@@ -9,8 +9,8 @@ class GameInDB(BaseModel):
     minPlayers: int
     # private: bool
     # password: str | None = None
-    class Config:
-        from_attributes = True
+    
+    model_config = ConfigDict(from_attributes = True)
 
 class GameCreate(BaseModel):
     name: str

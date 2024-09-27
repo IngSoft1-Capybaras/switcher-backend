@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 #class type
 class typeEnum(str, Enum):
@@ -19,8 +19,7 @@ class MovementCardSchema(BaseModel):
     player_id: int
     game_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes = True)
 
 class MovementCardOut(BaseModel):
     type : typeEnum
@@ -28,5 +27,4 @@ class MovementCardOut(BaseModel):
     used: bool
     player_id: int
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes = True)

@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from game.models import Game
 from gameState.models import GameState, StateEnum
 
@@ -12,8 +12,7 @@ class GameStateInDB(BaseModel):
     current_player: Optional[int]
     #mazo movimiento falta
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes = True)
 
 class GameStateCreate(BaseModel):
     state        : StateEnum
