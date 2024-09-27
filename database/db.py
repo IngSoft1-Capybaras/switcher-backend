@@ -19,10 +19,16 @@ def init_db():
     import movementCards.models
     Base.metadata.create_all(engine)
     
-def get_db():
-    db= SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_db(session=None):
+    if session:
+        try:
+            yield session
+        finally:
+            pass
+    else:
+        db= SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
         
