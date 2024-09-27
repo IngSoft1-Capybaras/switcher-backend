@@ -18,7 +18,7 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
         # Conveert games to a list of shemas
-        games_list = [GameInDB.model_validate(game) for game in games]
+        games_list = [{'id':game.id, 'playersCount': game.players_count(), 'maxPlayers': game.maxPlayers, 'minPlayers': game.minPlayers, 'name': game.name, 'isPrivate': game.isPrivate } for game in games]
         
         return games_list
     
