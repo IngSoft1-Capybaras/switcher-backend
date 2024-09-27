@@ -36,7 +36,7 @@ async def join_game(game_id: int, player_name: PlayerJoinRequest, db: Session = 
     game = game_repo.get_game_by_id(game_id, db)
     players_in_game = game_repo.count_players_in_game(game_id, db)
     
-    if game.maxPlayers == players_in_game:
+    if game.max_players == players_in_game:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The game is full.")
     
     player_id = repo.create_player(game_id, player_name.player_name, db)
