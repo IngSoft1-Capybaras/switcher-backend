@@ -18,7 +18,7 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
         # Conveert games to a list of shemas
-        games_list = [GameInDB.model_validate(game) for game in games]
+        games_list = [{'id':game.id, 'playersCount': game.players_count(), 'maxPlayers': game.maxPlayers, 'minPlayers': game.minPlayers, 'name': game.name, 'isPrivate': game.isPrivate } for game in games]
         
         return games_list
     
@@ -54,7 +54,8 @@ class GameRepository:
             game_id=game_instance.id,
             game_state_id=game_status_instance.id,
             turn=player.turn or turnEnum.PRIMERO,  # Use provided turn or default to PRIMERO
-            host=player.host
+            host=player.host,
+            winner = False
         )
         db.add(player_instance)
         db.commit()
@@ -65,3 +66,24 @@ class GameRepository:
             "player": PlayerInDB.model_validate(player_instance),
             "gameState": GameStateInDB.model_validate(game_status_instance)
         }
+
+
+    def get_game_winner(self, game_id: int, db: Session) -> PlayerInDB:
+        try:
+            game = db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code = 404, detail = "Game not found")
+
+        if game.game_state != StateEnum.FINISHED:
+            raise HTTPException(status_code = 404, detail = "The game is not finished")
+        
+        players = game.players
+
+        # busco el ganador, agarro el primero que encuentre (no deberia haber mas de uno, winner tiene constraint unique)
+        winner = next((player for player in players if player.winner), None)
+
+        if not winner:
+            raise HTTPException(status_code=404, detail="There is no winner")
+        
+        return winner
+

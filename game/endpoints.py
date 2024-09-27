@@ -6,10 +6,11 @@ from .models import Game
 from .schemas import GameCreate, GameInDB
 from player.models import Player, turnEnum
 from player.schemas import PlayerCreateMatch, PlayerInDB
+from player.player_repository import PlayerRepository
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository
-
+from connection_manager import manager
 
 game_router = APIRouter(
     tags=['Game']
@@ -22,7 +23,13 @@ async def create_game(game: GameCreate,
                       db: Session = Depends(get_db), 
                       repo: GameRepository = Depends()):
     
-    return repo.create_game(game, player, db)
+        res = repo.create_game(game, player, db)
+        games_list_update = {
+            "type": "GAMES_LIST_UPDATE"
+        }
+        await manager.broadcast(games_list_update)
+
+        return res
     
 
 # Obtener todas las partidas
@@ -41,3 +48,9 @@ async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, 
 @game_router.get("/games/{game_id}")
 async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
     return repo.get_game_by_id(game_id, db)
+
+
+# Obtener ganador
+@game_router.get("/games/{game_id}/winner")
+async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
+    return repo.get_game_winner(game_id, db)

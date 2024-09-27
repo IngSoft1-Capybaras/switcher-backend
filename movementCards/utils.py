@@ -7,14 +7,15 @@ from game.models import Game
 from game.game_repository import GameRepository
 from .movement_cards_repository import MovementCardsRepository
 from database.db import get_db
-
+from player.player_repository import PlayerRepository
 #VER TEST
 class MovementCardUtils:
     
     def __init__(
-        self, mov_card_repo: MovementCardsRepository
+        self, mov_card_repo: MovementCardsRepository, player_repo: PlayerRepository
     ):
         self.mov_card_repo = mov_card_repo
+        self.player_repo = player_repo
         
     def create_mov_deck(self, game_id: int, db: Session = Depends(get_db),):
         
@@ -34,7 +35,21 @@ class MovementCardUtils:
         for type in types_list:
             self.mov_card_repo.create_movement_card(game_id, type, db)
         
-        return {"message": "Movement deck created"}
+        # asigno 3 a cada jugador
+        players = self.player_repo.get_players_in_game(game_id,db)
+
+        for player in players:
+            # obtengo las cartas del juego que quedan en el deck (las que no fueron asignadas a un player aun)
+            movDeck = self.mov_card_repo.get_movement_deck(game_id, db)
+            # tomo 3 random
+            asigned_mov_cards = random.sample(movDeck, 3)
+            # las asigno
+            for asigned_mov_card in asigned_mov_cards:
+                print(f"Assigning card {asigned_mov_card.id} to player {player.id}")
+                self.mov_card_repo.assign_mov_card(asigned_mov_card.id, player.id, db);
+
+
+        return {"message": "Movement deck created and assigned to players"}
     
     
     

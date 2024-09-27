@@ -14,6 +14,7 @@ from movementCards.movement_cards_repository import MovementCardsRepository
 from figureCards.figure_cards_repository import FigureCardsRepository
 
 from player.utils import PlayerUtils
+from player.player_repository import PlayerRepository
 from movementCards.utils import MovementCardUtils
 from figureCards.utils import FigureCardUtils
 
@@ -30,7 +31,7 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     game_state_repo =  GameStateRepository()
     player_utils = PlayerUtils(player_repo)
     board_repo = BoardRepository()
-    mov_cards_utils = MovementCardUtils(MovementCardsRepository())
+    mov_cards_utils = MovementCardUtils(MovementCardsRepository(), PlayerRepository())
     fig_cards_utils = FigureCardUtils(FigureCardsRepository(), player_repo)
     
     #Verificar que existan jugadores en la partida
@@ -42,7 +43,7 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     #Crear tablero
     board_creation_result = board_repo.configure_board(game_id, db)
     
-    #Crear Mazo Movimientos
+    #Crear Mazo Movimientos y asignar 3 a cada jugador
     mov_deck_creation = mov_cards_utils.create_mov_deck(game_id, db)
 
     

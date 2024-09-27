@@ -14,6 +14,9 @@ from player.endpoints import player_router
 
 init_db()
 
+#Connection Manager
+from connection_manager import manager
+
 app = FastAPI()
 
 # Permitir conexiones externas
@@ -38,3 +41,17 @@ app.include_router(player_router)
 @app.get("/")
 async def root():
     return {"message": "El Switcher"}
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            await manager.broadcast(data)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+
+
+

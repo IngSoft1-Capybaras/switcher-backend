@@ -20,7 +20,8 @@ class PlayerInDB(BaseModel):
     game_id: int
     game_state_id: int
     host: bool
-
+    winner: bool
+    
     model_config = ConfigDict(from_attributes = True)
 
 
