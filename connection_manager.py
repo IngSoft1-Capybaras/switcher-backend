@@ -21,8 +21,5 @@ class ConnectionManager:
         for connection in self.active_connections:
             await connection.send_json(message)
             
-    async def broadcast_game(self, game_id: int, message: dict):
-        for connection in self.game_connections[game_id]:
-            await connection.send_json(message)
 
 manager = ConnectionManager()
