@@ -47,7 +47,7 @@ class FigureCardUtils:
             random.shuffle(combined_deck)
             show=True
             for index, figure in enumerate(combined_deck):
-                if index==4:
+                if index==3:
                     show=False
                 print(show)
                 self.fig_card_repo.create_figure_card(player.id, game_id, figure, db, show)
