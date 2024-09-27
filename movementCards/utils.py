@@ -43,9 +43,9 @@ class MovementCardUtils:
             movDeck = self.mov_card_repo.get_movement_deck(game_id, db)
             # tomo 3 random
             asigned_mov_cards = random.sample(movDeck, 3)
-            print(asigned_mov_cards)
             # las asigno
             for asigned_mov_card in asigned_mov_cards:
+                print(f"Assigning card {asigned_mov_card.id} to player {player.id}")
                 self.mov_card_repo.assign_mov_card(asigned_mov_card.id, player.id, db);
 
 

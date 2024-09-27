@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException
 from sqlalchemy.exc import NoResultFound
 from .models import MovementCard
 from .schemas import MovementCardSchema, typeEnum
+from player.models import Player
 
 class MovementCardsRepository:
 
@@ -69,7 +70,12 @@ class MovementCardsRepository:
         if not mov_card:
             raise HTTPException(status_code=400, detail="There no movement cards associated with this game")
 
-        mov_card.player_id = player_id
+        player = db.query(Player).filter(Player.id == player_id).first()
+
+        if not mov_card:
+            raise HTTPException(status_code=400, detail="no player with specified id")
+        
+        mov_card.player = player
         db.commit()
 
         return mov_card;
