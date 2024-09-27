@@ -7,7 +7,7 @@ from player.models import Player, turnEnum
 from game.models import Game
 from gameState.models import GameState, StateEnum
 
-from .game_state_repo import GameStateRepository
+from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
 from board.board_repository import BoardRepository
 from movementCards.movement_cards_repository import MovementCardsRepository

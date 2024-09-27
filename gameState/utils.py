@@ -3,7 +3,7 @@ from game.models import Game
 from game.game_repository import GameRepository
 from sqlalchemy.orm import Session
 from .models import GameState, StateEnum
-from .game_state_repo import GameStateRepository
+from .game_state_repository import GameStateRepository
 from fastapi import HTTPException, status
 
 class GameStateUtils:
