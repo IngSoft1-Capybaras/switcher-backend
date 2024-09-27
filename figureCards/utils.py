@@ -45,8 +45,12 @@ class FigureCardUtils:
             #armo el mazo para el jugador
             combined_deck = selected_hard_cards + selected_easy_cards
             random.shuffle(combined_deck)
-            for figure in combined_deck:
-                self.fig_card_repo.create_figure_card(player.id, game_id, figure, db)
+            show=True
+            for index, figure in enumerate(combined_deck):
+                if index==4:
+                    show=False
+                print(show)
+                self.fig_card_repo.create_figure_card(player.id, game_id, figure, db, show)
 
         return {"message": "Figure deck created"}
     

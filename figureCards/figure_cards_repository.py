@@ -43,12 +43,12 @@ class FigureCardsRepository:
             db.close()
         return figure_card_schema
     
-    def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, db : Session):
+    def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, db : Session,show:bool):
 
         try:
             new_card = FigureCard(
                 type=figure,
-                show=False,
+                show=show,
                 game_id= game_id,
                 player_id=player_id
             )

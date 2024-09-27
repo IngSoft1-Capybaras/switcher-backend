@@ -23,13 +23,13 @@ async def create_game(game: GameCreate,
                       db: Session = Depends(get_db), 
                       repo: GameRepository = Depends()):
     
-        repo.create_game(game, player, db)
+        res = repo.create_game(game, player, db)
         games_list_update = {
             "type": "GAMES_LIST_UPDATE"
         }
         await manager.broadcast(games_list_update)
 
-        return {"type": "GAMES_LIST_UPDATE"}
+        return res
     
 
 # Obtener todas las partidas
