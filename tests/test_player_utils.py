@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from .utils import PlayerUtils
-from .models import turnEnum
+from player.utils import PlayerUtils
+from player.models import turnEnum
 
 
 @pytest.fixture

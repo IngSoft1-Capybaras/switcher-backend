@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from .utils import FigureCardUtils
-from .models import typeEnum
+from figureCards.utils import FigureCardUtils
+from figureCards.models import typeEnum
 from player.utils import PlayerUtils
 
 @pytest.fixture

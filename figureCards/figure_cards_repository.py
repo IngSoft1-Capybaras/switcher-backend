@@ -7,22 +7,19 @@ from .schemas import FigureCardSchema
 
 class FigureCardsRepository:
 
-    def get_figure_cards(self, game_id: int, player_id: int, db : Session) -> dict:
+    def get_figure_cards(self, game_id: int, player_id: int, db : Session) -> list:
         
-        try:
-            # Fetch figure cards associated with the player and game
-            figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id,
-                                                       FigureCard.player.has(game_id=game_id)).all()
+        # Fetch figure cards associated with the player and game
+        figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id,
+                                                    FigureCard.player.has(game_id=game_id)).all()
 
-            if not figure_cards:
-                raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
+        if not figure_cards:
+            raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
 
-            # Convert figure cards to a list of dictionaries using SQLAlchemy’s ORM
-            # figure_cards_list = [card.__dict__ for card in figure_cards]
-            figure_cards_list = [FigureCardSchema.from_orm(card) for card in figure_cards]
+        # Convert figure cards to a list of dictionaries using SQLAlchemy’s ORM
+        # figure_cards_list = [card.__dict__ for card in figure_cards]
+        figure_cards_list = [FigureCardSchema.from_orm(card) for card in figure_cards]
 
-        finally:
-            db.close()
         return figure_cards_list
     
     def get_figure_card_by_id(self, game_id: int, player_id: int, card_id: int, db : Session) -> FigureCardSchema:

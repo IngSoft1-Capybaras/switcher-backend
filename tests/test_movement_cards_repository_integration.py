@@ -2,9 +2,9 @@ import pytest
 from unittest.mock import MagicMock
 from fastapi import HTTPException
 from sqlalchemy.orm.exc import NoResultFound
-from .movement_cards_repository import MovementCardsRepository
-from .models import MovementCard
-from .schemas import MovementCardSchema
+from movementCards.movement_cards_repository import MovementCardsRepository
+from movementCards.models import MovementCard
+from movementCards.schemas import MovementCardSchema
 
 # Mock database 
 @pytest.fixture
@@ -16,7 +16,6 @@ def movement_cards_repository():
     return MovementCardsRepository()
 
 
-@pytest.mark.integration_test
 def test_get_movement_cards_success(mock_db, movement_cards_repository):
 
     mock_movement_cards = [
@@ -32,7 +31,6 @@ def test_get_movement_cards_success(mock_db, movement_cards_repository):
     mock_db.query().filter().filter().all.assert_called_once()
 
 
-@pytest.mark.integration_test
 def test_get_movement_cards_not_found(mock_db, movement_cards_repository):
     mock_db.query().filter().filter().all.return_value = []
 
@@ -43,7 +41,7 @@ def test_get_movement_cards_not_found(mock_db, movement_cards_repository):
     assert exc_info.value.detail == "There no movement cards associated with this game and player"
 
 
-@pytest.mark.integration_test
+
 def test_get_movement_card_by_id_success(mock_db, movement_cards_repository):
     mock_movement_card = MovementCard(id=1, player_id=1)
     mock_db.query().filter().filter().one.return_value = mock_movement_card
@@ -54,7 +52,7 @@ def test_get_movement_card_by_id_success(mock_db, movement_cards_repository):
     assert result == expected_result
     mock_db.query().filter().filter().one.assert_called_once()
 
-@pytest.mark.integration_test
+
 def test_get_movement_card_by_id_not_found(mock_db, movement_cards_repository):
     mock_db.query().filter().filter().one.side_effect = NoResultFound
 

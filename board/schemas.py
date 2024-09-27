@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class ColorEnum(str, Enum):
     RED = "RED"
@@ -19,11 +19,11 @@ class BoxOut(BaseModel):
     color: ColorEnum
     pos_x: int
     pos_y: int
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes = True)
     
 class BoardOut(BaseModel):
     game_id: int
     id: int
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes = True)

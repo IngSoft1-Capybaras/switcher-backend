@@ -20,7 +20,6 @@ class GameStateRepository:
             )
             game_state_instance.state = state
             db.commit()
-        
         finally:
             db.close()
     
@@ -56,17 +55,18 @@ class GameStateRepository:
         return GameStateInDB.model_validate(game_state_in_db)
 
 
-    def get_next_player_id(self, game_id: int, db : Session) -> int:
+    def get_next_player_id(self, game_id: int, game_state_id: int, db : Session) -> int:
         
         try:
-            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
+            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id,
+                                                             GameState.id == game_state_id).first()
             
             if not game_state_instance:
                 raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Game State not found"
                 )
-            current_player_id = game_state_instance.currentPlayer
+            current_player_id = game_state_instance.current_player
             
             players = db.query(Player).filter(Player.game_id == game_id).all()
         

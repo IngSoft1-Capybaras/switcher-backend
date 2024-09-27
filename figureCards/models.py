@@ -8,7 +8,7 @@ class DifficultyEnum(str,Enum):
     EASY = "EASY"
     HARD = "HARD"
 
-class typeEnum(str,Enum):
+class typeEnum(str, Enum):
     TYPE_1 = "TYPE_1"
     TYPE_2 = "TYPE_2"
     TYPE_3 = "TYPE_3"

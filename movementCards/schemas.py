@@ -1,5 +1,5 @@
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 #class type
@@ -13,16 +13,15 @@ class typeEnum(str, Enum):
     LINEAL_AL_LAT = "LINEAL_AL_LAT"
     
 class MovementCardSchema(BaseModel):
+    id: int
     type : typeEnum
     id: int
     description: str
     used: bool
     player_id: Optional[int]  # Allowing player_id to be None
     game_id: int
-    
-    class Config:
-        orm_mode = True  # Needed to work with from_orm
-        from_attributes = True
+
+    model_config = ConfigDict(from_attributes = True)
 
 class MovementCardOut(BaseModel):
     type : typeEnum
@@ -30,6 +29,4 @@ class MovementCardOut(BaseModel):
     used: bool
     player_id: Optional[int]  # Allowing player_id to be None
     
-    class Config:
-        orm_mode = True  # Needed to work with from_orm
-        from_attributes = True
+    model_config = ConfigDict(from_attributes = True)

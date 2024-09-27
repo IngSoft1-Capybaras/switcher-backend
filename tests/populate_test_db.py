@@ -1,55 +1,67 @@
 import random
-
-from database.db import SessionLocal, engine
-
+from database.db import SessionLocal, engine, init_db
+from sqlalchemy.orm import sessionmaker, Session
 from board.models import Box, Board, ColorEnum
-from figureCards.models import FigureCard, DifficultyEnum
+from figureCards.models import FigureCard, DifficultyEnum, typeEnum as figTypeEnum
 from game.models import Game
 from gameState.models import GameState, StateEnum
-from movementCards.models import MovementCard
+from movementCards.models import MovementCard, typeEnum as movTypeEnum
 from player.models import Player, turnEnum
 
 
-def create_game(name, min_players, max_players):
-    game = Game(name=name, minPlayers=min_players, maxPlayers=max_players)
+
+def create_game(name, min_players, max_players, session):
+    game = Game(name=name, min_players=min_players, max_players=max_players)
     session.add(game)
-    session.flush()
+    # session.flush()
+    session.commit()
     return game
 
-def create_game_state(game, state):
+def create_game_state(game, state, session):
     game_state = GameState(state=state, game_id=game.id)
     session.add(game_state)
-    session.flush()
+    # session.flush()
+    session.commit()
     return game_state
 
-def create_player(name, game, game_state, turn, host):
+def create_player(name, game, game_state, turn, host, session):
     player = Player(name=name, game_id=game.id, game_state_id=game_state.id, turn=turn, host=host)
     session.add(player)
-    session.flush()
+    # session.flush()
+    session.commit()
+
     return player
 
-def create_board(game):
-    board = Board(id_game=game.id)
+def create_board(game, session):
+    board = Board(game_id=game.id)
     session.add(board)
-    session.flush()
+    # session.flush()
+    session.commit()
+
     return board
 
-def create_box(color, pos_x, pos_y, game, board):
-    box = Box(color=color, posX=pos_x, posY=pos_y, idGame=game.id, idBoard=board.id)
+def create_box(color, pos_x, pos_y, game, board, session):
+    box = Box(color=color, pos_x=pos_x, pos_y=pos_y, game_id=game.id, board_id=board.id)
     session.add(box)
-    session.flush()
+    # session.flush()
+    session.commit()
+
     return box
 
-def create_movement_card(description, used, player):
-    card = MovementCard(description=description, used=used, idPlayer=player.id)
+def create_movement_card(description, used, player, game, type, session):
+    card = MovementCard(description=description, used=used, player_id=player.id, game_id=game.id, type=type)
     session.add(card)
-    session.flush()
+    # session.flush()
+    session.commit()
+
     return card
 
-def create_figure_card(show, difficulty, player, game):
-    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, game_id=game.id)
+def create_figure_card(show, difficulty, player, type, game, session):
+    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, type=type, game_id=game.id)
     session.add(card)
-    session.flush()
+    # session.flush()
+    session.commit()
+
     return card
 
 # Populate the database with sample data
@@ -57,14 +69,14 @@ def populate_database():
     session = SessionLocal()
     try:
         # Create a game
-        game = create_game("Test Game", 2, 4)
+        game = create_game("Test Game", 2, 4, session)
 
         # Create game state
-        game_state = create_game_state(game, StateEnum.PLAYING)
+        game_state = create_game_state(game, StateEnum.PLAYING, session)
 
         # Create players
         players = [
-            create_player(f"Player {i}", game, game_state, turn, i == 0)
+            create_player(f"Player {i}", game, game_state, turn, i == 0, session)
             for i, turn in enumerate([turnEnum.PRIMERO, turnEnum.SEGUNDO, turnEnum.TERCERO, turnEnum.CUARTO])
         ]
 
@@ -72,24 +84,24 @@ def populate_database():
         game_state.current_player = players[0].id
 
         # Create board
-        board = create_board(game)
+        board = create_board(game, session)
 
         # Create boxes
         colors = list(ColorEnum)
         for x in range(6):
             for y in range(6):
-                create_box(random.choice(colors), x, y, game, board)
+                create_box(random.choice(colors), x, y, game, board, session)
 
         # Create movement cards
-        movements = ["DER_ESP", "IZQ_ESP", "EN_L_ESP", "DIAG"]
+        movements = ["Descripcion 1", "Descripcion 2", "Descripcion 3", "Descripcion 4"]
         for player in players:
             for _ in range(3):
-                create_movement_card(random.choice(movements), False, player)
+                create_movement_card(random.choice(movements), False, player, game, random.choice(list(movTypeEnum)), session)
 
         # Create figure cards
         for player in players:
-            for _ in range(2):
-                create_figure_card(False, random.choice(list(DifficultyEnum)), player, game)
+            for _ in range(3):
+                create_figure_card(False, random.choice(list(DifficultyEnum)), player, random.choice(list(figTypeEnum)), game, session)
 
         # Commit the session
         session.commit()
@@ -98,5 +110,7 @@ def populate_database():
         session.rollback()
         
 if __name__ == "__main__":
+    init_db()
+    Session = sessionmaker(bind=engine)
     populate_database()
     print("Database populated with test data.")

@@ -9,9 +9,9 @@ class Game(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-    maxPlayers = Column(Integer, nullable=False)
-    minPlayers = Column(Integer, nullable=False)
-    isPrivate = Column(Boolean, default=False)  # New attribute
+    max_players = Column(Integer, nullable=False)
+    min_players = Column(Integer, nullable=False)
+    is_private = Column(Boolean, default=False)  # New attribute
     password = Column(String, nullable=True)
 
     game_state = relationship("GameState", back_populates="game", uselist=False)
