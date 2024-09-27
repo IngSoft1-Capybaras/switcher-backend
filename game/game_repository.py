@@ -18,7 +18,7 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
         # Conveert games to a list of shemas
-        games_list = [GameInDB.model_validate(game) for game in games]
+        games_list = [{'id':game.id, 'playersCount': game.players_count(), 'maxPlayers': game.maxPlayers, 'minPlayers': game.minPlayers, 'name': game.name, 'isPrivate': game.isPrivate } for game in games]
         
         return games_list
     
@@ -55,7 +55,7 @@ class GameRepository:
             game_state_id=game_status_instance.id,
             turn=player.turn or turnEnum.PRIMERO,  # Use provided turn or default to PRIMERO
             host=player.host,
-            winner=False
+            winner = False
         )
         db.add(player_instance)
         db.commit()
