@@ -13,8 +13,8 @@ def game_a():
     return {
         "id": 1,
         "name": "test_game_a",
-        "maxPlayers": 4,
-        "minPlayers": 2
+        "max_players": 4,
+        "min_players": 2
     } 
 
 @pytest.fixture
@@ -22,8 +22,8 @@ def game_b():
     return {
         "id": 2,
         "name": "test_game_b",
-        "maxPlayers": 4,
-        "minPlayers": 2
+        "max_players": 4,
+        "min_players": 2
     } 
 
 @pytest.fixture
