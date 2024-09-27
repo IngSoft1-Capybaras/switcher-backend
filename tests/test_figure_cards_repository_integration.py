@@ -1,65 +1,73 @@
 import pytest
-from unittest.mock import MagicMock
-from fastapi import HTTPException
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import NoResultFound
 from figureCards.figure_cards_repository import FigureCardsRepository
-from figureCards.models import FigureCard
-from figureCards.schemas import FigureCardSchema
+from board.models import  Board, Box
+from figureCards.models import FigureCard, typeEnum
+from game.models import Game
+from gameState.models import GameState
+from movementCards.models import MovementCard
+from player.models import Player
 
-# Mock database 
-@pytest.fixture
-def mock_db():
-    return MagicMock()
+
+from database.db import engine
+
+#Configuración de la sesión
+Session = sessionmaker(bind=engine)
+
 
 @pytest.fixture
 def figure_cards_repository():
     return FigureCardsRepository()
 
 
+@pytest.mark.integration_test
+def test_get_figure_cards(figure_cards_repository: FigureCardsRepository, session):
+    # session = Session()
+    # try:
+    N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1, 
+                                                FigureCard.player_id == 1).count()
+    
+    list_of_cards = figure_cards_repository.get_figure_cards(1, 1, session)
+    
+    assert len(list_of_cards) == N_cards
 
-def test_get_figure_cards_success(mock_db, figure_cards_repository):
-
-    mock_figure_cards = [
-        FigureCard(id=1, player_id=1),
-        FigureCard(id=2, player_id=1),
-    ]
-    mock_db.query().filter().filter().all.return_value = mock_figure_cards
-    expected_result = [FigureCardSchema.from_orm(card) for card in mock_figure_cards]
-
-    result = figure_cards_repository.get_figure_cards(game_id=1, player_id=1, db=mock_db)
-
-    assert result == expected_result
-    mock_db.query().filter().filter().all.assert_called_once()
-
+    # finally:
+    #     session.close()
 
 
-def test_get_figure_cards_not_found(mock_db, figure_cards_repository):
-    mock_db.query().filter().filter().all.return_value = []
+@pytest.mark.integration_test
+def test_get_figure_card_by_id(figure_cards_repository: FigureCardsRepository, session):
+    # session = Session()
+    try:
+        # busco la cantidad de cartas con todos id 1
+        test_card = session.query(FigureCard).filter(FigureCard.game_id == 1,
+                                                  FigureCard.player_id == 1,
+                                                  FigureCard.id == 1).one()
+        
+        figure_card = figure_cards_repository.get_figure_card_by_id(1, 1, 1, session)
 
-    with pytest.raises(HTTPException) as exc_info:
-        figure_cards_repository.get_figure_cards(game_id=1, player_id=1, db=mock_db)
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "There no figure cards associated with this game and player"
-
-
-
-def test_get_figure_card_by_id_success(mock_db, figure_cards_repository):
-    mock_figure_card = FigureCard(id=1, player_id=1)
-    mock_db.query().filter().filter().one.return_value = mock_figure_card
-    expected_result = FigureCardSchema.from_orm(mock_figure_card)
-
-    result = figure_cards_repository.get_figure_card_by_id(game_id=1, player_id=1, card_id=1, db=mock_db)
-
-    assert result == expected_result
-    mock_db.query().filter().filter().one.assert_called_once()
+        assert test_card.id == figure_card.id
+    except NoResultFound:
+        raise ValueError("There is no figure card with game_id=1, player_id=1 and id=1")
+    # finally:
+    #     session.close()
 
 
-def test_get_figure_card_by_id_not_found(mock_db, figure_cards_repository):
-    mock_db.query().filter().filter().one.side_effect = NoResultFound
-
-    with pytest.raises(HTTPException) as exc_info:
-        figure_cards_repository.get_figure_card_by_id(game_id=1, player_id=1, card_id=1, db=mock_db)
-
-    assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Figure card not found"
+@pytest.mark.integration_test
+def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, session):
+    # session = Session()
+    # try:
+    N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1,
+                                               FigureCard.player_id == 1).count()
+    # finally:
+    #     session.close()
+    
+    figure_cards_repository.create_figure_card(1, 1, typeEnum.TYPE_4, session)
+    
+    # session = Session()
+    
+    # try:
+    assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
+    # finally:
+    #     session.close()
