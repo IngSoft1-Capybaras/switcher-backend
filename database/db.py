@@ -4,7 +4,7 @@ from settings import DATABASE_FILENAME
 
 # Crear una engine sqlalchemy
 
-engine = create_engine(f'sqlite:///{DATABASE_FILENAME}', echo=True)
+engine = create_engine(f'sqlite:///./{DATABASE_FILENAME}', echo=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
