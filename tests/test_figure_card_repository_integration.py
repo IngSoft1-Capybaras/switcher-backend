@@ -14,10 +14,24 @@ from database.db import engine
 Session = sessionmaker(bind=engine)
 
 
-
 @pytest.fixture
 def figure_cards_repository():
     return FigureCardsRepository()
+
+
+@pytest.mark.integration_test
+def test_get_figure_cards(figure_cards_repository: FigureCardsRepository):
+    session = Session()
+    try:
+        N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1, 
+                                                   FigureCard.player_id == 1).count()
+        print(N_cards)
+        list_of_cards = figure_cards_repository.get_figure_cards(1, 1, session)
+        
+        assert len(list_of_cards) == N_cards
+
+    finally:
+        session.close()
 
 @pytest.mark.integration_test
 def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository):
@@ -28,7 +42,7 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository):
     finally:
         session.close()
     
-    figure_cards_repository.create_figure_card(17,1,typeEnum.TYPE_4, session)
+    figure_cards_repository.create_figure_card(17,1, typeEnum.TYPE_4, session)
     
     session = Session()
     
