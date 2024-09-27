@@ -16,11 +16,11 @@ from database.db import engine
 Session = sessionmaker(bind=engine)
 
 @pytest.fixture
-def movement_card_repository():
+def movement_cards_repository():
     return MovementCardsRepository()
 
 
-# @pytest.mark.integration_test
+@pytest.mark.integration_test
 def test_get_movement_cards(movement_cards_repository: MovementCardsRepository, session):
     # session = Session()
     # try:
@@ -35,7 +35,7 @@ def test_get_movement_cards(movement_cards_repository: MovementCardsRepository, 
     #     session.close()
 
 
-# @pytest.mark.integration_test
+@pytest.mark.integration_test
 def test_get_movement_card_by_id(movement_cards_repository: MovementCardsRepository, session):
     # session = Session()
     try:
@@ -53,18 +53,17 @@ def test_get_movement_card_by_id(movement_cards_repository: MovementCardsReposit
     #     session.close()
 
 
-# @pytest.mark.integration_test
-def test_create_new_movement_card(movement_card_repository: MovementCardsRepository, session):
+@pytest.mark.integration_test
+def test_create_new_movement_card(movement_cards_repository: MovementCardsRepository, session):
     # session = Session()
     
     # try:
-    N_cards = session.query(MovementCard).filter(MovementCard.game_id == 1, 
-                                                     MovementCard.player_id == 17).count()
+    N_cards = session.query(MovementCard).filter(MovementCard.game_id == 1).count()
     # finally:
     #     session.close()
     
-    movement_card_repository.create_movement_card(17, 1, typeEnum.EN_L_DER, session)
-    session = Session()
+    movement_cards_repository.create_movement_card(1, typeEnum.EN_L_DER, session)
+    # session = Session()
     
     # try:
     assert session.query(MovementCard).filter(MovementCard.game_id == 1).count() == N_cards + 1
