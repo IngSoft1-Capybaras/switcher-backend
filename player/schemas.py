@@ -30,3 +30,6 @@ class PlayerCreateMatch(BaseModel):
     name: str
     host: Optional[bool] = True
     turn: Optional[turnEnum] = None
+
+class PlayerJoinRequest(BaseModel):
+    player_name : str
