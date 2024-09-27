@@ -9,17 +9,11 @@ class Game(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String, nullable=False)
-<<<<<<< HEAD
     max_players = Column(Integer, nullable=False)
     min_players = Column(Integer, nullable=False)
-    
-=======
-    maxPlayers = Column(Integer, nullable=False)
-    minPlayers = Column(Integer, nullable=False)
-    isPrivate = Column(Boolean, default=False)  # New attribute
+    is_private = Column(Boolean, default=False)  # New attribute
     password = Column(String, nullable=True)
 
->>>>>>> dev
     game_state = relationship("GameState", back_populates="game", uselist=False)
     players = relationship("Player", back_populates="game")
     boxes = relationship("Box", back_populates="game")
