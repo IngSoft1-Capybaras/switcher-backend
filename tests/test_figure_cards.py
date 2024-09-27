@@ -10,7 +10,7 @@ from figureCards.models import typeEnum, DifficultyEnum
 from database.db import get_db
 from main import app
 
-app.include_router(figure_cards_router)
+# app.include_router(figure_cards_router)
 
 client = TestClient(app)
 

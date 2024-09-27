@@ -1,36 +1,41 @@
 import pytest
+from sqlalchemy.orm import Session
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException, Depends
 from movementCards.schemas import MovementCardSchema, typeEnum
 from main import app
 from movementCards.movement_cards_repository import MovementCardsRepository
+from database.db import get_db
 
 
 client = TestClient(app)
 
+
 # Mock DB session
 @pytest.fixture
 def mock_db():
-    return MagicMock()
+    return MagicMock(spec=Session)
+
 
 # Mock repository
 @pytest.fixture
 def mock_repo():
     return MagicMock(spec=MovementCardsRepository)
 
-# Dependency override function
-def override_movement_cards_repo():
-    return mock_repo()
 
 # Apply the override before running the tests
 @pytest.fixture(autouse=True)
-def setup_dependency_override(mock_repo):
+def setup_dependency_override(mock_repo, mock_db):
+    def override_get_db():
+        return mock_db
+    
+    app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[MovementCardsRepository] = lambda: mock_repo
     yield
     app.dependency_overrides = {}  # Clean up overrides after test
 
-@patch('movementCards.movement_cards_repository.MovementCardsRepository')
+
 def test_get_movement_cards_success(mock_repo, mock_db):
     mock_movement_cards = [
         MovementCardSchema(id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=1, game_id=1), 
@@ -45,7 +50,6 @@ def test_get_movement_cards_success(mock_repo, mock_db):
     mock_repo.get_movement_cards.assert_called_once_with(1, 1, mock_db)
 
 
-@patch('movementCards.movement_cards_repository.MovementCardsRepository')
 def test_get_movement_cards_not_found(mock_repo, mock_db):
     mock_repo.get_movement_cards.side_effect = HTTPException(
         status_code=404, 
@@ -59,7 +63,6 @@ def test_get_movement_cards_not_found(mock_repo, mock_db):
     mock_repo.get_movement_cards.assert_called_once_with(1, 1, mock_db)
 
 
-@patch('movementCards.movement_cards_repository.MovementCardsRepository')
 def test_get_movement_card_by_id_success(mock_repo, mock_db):
     mock_movement_card = MovementCardSchema(
         id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=1, game_id=1
@@ -73,7 +76,6 @@ def test_get_movement_card_by_id_success(mock_repo, mock_db):
     mock_repo.get_movement_card_by_id.assert_called_once_with(1, 1, 1, mock_db)
 
 
-@patch('movementCards.movement_cards_repository.MovementCardsRepository')
 def test_get_movement_card_by_id_not_found(mock_repo, mock_db):
     mock_repo.get_movement_card_by_id.side_effect = HTTPException(
         status_code=404, 

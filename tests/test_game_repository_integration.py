@@ -28,8 +28,8 @@ def test_get_game_by_id(game_repository: GameRepository):
         
         game = Game(
             name = "test_game",
-            maxPlayers = 3,
-            minPlayers = 2
+            max_players = 3,
+            min_players = 2
         )
         session.add(game)
         session.commit()
