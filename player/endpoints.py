@@ -23,8 +23,8 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 
 # Abandonar juego
 @player_router.post("/players/{player_id}/leave")
-async def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
-    repo.leave_game(game_id, player_id, db)
+async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
+    await repo.leave_game(game_id, player_id, db)
 
     message = {
             "type":f"{game_id}:GAME_INFO_UPDATE"
@@ -51,7 +51,7 @@ async def join_game(game_id: int,
     game = game_repo.get_game_by_id(game_id, db)
     players_in_game = game_utils.count_players_in_game(game_id, db)
     
-    if game.max_players == players_in_game:
+    if game.get('max_players') == players_in_game:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The game is full.")
     
     res = repo.create_player(game_id, player_name.player_name, db)
