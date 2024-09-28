@@ -25,8 +25,16 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 async def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
     repo.leave_game(game_id, player_id, db)
 
-    message = {"type": "PLAYER_LIST_UPDATE"}
+    message = {
+            "type":f"{game_id}:GAME_INFO_UPDATE"
+        }
     await manager.broadcast(message)
+    
+    message = {
+            "type": "GAMES_LIST_UPDATE"
+    }
+    await manager.broadcast(message)
+
 
     return message
 
@@ -39,7 +47,7 @@ async def join_game(game_id: int, player_name: PlayerJoinRequest, db: Session = 
     if game.max_players == players_in_game:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The game is full.")
     
-    player_id = repo.create_player(game_id, player_name.player_name, db)
+    res = repo.create_player(game_id, player_name.player_name, db)
     
     player_list_update = {
             "type":f"{game_id}:GAME_INFO_UPDATE"
@@ -52,4 +60,4 @@ async def join_game(game_id: int, player_name: PlayerJoinRequest, db: Session = 
     await manager.broadcast(player_list_update)
 
         
-    return player_id
+    return res
