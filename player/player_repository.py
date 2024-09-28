@@ -22,7 +22,7 @@ class PlayerRepository:
         return PlayerInDB.model_validate(player_in_db)
 
     
-    def get_players_in_game(self, game_id: int, db : Session) -> dict:
+    def get_players_in_game(self, game_id: int, db : Session):
         try:
             game = db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound :
