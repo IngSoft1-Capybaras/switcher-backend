@@ -90,4 +90,4 @@ class PlayerRepository:
         finally:
             db.close()
             
-        return player_id
+        return {"player_id": player_id}
