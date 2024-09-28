@@ -1,11 +1,8 @@
-import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from database.db import get_db
 
-from player.models import Player, turnEnum
-from game.models import Game
-from gameState.models import GameState, StateEnum
+from gameState.models import  StateEnum
 
 from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -13,10 +10,10 @@ from board.board_repository import BoardRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
 from figureCards.figure_cards_repository import FigureCardsRepository
 
-from player.utils import PlayerUtils
+from player.utils import PlayerUtils, get_player_utils
 from player.player_repository import PlayerRepository
-from movementCards.utils import MovementCardUtils
-from figureCards.utils import FigureCardUtils
+from movementCards.utils import MovementCardUtils, get_mov_cards_utils
+from figureCards.utils import FigureCardUtils, get_fig_cards_utils
 from connection_manager import manager
 
 
@@ -27,13 +24,18 @@ game_state_router = APIRouter(
 
 
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)
-async def start_game(game_id: int, db: Session = Depends(get_db)):
-    player_repo = PlayerRepository()
-    game_state_repo =  GameStateRepository()
-    player_utils = PlayerUtils(player_repo)
-    board_repo = BoardRepository()
-    mov_cards_utils = MovementCardUtils(MovementCardsRepository(), PlayerRepository())
-    fig_cards_utils = FigureCardUtils(FigureCardsRepository(), player_repo)
+async def start_game(
+    game_id: int,
+    db: Session = Depends(get_db),
+    player_repo: PlayerRepository = Depends(),
+    game_state_repo: GameStateRepository = Depends(),
+    player_utils: PlayerUtils = Depends(get_player_utils),
+    board_repo: BoardRepository = Depends(),
+    mov_cards_utils: MovementCardUtils = Depends(get_mov_cards_utils),
+    fig_cards_utils: FigureCardUtils = Depends(get_fig_cards_utils)
+):
+        
+
     
     #Verificar que existan jugadores en la partida
     players = player_repo.get_players_in_game(game_id, db)
@@ -50,8 +52,6 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     
     #Crear Mazo Figuras para cada jugador
     fig_deck_creation = fig_cards_utils.create_fig_deck(db, game_id)
-    if "error" in fig_deck_creation:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Unable to create figure deck")
     
     # Cambiar estado de la partida
     game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
