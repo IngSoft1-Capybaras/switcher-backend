@@ -15,7 +15,8 @@ class GameRepository:
         games = db.query(Game).offset(offset).limit(limit).all()
         
         if not games:
-            raise HTTPException(status_code = 404, detail = "There are no games available")
+            return {"total_pages": 0,
+                    "games": []}
         
         # Conveert games to a list of dicts
         games_list = [{"id": game.id, "players_count": game.players_count(), 
@@ -24,10 +25,10 @@ class GameRepository:
         
         total_pages = len(games_list) // limit
 
-        # return {"total_pages": total_pages, 
-        #         "games": games_list}
+        return {"total_pages": total_pages, 
+                "games": games_list}
 
-        return games_list
+        # return games_list
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
         
         # Fetch the specifc game by its id
