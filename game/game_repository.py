@@ -18,7 +18,7 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
         # Conveert games to a list of shemas
-        games_list = [GameInDB.from_orm(game) for game in games]
+        games_list = [{"id": game.id, "players_count": game.players_count(), "max_players": game.max_players, "min_players": game.min_players, "name": game.name, "is_private": game.is_private } for game in games]
         return games_list
     
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
