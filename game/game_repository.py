@@ -91,7 +91,7 @@ class GameRepository:
         if not winner:
             raise HTTPException(status_code=404, detail="There is no winner")
         
-        return winner
+        return PlayerInDB.model_validate(winner)
     
     def count_players_in_game(self, game_id: int, db: Session) -> int:
         try:
