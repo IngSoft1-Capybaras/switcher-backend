@@ -4,6 +4,8 @@ from fastapi import Depends, HTTPException, status
 from .models import Player, turnEnum
 from .schemas import PlayerInDB
 from game.models import Game
+from game.game_repository import GameRepository
+from game.utils import GameUtils
 from gameState.models import GameState
 from connection_manager import manager
 
@@ -47,7 +49,7 @@ class PlayerRepository:
         
         
     
-    def leave_game(self, game_id: int, player_id: int, db: Session):
+    async def leave_game(self, game_id: int, player_id: int, db: Session):
         try:
             game = db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound :
@@ -62,6 +64,10 @@ class PlayerRepository:
 
         db.commit()
 
+        game_utils = GameUtils(GameRepository())
+        # chequeo la condicion de ganar por abandono
+        await game_utils.check_win_condition(game, db)
+            
         return {"message": "Player has successfully left the game"}
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
