@@ -17,6 +17,7 @@ from player.utils import PlayerUtils
 from player.player_repository import PlayerRepository
 from movementCards.utils import MovementCardUtils
 from figureCards.utils import FigureCardUtils
+from connection_manager import manager
 
 
 game_state_router = APIRouter(
@@ -56,6 +57,12 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
     game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
     game_state_repo.update_current_player(game_id, first_player_id, db)
     
+    #notificar a los jugadores
+    message = {
+            "type":f"{game_id}:GAME_STARTED"
+        }
+    await manager.broadcast(message)
+
     return {"message": "Game status updated, ur playing!"}
 
 
