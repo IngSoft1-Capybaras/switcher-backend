@@ -93,14 +93,4 @@ class GameRepository:
         
         return winner
     
-    def count_players_in_game(self, game_id: int, db: Session) -> int:
-        try:
-            game = db.query(Game).filter(Game.id == game_id).one()
-            
-        except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "Game not found")
-        
-        player_count = game.players_count()
-        return player_count
-        
 
