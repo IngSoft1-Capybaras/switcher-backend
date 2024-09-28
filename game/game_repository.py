@@ -17,10 +17,17 @@ class GameRepository:
         if not games:
             raise HTTPException(status_code = 404, detail = "There are no games available")
         
-        # Conveert games to a list of shemas
-        games_list = [{"id": game.id, "players_count": game.players_count(), "max_players": game.max_players, "min_players": game.min_players, "name": game.name, "is_private": game.is_private } for game in games]
+        # Conveert games to a list of dicts
+        games_list = [{"id": game.id, "players_count": game.players_count(), 
+                       "max_players": game.max_players, "min_players": game.min_players, 
+                       "name": game.name, "is_private": game.is_private } for game in games]
+        
+        total_pages = len(games_list) // limit
+
+        # return {"total_pages": total_pages, 
+        #         "games": games_list}
+
         return games_list
-    
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
         
         # Fetch the specifc game by its id
