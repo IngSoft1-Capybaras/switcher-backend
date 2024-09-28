@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from player.schemas import turnEnum
+from player.schemas import turnEnum, PlayerCreateMatch
 from game.game_repository import GameRepository
 from game.models import Game
 from game.schemas import GameInDB, GameCreate
@@ -36,15 +36,47 @@ def setup_dependency_override(mock_repo, mock_db):
     yield
     app.dependency_overrides = {}  # Clean up overrides after test
 
-# @patch('app.GameRepository')
-# def test_create_game(mock_db, mock_repo):
+
+def test_create_game_and_broadcast(mock_repo, mock_db):
+    mock_repo.create_game.return_value = {
+        "game": {
+            "name": "my game",
+            "id": 1,
+            "max_players": 3,
+            "min_players": 3
+        },
+        "player": {
+            "name": "PlayerOne",
+            "host": True,
+            "turn": turnEnum.PRIMERO
+        },
+        "gameState": {
+            "id": 1, 
+            "state": "WAITING",
+            "game_id": 1
+        }
+    }
     
-    
-#     response = client.post("/games", json={"game": game_data.model_dump(), "player": player_data.model_dump()})
-    
-#     assert response.status_code == 201
-#     assert response.json() == expected_response.model_dump()
-#     mock_repo.create_game.assert_called_once_with(game_data, player_data, mock_db)
+    with client.websocket_connect("/ws") as websocket:
+        response = client.post(
+            "/games",
+            json={
+                "game": {"name": "my game","max_players": 3,"min_players": 3},
+                "player": {"name": "PlayerOne", "host": True, "turn":turnEnum.PRIMERO}
+            }
+        )
+        
+        assert response.status_code == status.HTTP_201_CREATED
+        
+        response_data =  response.json()
+        assert response_data["game"]["name"] == "my game"
+        
+        game_expected = GameCreate(name="my game", max_players=3, min_players=3)
+        player_expected = PlayerCreateMatch(name="PlayerOne", host= True, turn = turnEnum.PRIMERO)
+        mock_repo.create_game.assert_called_once_with(game_expected, player_expected, mock_db)
+        
+        game_list_update = websocket.receive_json()
+        assert game_list_update["type"] == "GAMES_LIST_UPDATE"
 
 
 def test_get_games_success(mock_repo, mock_db):
@@ -100,9 +132,54 @@ def test_get_game_by_id_not_found(mock_repo, mock_db):
     mock_repo.get_game_by_id.assert_called_once_with(999, mock_db)
 
 
-# def test_get_game_winner(mock_GameRepository, player_a):
-#     pass
+def test_get_game_winner(mock_repo, mock_db):
+    mock_repo.get_game_winner.return_value = {
+        "id": 8,
+        "name": "Choa",
+        "turn": turnEnum.SEGUNDO,
+        "game_id": 4,
+        "game_state_id": 4,
+        "host": False,
+        "winner": True
+    }
+    
+    response = client.get("/games/4/winner")
+    assert response.status_code == 200
+    
+    response_data = response.json()
+    
+    assert response_data["name"] == "Choa"
+    assert response_data["id"] == 8
+    assert response_data["winner"] 
+    
+    mock_repo.get_game_winner.assert_called_once_with(4,mock_db)
+    
+    
 
 
-# def test_get_game_winner_no_winner(mock_GameRepository):
-#     pass
+def test_get_game_winner_no_winner(mock_repo, mock_db):
+    game_id = 7
+    mock_repo.get_game_winner.side_effect = HTTPException(status_code=404, detail="There is no winner")
+    
+    response = client.get(f"/games/{game_id}/winner")
+    
+    assert response.status_code == 404
+    
+    response_data = response.json()
+    assert response_data["detail"] == "There is no winner"
+    
+    mock_repo.get_game_winner.assert_called_once_with(game_id, mock_db)
+    
+def test_get_game_winner_not_finished(mock_repo, mock_db):
+    
+    game_id = 9
+    mock_repo.get_game_winner.side_effect = HTTPException(status_code = 404, detail = "The game is not finished")
+    
+    response = client.get(f"/games/{game_id}/winner")
+    
+    assert response.status_code == 404
+    
+    response_data = response.json()
+    assert response_data["detail"] == "The game is not finished"
+    
+    mock_repo.get_game_winner.assert_called_once_with(game_id, mock_db)
