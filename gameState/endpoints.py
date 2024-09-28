@@ -1,11 +1,13 @@
 import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 from database.db import get_db
 
 from player.models import Player, turnEnum
 from game.models import Game
 from gameState.models import GameState, StateEnum
+from gameState.schemas import GameStateInDB
 
 from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -23,6 +25,10 @@ game_state_router = APIRouter(
     prefix= "/game_state",
     tags=['GameStatus']
 )
+
+@game_state_router.get("/{game_id}")
+async def get_game_state(game_id: int, db: Session = Depends(get_db), repo: GameStateRepository = Depends()):
+    return repo.get_game_state_by_id(game_id, db)
 
 
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)
