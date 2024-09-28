@@ -47,16 +47,12 @@ class GameUtils:
         last_player.winner = True
         db.add(last_player)
         db.commit()
-
-        # notifico al jugador de la victoria
-        player_list_update = {
-            "type":f"{game_id}:GAME_INFO_UPDATE"
-            }
-        await manager.broadcast(player_list_update)
         
-        player_list_update = {
-                "type": "GAMES_LIST_UPDATE"
+        player_update = {
+                "type": "PLAYER_WINNER",
+                "game_id": game_id,
+                "winner_id": last_player.id
         }
-        
-        await manager.broadcast(player_list_update)
+
+        await manager.broadcast(player_update)
         
