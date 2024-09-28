@@ -45,5 +45,11 @@ async def join_game(game_id: int, player_name: PlayerJoinRequest, db: Session = 
             "type":f"{game_id}:GAME_INFO_UPDATE"
         }
     await manager.broadcast(player_list_update)
+    
+    player_list_update = {
+            "type": "GAMES_LIST_UPDATE"
+    }
+    await manager.broadcast(player_list_update)
+
         
     return player_id
