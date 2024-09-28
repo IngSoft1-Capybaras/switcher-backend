@@ -37,9 +37,12 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "Game not found")
         
         # Convert game to schema
-        game_schema = GameInDB.model_validate(game)
+        # game_schema = GameInDB.model_validate(game)
+        return {"id": game.id, "players_count": game.players_count(), 
+                "max_players": game.max_players, "min_players": game.min_players, 
+                "name": game.name, "is_private": game.is_private }
         
-        return game_schema
+        # return game_schema
     
         # Fetch the specifc game by its id
     def create_game(self, game: GameCreate, player: PlayerCreateMatch,db : Session ):
