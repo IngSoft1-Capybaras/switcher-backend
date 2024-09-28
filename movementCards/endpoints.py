@@ -12,5 +12,5 @@ async def get_movement_cards(game_id: int, player_id: int, db: Session = Depends
 
 # Obtener todas las cartas de movimiento
 @movement_cards_router.get("/deck/movement/{game_id}/{player_id}/{card_id}")
-async def get_movement_cards(game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db), repo: MovementCardsRepository = Depends()):
+async def get_movement_card_by_id(game_id: int, player_id: int, card_id: int, db: Session = Depends(get_db), repo: MovementCardsRepository = Depends()):
     return repo.get_movement_card_by_id(game_id, player_id, card_id, db)
