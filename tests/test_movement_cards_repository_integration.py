@@ -23,7 +23,7 @@ def test_get_movement_cards_success(mock_db, movement_cards_repository):
         MovementCard(id=2, player_id=1),
     ]
     mock_db.query().filter().filter().all.return_value = mock_movement_cards
-    expected_result = [MovementCardSchema.from_orm(card) for card in mock_movement_cards]
+    expected_result = [MovementCardSchema.model_validate(card) for card in mock_movement_cards]
 
     result = movement_cards_repository.get_movement_cards(game_id=1, player_id=1, db=mock_db)
 
@@ -45,7 +45,7 @@ def test_get_movement_cards_not_found(mock_db, movement_cards_repository):
 def test_get_movement_card_by_id_success(mock_db, movement_cards_repository):
     mock_movement_card = MovementCard(id=1, player_id=1)
     mock_db.query().filter().filter().one.return_value = mock_movement_card
-    expected_result = MovementCardSchema.from_orm(mock_movement_card)
+    expected_result = MovementCardSchema.model_validate(mock_movement_card)
 
     result = movement_cards_repository.get_movement_card_by_id(game_id=1, player_id=1, card_id=1, db=mock_db)
 

@@ -59,7 +59,7 @@ class MovementCardsRepository:
             raise HTTPException(status_code=404, detail="There no movement cards associated with this game")
 
         # Convert movement deck of cards to a list of schemas
-        movement_cards_deck = [MovementCardSchema.from_orm(card) for card in movement_cards]
+        movement_cards_deck = [MovementCardSchema.model_validate(card) for card in movement_cards]
 
         return movement_cards_deck
 

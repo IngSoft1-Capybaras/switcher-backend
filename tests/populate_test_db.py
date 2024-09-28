@@ -25,7 +25,7 @@ def create_game_state(game, state, session):
     return game_state
 
 def create_player(name, game, game_state, turn, host, session):
-    player = Player(name=name, game_id=game.id, game_state_id=game_state.id, turn=turn, host=host)
+    player = Player(name=name, game_id=game.id, game_state_id=game_state.id, turn=turn, host=host, winner=False)
     session.add(player)
     # session.flush()
     session.commit()

@@ -50,7 +50,7 @@ class FigureCardUtils:
                 if index==3:
                     show=False
                 print(show)
-                self.fig_card_repo.create_figure_card(player.id, game_id, figure, db, show)
+                self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
 
         return {"message": "Figure deck created"}
     

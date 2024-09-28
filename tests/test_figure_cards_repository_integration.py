@@ -63,7 +63,7 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, 
     # finally:
     #     session.close()
     
-    figure_cards_repository.create_figure_card(1, 1, typeEnum.TYPE_4, session)
+    figure_cards_repository.create_figure_card(1, 1, typeEnum.TYPE_4, True, session)
     
     # session = Session()
     
