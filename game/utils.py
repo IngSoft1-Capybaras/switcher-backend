@@ -4,6 +4,9 @@ from sqlalchemy.exc import NoResultFound
 from .models import Game
 from game.game_repository import GameRepository
 from gameState.game_state_repository import GameStateRepository
+from gameState.models import StateEnum
+from player.models import Player
+from connection_manager import manager
 
 
 class GameUtils:
@@ -21,8 +24,39 @@ class GameUtils:
         return player_count
 
 
-    def check_win_condition(self, game: Game, db: Session):
-            # chequeo si queda solo uno
-            players_left = self.count_players_in_game(Game.id)
-            if players_left == 1:    
-                Game.game_state 
+    async def check_win_condition(self, game: Game, db: Session):
+        # chequeo si queda solo uno
+        
+        players_left = game.players
+        
+        if len(players_left) == 1:
+            await self.handle_win(game.id, players_left[0], db)
+            return True
+        
+        return False
+        # aca irian el resto de las condiciones que se veran en otros sprints
+
+
+    async def handle_win(self, game_id: int, last_player: Player, db: Session):
+        game_state_repository = GameStateRepository()
+
+        # actualizo partida a finalizada
+        game_state_repository.update_game_state(game_id, StateEnum.FINISHED, db)
+        
+        # asigno al ultimo jugador como ganador
+        last_player.winner = True
+        db.add(last_player)
+        db.commit()
+
+        # notifico al jugador de la victoria
+        player_list_update = {
+            "type":f"{game_id}:GAME_INFO_UPDATE"
+            }
+        await manager.broadcast(player_list_update)
+        
+        player_list_update = {
+                "type": "GAMES_LIST_UPDATE"
+        }
+        
+        await manager.broadcast(player_list_update)
+        
