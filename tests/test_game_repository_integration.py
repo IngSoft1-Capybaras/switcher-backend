@@ -43,7 +43,7 @@ def test_get_game_by_id(game_repository: GameRepository, session):
 
         game = game_repository.get_game_by_id(1, session)
 
-        assert game.id == test_game.id
+        assert game.get('id') == test_game.id
     except NoResultFound:
         raise ValueError("There is no game with id 1")
     # finally:

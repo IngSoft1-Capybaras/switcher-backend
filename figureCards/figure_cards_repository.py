@@ -9,47 +9,39 @@ class FigureCardsRepository:
 
     def get_figure_cards(self, game_id: int, player_id: int, db : Session) -> list:
         
-        # Fetch figure cards associated with the player and game
+        # busco las figure cards asociadas a game_id y player_id
         figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id,
                                                     FigureCard.player.has(game_id=game_id)).all()
 
         if not figure_cards:
             raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
 
-        # Convert figure cards to a list of dictionaries using SQLAlchemy’s ORM
-        # figure_cards_list = [card.__dict__ for card in figure_cards]
+        # convierto cada elemento en figure_cards a su schema
         figure_cards_list = [FigureCardSchema.model_validate(card) for card in figure_cards]
 
         return figure_cards_list
     
     def get_figure_card_by_id(self, game_id: int, player_id: int, card_id: int, db : Session) -> FigureCardSchema:
-
+        # busco una figura card especifica segun game_id, player_id y card_id
         try:
-            # Fetch the specific figure card by its id, player_id and game_id
-            try:
-                figure_card = db.query(FigureCard).filter(FigureCard.id == card_id, 
-                                                          FigureCard.player_id == player_id,
-                                                          FigureCard.player.has(game_id=game_id)).one()
-            except NoResultFound:
-                raise HTTPException(status_code=404, detail="Figure card not found")
+            figure_card = db.query(FigureCard).filter(FigureCard.id == card_id, 
+                                                        FigureCard.player_id == player_id,
+                                                        FigureCard.player.has(game_id=game_id)).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail="Figure card not found")
 
-            # Convert the figure card to a schema
-            figure_card_schema = FigureCardSchema.model_validate(figure_card)
+        # convierto la figure card a su schema
+        figure_card_schema = FigureCardSchema.model_validate(figure_card)
 
-        finally:
-            db.close()
         return figure_card_schema
     
     def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, show: bool, db: Session):
-
-        try:
-            new_card = FigureCard(
-                type=figure,
-                show=show,
-                game_id= game_id,
-                player_id=player_id
-            )
-            db.add(new_card)
-            db.commit()
-        finally:
-            db.close()
+        new_card = FigureCard(
+            type=figure,
+            show=show,
+            game_id= game_id,
+            player_id=player_id
+        )
+        db.add(new_card)
+        db.commit()
+        

@@ -1,8 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 from database.db import get_db
 
 from gameState.models import  StateEnum
+
+from player.models import Player, turnEnum
+from game.models import Game
+from gameState.models import GameState, StateEnum
+from gameState.schemas import GameStateInDB
 
 from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -36,6 +42,12 @@ async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depe
     await manager.broadcast(message)
     
     return {"message": "Current player successfully updated"}
+
+  
+@game_state_router.get("/{game_id}")
+async def get_game_state(game_id: int, db: Session = Depends(get_db), repo: GameStateRepository = Depends()):
+    return repo.get_game_state_by_id(game_id, db)
+
 
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)
 async def start_game(

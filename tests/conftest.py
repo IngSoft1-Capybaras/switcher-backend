@@ -26,9 +26,10 @@ def engine():
     yield test_engine
     
     # Drop the database after all tests
-    # drop_database(test_engine.url)
+    drop_database(test_engine.url)
 
-@pytest.fixture(scope="function")
+
+@pytest.fixture(scope="module")
 def session(engine):
     # Create a new connection
     connection = engine.connect()
@@ -52,7 +53,7 @@ def session(engine):
     transaction.rollback()
     connection.close()
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="module")
 def override_get_db(session):
     def _override_get_db():
         try:
@@ -60,10 +61,3 @@ def override_get_db(session):
         finally:
             pass
     return _override_get_db
-
-# @pytest.fixture(scope="function")
-# def client(override_get_db):
-#     from main import app
-#     app.dependency_overrides[get_db] = override_get_db
-#     yield TestClient(app)
-#     app.dependency_overrides.clear()

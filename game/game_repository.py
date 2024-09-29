@@ -7,27 +7,37 @@ from player.models import Player
 from player.schemas import PlayerCreateMatch, PlayerInDB, turnEnum
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
+from gameState.game_state_repository import GameStateRepository
 
+from math import ceil
 class GameRepository:
 
     def get_games(self, db : Session, limit: int = 5, offset: int = 0) -> list:
+        game_state_repository = GameStateRepository()
         # Fetch games
-        games = db.query(Game).offset(offset).limit(limit).all()
+        games = db.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING).all()
         
         if not games:
-            raise HTTPException(status_code = 404, detail = "There are no games available")
+            return {"total_pages": 1,
+                    "games": []}
         
-        # Conveert games to a list of dicts
+        total_pages = ceil(len(games) / limit)
+        start_idx = offset
+        end_idx = min(offset + limit, len(games))
+        
+        selected_games = games[start_idx:end_idx]
+
+        # Conveert games to a list of dicts and filter by available
         games_list = [{"id": game.id, "players_count": game.players_count(), 
                        "max_players": game.max_players, "min_players": game.min_players, 
-                       "name": game.name, "is_private": game.is_private } for game in games]
+                       "name": game.name, "is_private": game.is_private } for game in selected_games]        
         
-        total_pages = len(games_list) // limit
 
-        # return {"total_pages": total_pages, 
-        #         "games": games_list}
+        return {"total_pages": total_pages, 
+                "games": games_list}
+    
 
-        return games_list
+        # return games_list
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
         
         # Fetch the specifc game by its id
@@ -37,9 +47,12 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = "Game not found")
         
         # Convert game to schema
-        game_schema = GameInDB.model_validate(game)
+        # game_schema = GameInDB.model_validate(game)
+        return {"id": game.id, "players_count": game.players_count(), 
+                "max_players": game.max_players, "min_players": game.min_players, 
+                "name": game.name, "is_private": game.is_private }
         
-        return game_schema
+        # return game_schema
     
         # Fetch the specifc game by its id
     def create_game(self, game: GameCreate, player: PlayerCreateMatch,db : Session ):
@@ -91,16 +104,6 @@ class GameRepository:
         if not winner:
             raise HTTPException(status_code=404, detail="There is no winner")
         
-        return winner
+        return PlayerInDB.model_validate(winner)
     
-    def count_players_in_game(self, game_id: int, db: Session) -> int:
-        try:
-            game = db.query(Game).filter(Game.id == game_id).one()
-            
-        except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "Game not found")
-        
-        player_count = game.players_count()
-        return player_count
-        
 
