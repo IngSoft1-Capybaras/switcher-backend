@@ -42,7 +42,7 @@ async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, 
     # Calculo el offset segun la pagina y el limite
     offset = (page - 1) * limit
 
-    return repo.get_games(db)
+    return repo.get_games(db, offset=offset, limit=limit)
 
 # Obtener partida segun id
 @game_router.get("/games/{game_id}")
