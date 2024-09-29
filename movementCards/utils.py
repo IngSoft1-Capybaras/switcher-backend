@@ -8,7 +8,9 @@ from game.game_repository import GameRepository
 from .movement_cards_repository import MovementCardsRepository
 from database.db import get_db
 from player.player_repository import PlayerRepository
-#VER TEST
+
+def get_mov_cards_utils(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
+    return MovementCardUtils(mov_card_repo, player_repo)
 class MovementCardUtils:
     
     def __init__(
@@ -43,6 +45,7 @@ class MovementCardUtils:
             movDeck = self.mov_card_repo.get_movement_deck(game_id, db)
             # tomo 3 random
             asigned_mov_cards = random.sample(movDeck, 3)
+            print(asigned_mov_cards)
             # las asigno
             for asigned_mov_card in asigned_mov_cards:
                 print(f"Assigning card {asigned_mov_card.id} to player {player.id}")
