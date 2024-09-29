@@ -51,7 +51,6 @@ class FigureCardUtils:
             for index, figure in enumerate(combined_deck):
                 if index==3:
                     show=False
-                print(show)
                 self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
 
         return {"message": "Figure deck created"}
