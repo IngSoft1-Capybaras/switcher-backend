@@ -142,9 +142,6 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
     mock_mov_random_sample.return_value = [MovementCardSchema(id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=1, game_id=1), 
         MovementCardSchema(id=2, type=typeEnum.EN_L_DER, description="test", used=False, player_id=1, game_id=game_id),
         MovementCardSchema(id=3, type=typeEnum.EN_L_DER, description="test", used=False, player_id=1, game_id=game_id)]
-    
-    # Debug statement to verify the mock
-    print("mock_mov_random_sample.return_value:", mock_mov_random_sample.return_value)
 
     with client.websocket_connect("/ws") as websocket:
 
@@ -168,4 +165,27 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         mock_game_state_repo.update_current_player.assert_called_once_with(game_id, players[0].id, mock_db)
         
         
+def test_finish_turn(mock_game_state_repo, mock_db):
+    game_id = 2
+    next_player_id = 3
     
+    mock_game_state_repo.get_next_player_id.return_value = next_player_id
+    
+    mock_game_state_repo.update_current_player.return_value = None
+    
+    with client.websocket_connect("/ws") as websocket:
+
+        response = client.patch(
+            f"game_state/{game_id}/finish_turn"
+        )
+        
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json() == {"message": "Current player successfully updated"}
+        
+        game_state_update = websocket.receive_json()
+        assert game_state_update["type"] == f"{game_id}:NEXT_TURN"
+        
+        mock_game_state_repo.get_next_player_id.called_once_with(game_id, mock_db)
+        mock_game_state_repo.update_current_player.called_once_with(game_id, next_player_id, mock_db)
+        
+        
