@@ -27,10 +27,21 @@ game_state_router = APIRouter(
     tags=['GameStatus']
 )
 
-@game_state_router.get("/{game_id}")
-async def get_game_state(game_id: int, db: Session = Depends(get_db), repo: GameStateRepository = Depends()):
-    return repo.get_game_state_by_id(game_id, db)
+@game_state_router.get("/{game_id}/current_turn", status_code=status.HTTP_200_OK)
+async def get_current_player(game_id: int, db: Session = Depends(get_db)):
+    game_state_repo =  GameStateRepository()
+    
+    return game_state_repo.get_current_player(game_id, db)
 
+@game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
+async def finish_turn(game_id: int, db: Session = Depends(get_db)):
+    game_state_repo =  GameStateRepository()
+    
+    next_player_id = game_state_repo.get_next_player_id(game_id, db)
+    
+    game_state_repo.update_current_player(game_id, next_player_id, db)
+    
+    return {"message": "Current player successfully updated"}
 
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)
 async def start_game(game_id: int, db: Session = Depends(get_db)):
@@ -71,14 +82,6 @@ async def start_game(game_id: int, db: Session = Depends(get_db)):
 
     return {"message": "Game status updated, ur playing!"}
 
-
-@game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
-async def finish_turn(game_id: int, db: Session = Depends(get_db)):
-    game_state_repo =  GameStateRepository()
-    
-    next_player_id = game_state_repo.get_next_player_id(game_id, db)
-    
-    game_state_repo.update_current_player(game_id, next_player_id, db)
-    
-    return {"message": "Current player successfully updated"}
-    
+@game_state_router.get("/{game_id}")
+async def get_game_state(game_id: int, db: Session = Depends(get_db), repo: GameStateRepository = Depends()):
+    return repo.get_game_state_by_id(game_id, db)
