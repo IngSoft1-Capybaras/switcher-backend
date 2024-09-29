@@ -40,17 +40,17 @@ class GameStateRepository:
             db.close()
     
     def get_game_state_by_id(self, game_id: int, db : Session) -> GameStateInDB:
-        try:
+        # try:
             
-            game_state_in_db = db.query(GameState).filter(GameState.game_id == game_id).first()
+        game_state_in_db = db.query(GameState).filter(GameState.game_id == game_id).first()
 
-            if not game_state_in_db:
-                raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Game State not found"
-                )
-        finally:
-            db.close()
+        if not game_state_in_db:
+            raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game State not found"
+        )
+    # finally:
+        #     db.close()
         
         return GameStateInDB.model_validate(game_state_in_db)
 
