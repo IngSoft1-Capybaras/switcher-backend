@@ -13,7 +13,6 @@ from math import ceil
 class GameRepository:
 
     def get_games(self, db : Session, limit: int = 5, offset: int = 0) -> list:
-        game_state_repository = GameStateRepository()
         # Fetch games
         games = db.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING).all()
         

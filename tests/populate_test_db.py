@@ -72,7 +72,7 @@ def populate_database():
         game = create_game("Test Game", 2, 4, session)
 
         # Create game state
-        game_state = create_game_state(game, StateEnum.PLAYING, session)
+        game_state = create_game_state(game, StateEnum.WAITING, session)
 
         # Create players
         players = [
