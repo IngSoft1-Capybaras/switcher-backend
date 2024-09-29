@@ -7,26 +7,35 @@ from player.models import Player
 from player.schemas import PlayerCreateMatch, PlayerInDB, turnEnum
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
+from gameState.game_state_repository import GameStateRepository
 
+from math import ceil
 class GameRepository:
 
     def get_games(self, db : Session, limit: int = 5, offset: int = 0) -> list:
+        game_state_repository = GameStateRepository()
         # Fetch games
-        games = db.query(Game).offset(offset).limit(limit).all()
+        games = db.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING).all()
         
         if not games:
-            return {"total_pages": 0,
+            return {"total_pages": 1,
                     "games": []}
         
-        # Conveert games to a list of dicts
+        total_pages = ceil(len(games) / limit)
+        start_idx = offset
+        end_idx = min(offset + limit, len(games))
+        
+        selected_games = games[start_idx:end_idx]
+
+        # Conveert games to a list of dicts and filter by available
         games_list = [{"id": game.id, "players_count": game.players_count(), 
                        "max_players": game.max_players, "min_players": game.min_players, 
-                       "name": game.name, "is_private": game.is_private } for game in games]
+                       "name": game.name, "is_private": game.is_private } for game in selected_games]        
         
-        total_pages = len(games_list) // limit
 
         return {"total_pages": total_pages, 
                 "games": games_list}
+    
 
         # return games_list
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
