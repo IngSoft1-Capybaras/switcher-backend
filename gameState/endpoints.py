@@ -34,8 +34,6 @@ async def start_game(
     mov_cards_utils: MovementCardUtils = Depends(get_mov_cards_utils),
     fig_cards_utils: FigureCardUtils = Depends(get_fig_cards_utils)
 ):
-        
-
     
     #Verificar que existan jugadores en la partida
     players = player_repo.get_players_in_game(game_id, db)
