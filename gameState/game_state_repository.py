@@ -109,3 +109,25 @@ class GameStateRepository:
             
         finally: 
             db.close()
+
+    def get_current_player(self, game_id: int, db : Session) -> int:
+        try:
+            game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
+
+            if not game_state_instance:
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Game State not found"
+                )
+
+            current_player_id = game_state_instance.current_player
+
+            if not current_player_id:
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Current player not found"
+                )
+
+            return {"current_player_id": current_player_id}
+        finally:
+            db.close()
