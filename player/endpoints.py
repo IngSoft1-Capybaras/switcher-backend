@@ -5,7 +5,7 @@ from .player_repository import PlayerRepository
 from .schemas import PlayerJoinRequest
 from game.game_repository import GameRepository
 from connection_manager import manager
-from game.utils import GameUtils
+from game.utils import get_game_utils, GameUtils
 
 player_router = APIRouter()
 
@@ -44,9 +44,10 @@ async def join_game(game_id: int,
                     player_name: PlayerJoinRequest, 
                     db: Session = Depends(get_db), 
                     repo: PlayerRepository = Depends(), 
-                    game_repo: GameRepository = Depends()):
-    
-    game_utils = GameUtils(game_repo)
+                    game_repo: GameRepository = Depends(),
+                    game_utils: GameUtils = Depends(get_game_utils)
+                    ):
+
     #Verificar que no se supere el maximo de jugadores
     game = game_repo.get_game_by_id(game_id, db)
     players_in_game = game_utils.count_players_in_game(game_id, db)
