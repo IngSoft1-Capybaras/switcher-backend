@@ -5,6 +5,7 @@ from .models import GameState, StateEnum
 from .schemas import GameStateInDB
 from database.db import get_db
 from player.models import Player, turnEnum
+import logging
 
 
 class GameStateRepository:
@@ -67,7 +68,6 @@ class GameStateRepository:
             )
         
         current_player = next((player for player in players if player.id == current_player_id), None)
-        
         if not current_player:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -75,7 +75,6 @@ class GameStateRepository:
             )
         
         current_turn = current_player.turn
-        
         turn_order = [
             turnEnum.PRIMERO,
             turnEnum.SEGUNDO,
@@ -84,10 +83,13 @@ class GameStateRepository:
         ]
         
         current_turn_index = turn_order.index(current_turn)
-        next_turn = turn_order[(current_turn_index + 1) % len(turn_order)]
+
+        next_turn_index = (current_turn_index + 1) % len(players)
+        next_turn = turn_order[next_turn_index]
         
+
         next_player = next((player for player in players if player.turn == next_turn), None)
-        
+
         if not next_player:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
