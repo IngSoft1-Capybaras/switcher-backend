@@ -88,9 +88,10 @@ def test_get_games_success(mock_repo, mock_db):
     mock_repo.get_games.return_value = mock_games
         
     response = client.get("/games")
+    
     assert response.status_code == 200
     assert response.json() == [game.model_dump() for game in mock_games]
-    mock_repo.get_games.assert_called_once_with(mock_db)
+    mock_repo.get_games.assert_called_once_with(mock_db, offset=0, limit=5)
 
 
 def test_get_games_not_found(mock_repo, mock_db):
@@ -103,7 +104,7 @@ def test_get_games_not_found(mock_repo, mock_db):
 
     assert response.status_code == 404
     assert response.json() == {"detail": "There are no games available"}
-    mock_repo.get_games.assert_called_once_with(mock_db)
+    mock_repo.get_games.assert_called_once_with(mock_db, offset=0, limit=5)
 
 
 def test_get_game_by_id_success(mock_repo, mock_db):
