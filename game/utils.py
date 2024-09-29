@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends
 from sqlalchemy.exc import NoResultFound
 from .models import Game
 from game.game_repository import GameRepository
@@ -9,9 +9,11 @@ from player.models import Player
 from connection_manager import manager
 
 
+def get_game_utils(game_repo: GameRepository = Depends()):
+    return GameUtils(game_repo)
 class GameUtils:
     def __init__(self, game_repository: GameRepository):
-         self.game_repository = game_repository
+        self.game_repository = game_repository
 
     def count_players_in_game(self, game_id: int, db: Session) -> int:
         try:
