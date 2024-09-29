@@ -10,6 +10,7 @@ from player.player_repository import PlayerRepository
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository
+from board.board_repository import BoardRepository
 from connection_manager import manager
 
 game_router = APIRouter(
@@ -29,8 +30,7 @@ async def create_game(game: GameCreate,
         }
         await manager.broadcast(games_list_update)
 
-        return res
-    
+        return res    
 
 # Obtener todas las partidas
 @game_router.get("/games")
@@ -54,3 +54,7 @@ async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: Game
 @game_router.get("/games/{game_id}/winner")
 async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
     return repo.get_game_winner(game_id, db)
+
+@game_router.get("/games/{game_id}/board")
+async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepository = Depends()):
+    return repo.get_configured_board(game_id, db)
