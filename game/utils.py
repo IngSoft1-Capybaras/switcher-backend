@@ -51,7 +51,8 @@ class GameUtils:
         player_update = {
                 "type": "PLAYER_WINNER",
                 "game_id": game_id,
-                "winner_id": last_player.id
+                "winner_id": last_player.id,
+                "winner_name": last_player.name
         }
 
         await manager.broadcast(player_update)
