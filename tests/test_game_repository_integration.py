@@ -7,7 +7,7 @@ from board.models import  Board, Box
 from figureCards.models import FigureCard, typeEnum
 from game.models import Game
 from game.schemas import GameCreate
-from gameState.models import GameState
+from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard
 from player.models import Player
 from player.schemas import PlayerCreateMatch
@@ -24,20 +24,16 @@ def game_repository():
 
 @pytest.mark.integration_test
 def test_get_games(game_repository: GameRepository, session):
-    # session = Session()
-    # try:
-    N_games = session.query(Game).count()
+    N_games = session.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING).count()
 
-    list_of_games = game_repository.get_games(session)
+    list_of_games = game_repository.get_games(session).get('games')
 
     assert len(list_of_games) == min(5, N_games)
-    # finally:
-    #     session.close()
+
 
 
 @pytest.mark.integration_test
 def test_get_game_by_id(game_repository: GameRepository, session):
-    # session = Session()
     try:
         test_game = session.query(Game).filter(Game.id == 1).one()
 
@@ -46,15 +42,11 @@ def test_get_game_by_id(game_repository: GameRepository, session):
         assert game.get('id') == test_game.id
     except NoResultFound:
         raise ValueError("There is no game with id 1")
-    # finally:
-    #     session.close()
+
 
 
 @pytest.mark.integration_test
 def test_create_game(game_repository: GameRepository, session):
-    # session = Session()
-
-    # try:
     N_games = session.query(Game).count()
 
     game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
@@ -62,6 +54,3 @@ def test_create_game(game_repository: GameRepository, session):
                                 session)
     
     assert session.query(Game).count() == N_games + 1
-
-    # finally:
-    #     session.close()
