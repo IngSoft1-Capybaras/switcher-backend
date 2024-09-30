@@ -75,13 +75,15 @@ class GameStateRepository:
             )
         
         current_turn = current_player.turn
-        turn_order = [
+        full_turn_order = [
             turnEnum.PRIMERO,
             turnEnum.SEGUNDO,
             turnEnum.TERCERO,
             turnEnum.CUARTO
         ]
         
+        turn_order = [turn for turn in full_turn_order if turn in [player.turn for player in players]]
+
         current_turn_index = turn_order.index(current_turn)
 
         next_turn_index = (current_turn_index + 1) % len(players)
