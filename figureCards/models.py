@@ -1,19 +1,31 @@
 from enum import Enum
-from pony.orm import Required, PrimaryKey
-from database.db import db
-
-
-#class Figures(Enum):
+from sqlalchemy import Column, Integer, Boolean, Enum as SQLAEnum, ForeignKey
+from sqlalchemy.orm import relationship
+from database.db import Base
 
 # Definir un enum de dificultades
-class DifficultyEnum(Enum):
-    EASY =  "easy"
-    HARD = "hard"
+class DifficultyEnum(str,Enum):
+    EASY = "EASY"
+    HARD = "HARD"
+
+class typeEnum(str, Enum):
+    TYPE_1 = "TYPE_1"
+    TYPE_2 = "TYPE_2"
+    TYPE_3 = "TYPE_3"
+    TYPE_4 = "TYPE_4" #H
+    TYPE_5 = "TYPE_5" #H
+    TYPE_6 = "TYPE_6" #H
 
 # Modelo de carta de figura
-class FigureCard(db.Entity):
-    #FALTA TIPO
-    id =  PrimaryKey(int, auto = True)
-    show =  Required(bool)
-    difficulty =  Required(DifficultyEnum)
-    idPlayer =  Required("Player")
+class FigureCard(Base):
+    __tablename__ = 'figure_cards'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    show = Column(Boolean, nullable=False)
+    difficulty = Column(SQLAEnum(DifficultyEnum), nullable=True)
+    player_id = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=False)
+    type = Column(SQLAEnum(typeEnum), nullable=False)
+    game_id = Column(Integer, ForeignKey('games.id'), nullable=False)
+
+    player = relationship("Player", back_populates="figure_cards")
+    game = relationship("Game", back_populates="figure_cards")

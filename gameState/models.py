@@ -1,17 +1,24 @@
 from enum import Enum
-from pony.orm import Required, PrimaryKey, Optional
-from database.db import db
+from sqlalchemy import Column, Integer, String, Enum as SQLAEnum, ForeignKey, UniqueConstraint
+from sqlalchemy.orm import relationship
+from database.db import Base
 
 # enum de estados de partida
-class StateEnum(Enum):
-    PLAYING = "playing"
-    WAITING = "waiting"
-    FINISHED = "finished"
+class StateEnum(str,Enum):
+    PLAYING = "PLAYING"
+    WAITING = "WAITING"
+    FINISHED = "FINISHED"
 
 # modelo del estado de la partida
-class GameState(db.Entity):
-    id =  PrimaryKey(int, auto = True)
-    state =  Required(StateEnum)
-    idGame =  Required("Game", unique='True')
-    currentPlayer =  Optional("Player")
-    #mazo movimiento falta
+class GameState(Base):
+    __tablename__ = 'game_state'
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    state = Column(SQLAEnum(StateEnum), nullable=False)
+    game_id = Column(Integer, ForeignKey('games.id', use_alter=True), unique=True, nullable=False)
+    current_player = Column(Integer, ForeignKey('players.id', use_alter=True), nullable=True)
+    
+    game = relationship("Game", back_populates="game_state", uselist=False)
+    players = relationship("Player", back_populates="game_state", foreign_keys="[Player.game_state_id]")
+    
+    __table_args__ = (UniqueConstraint('game_id', name='uq_game_id'),)

@@ -1,22 +1,19 @@
 from enum import Enum
-from pydantic import BaseModel
-
-#class Figures(Enum):
-
-# Schema del enum de dificultades
-class DifficultyEnum(Enum):
-    EASY: "easy"
-    HARD: "hard"
+from typing import Optional
+from pydantic import BaseModel, ConfigDict
+from .models import typeEnum, DifficultyEnum
 
 # Schema de cartas de figura
-class FigureCard(BaseModel):
-    #FALTA TIPO
+class FigureCardSchema(BaseModel):
+    id: int
+    type: typeEnum
     show: bool
-    difficulty: DifficultyEnum
-    idPlayer: int
-    idGame :  int
+    difficulty: Optional[DifficultyEnum] = None
+    player_id: int
+    game_id :  int
     
     
+    model_config = ConfigDict(from_attributes = True)
     
     
     
