@@ -89,7 +89,7 @@ def test_get_next_player_id(game_state_repository: GameStateRepository, session)
     current_player_id = test_game_state.current_player
 
 
-    result = game_state_repository.get_next_player_id(1, 1, session)
+    result = game_state_repository.get_next_player_id(1, session)
     
     assert result == 2
         

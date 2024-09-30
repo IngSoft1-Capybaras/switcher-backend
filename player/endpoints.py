@@ -24,8 +24,15 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 # Abandonar juego
 @player_router.post("/players/{player_id}/leave")
 async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
-    await repo.leave_game(game_id, player_id, db)
+    response = await repo.leave_game(game_id, player_id, db)
 
+    #Si se cambia el turno del jugador actual porque este decidio abandonar la partida
+    if response.get("changed_turn"):
+        message = {
+            "type":f"{game_id}:NEXT_TURN"
+        }
+        await manager.broadcast(message)
+    
     message = {
             "type":f"{game_id}:GAME_INFO_UPDATE"
         }

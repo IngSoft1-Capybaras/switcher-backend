@@ -7,6 +7,7 @@ from game.models import Game
 from game.game_repository import GameRepository
 from game.utils import GameUtils
 from gameState.models import GameState, StateEnum
+from gameState.game_state_repository import GameStateRepository
 from connection_manager import manager
 from figureCards.models import FigureCard
 from movementCards.models import MovementCard
@@ -62,7 +63,18 @@ class PlayerRepository:
         except NoResultFound :
             raise HTTPException(status_code=404, detail="Game state not found")
         
+        changed_turn = False
+        
         if game_state.state == StateEnum.PLAYING:
+            #me aseguro que no sea el turno del jugador
+            if game_state.current_player == player_id:
+                game_state_repo = GameStateRepository()
+                #si lo es, le pasamos el turno al siguiente jugador
+                next_player_id = game_state_repo.get_next_player_id(game_id, db)
+                game_state_repo.update_current_player(game_id, next_player_id,db)
+                changed_turn = True
+                
+            
             # descarto sus cartas de figura
             player_figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id).all()
             
@@ -98,7 +110,7 @@ class PlayerRepository:
             # chequeo la condicion de ganar por abandono
             await game_utils.check_win_condition(game, db)
         
-        return {"message": "Player has successfully left the game"}
+        return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
