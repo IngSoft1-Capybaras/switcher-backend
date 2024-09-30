@@ -43,11 +43,18 @@ export PYTHONPATH="/path/to/this/project/
 uvicorn main:app --reload
 ```
 
+Tambien puede usar el script `run_server.sh` que automatiza todos estos pasos y ademas se puede especificar la variable de entorno con la llave `-e` y tambien si quiere eliminar la base de datos luego de apagar el servidor con `--no-persitence`. De todas formas, con la llave `-h` puede ver todas las opciones.
+
 Los valores posibles de ENVIRONMENT son `production`, `test` y `development`. Para cada valor, se crea una base de datos distinta
+
 
 ### Testing
 
-- Se puede usar el Makefile para correr los tests. 
+- Se puede usar el Makefile para correr los tests. Pero antes, recordar hacer:
+```bash
+export PYTHONPATH="/path/to/this/project/
+```
+
 Para correr los unittests:
 ```bash
 make run_unit_tests
