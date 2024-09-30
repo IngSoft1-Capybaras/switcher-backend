@@ -8,6 +8,8 @@ from game.game_repository import GameRepository
 from game.utils import GameUtils
 from gameState.models import GameState, StateEnum
 from connection_manager import manager
+from figureCards.models import FigureCard
+from movementCards.models import MovementCard
 
 class PlayerRepository:
     
@@ -54,6 +56,32 @@ class PlayerRepository:
             game = db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound :
             raise HTTPException(status_code=404, detail="Game not found")
+        
+        try:
+            game_state = db.query(GameState).filter(GameState.game_id == game_id).one()
+        except NoResultFound :
+            raise HTTPException(status_code=404, detail="Game state not found")
+        
+        if game_state.state == StateEnum.PLAYING:
+            # descarto sus cartas de figura
+            player_figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id).all()
+            
+            if not player_figure_cards:
+                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any figure cards")
+            
+
+            for figure_card in player_figure_cards:
+                db.delete(figure_card)
+
+            # mando sus cartas de movimiento al mazo
+            player_movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id).all()
+            
+            if not player_movement_cards:
+                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any movement cards")
+            
+            for movement_card in player_movement_cards:
+                movement_card.player_id = None
+        
 
         # delete() devuelve la cantidad de filas afectadas por la operacion
         rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete()
@@ -65,15 +93,11 @@ class PlayerRepository:
         db.commit()
 
         game_utils = GameUtils(GameRepository())
-        try:
-            game_state = db.query(GameState).filter(GameState.game_id == game_id).one()
-        except NoResultFound :
-            raise HTTPException(status_code=404, detail="Game state not found")
-        
+
         if game_state.state == StateEnum.PLAYING:
             # chequeo la condicion de ganar por abandono
             await game_utils.check_win_condition(game, db)
-            
+        
         return {"message": "Player has successfully left the game"}
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
