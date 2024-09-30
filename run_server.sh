@@ -12,6 +12,7 @@ show_help() {
 # Default values
 ENVIRONMENT="development"
 NO_PERSISTENCE=false
+PYTHONPATH=$(pwd)
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
