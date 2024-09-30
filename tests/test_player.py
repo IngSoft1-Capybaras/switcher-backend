@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import status
 
@@ -107,33 +107,37 @@ def test_get_player_by_id(player_repo, mock_db):
     assert response.json() == expected_player
     
     player_repo.get_player_by_id.assert_called_once_with(game_id, player_id, mock_db)
-    
+
 def test_leave_game(player_repo, mock_db):
     
     game_id = 1
     player_id = 1
     
-    player_repo.leave_game.response_value = {"message": "Player has successfully left the game"}
+    player_repo.leave_game.return_value = {
+        "message": "Player has successfully left the game",
+        "changed_turn": True
+    } 
     
     with client.websocket_connect("/ws") as websocket:
         response = client.post(
             f"/players/{player_id}/leave?game_id={game_id}"
         )
-        
+        print(player_repo.leave_game.return_value)
         print("Response status code:", response.status_code)
         print("Response JSON:", response.json())
 
         assert response.status_code == 200
         assert response.json() == {"type": "GAMES_LIST_UPDATE"}
         
-        #Recibimos dos mensajes por broadcast
+        #Recibimos tres mensajes por broadcast
         #Guardamos en messages
         messages = []
-        for _ in range(2):
+        for _ in range(3):
             message = websocket.receive_json()
             messages.append(message)
         
         expected_messages = [
+            {"type":f"{game_id}:GAME_INFO_UPDATE"},
             {"type": "GAMES_LIST_UPDATE"},
             {"type": f"{game_id}:GAME_INFO_UPDATE"}
         ]
