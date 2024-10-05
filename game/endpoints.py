@@ -9,7 +9,7 @@ from player.schemas import PlayerCreateMatch, PlayerInDB
 from player.player_repository import PlayerRepository
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
-from .game_repository import GameRepository
+from .game_repository import GameRepository, get_game_repository
 from board.board_repository import BoardRepository
 from connection_manager import manager
 
@@ -22,7 +22,7 @@ game_router = APIRouter(
 async def create_game(game: GameCreate, 
                       player: PlayerCreateMatch, 
                       db: Session = Depends(get_db), 
-                      repo: GameRepository = Depends()):
+                      repo: GameRepository = Depends(get_game_repository)):
     
         res = repo.create_game(game, player, db)
         games_list_update = {
@@ -46,13 +46,13 @@ async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, 
 
 # Obtener partida segun id
 @game_router.get("/games/{game_id}")
-async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
+async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends(get_game_repository)):
     return repo.get_game_by_id(game_id, db)
 
 
 # Obtener ganador
 @game_router.get("/games/{game_id}/winner")
-async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends()):
+async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends(get_game_repository)):
     return repo.get_game_winner(game_id, db)
 
 @game_router.get("/games/{game_id}/board")
