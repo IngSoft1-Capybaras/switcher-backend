@@ -20,6 +20,7 @@ class MovementCardsRepository:
 
         return movement_cards_list
     
+
     def get_movement_card_by_id(self, game_id: int, player_id: int, card_id: int, db : Session) -> MovementCardSchema:
         
         # Fetch the specific movement card by its id, player_id and game_id
@@ -34,21 +35,19 @@ class MovementCardsRepository:
         movement_card_schema = MovementCardSchema.model_validate(movement_card)
 
         return movement_card_schema
-    
-    def create_movement_card(self, game_id: int, type: typeEnum, db : Session):
-        
-        try:
-            new_card = MovementCard(
-                description = "",
-                used = False,
-                game_id = game_id,
-                type = type 
-            )
 
-            db.add(new_card)
-            db.commit()
-        finally:
-            db.close()
+
+    def create_movement_card(self, game_id: int, type: typeEnum, db : Session):
+        new_card = MovementCard(
+            description = "",
+            used = False,
+            game_id = game_id,
+            type = type 
+        )
+
+        db.add(new_card)
+        db.commit()
+
 
     def get_movement_deck(self, game_id: int, db : Session) -> list:
         # Fetch figure cards associated with the player and game
@@ -79,3 +78,7 @@ class MovementCardsRepository:
         db.commit()
 
         return mov_card;
+
+
+def get_movement_cards_repository(movement_cards_repo: MovementCardsRepository = Depends()) -> MovementCardsRepository:
+    return movement_cards_repo
