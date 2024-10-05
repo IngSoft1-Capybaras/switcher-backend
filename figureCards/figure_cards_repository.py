@@ -44,4 +44,22 @@ class FigureCardsRepository:
         )
         db.add(new_card)
         db.commit()
+    
+    def grab_figure_cards(self, player_id: int, game_id: int,db: Session):
+        figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                    FigureCard.game_id == game_id,
+                                                    FigureCard.show == True
+                                                    ).all()
         
+        cards_needed = 3 - len(figure_cards)
+        
+        if cards_needed > 0:
+            db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                        FigureCard.game_id == game_id,
+                                                        FigureCard.show == False
+                                                        ).limit(cards_needed).update({FigureCard.show: True}, synchronize_session=False)
+            
+            db.commit()
+            
+        
+            

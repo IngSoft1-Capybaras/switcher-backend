@@ -79,3 +79,19 @@ class MovementCardsRepository:
         db.commit()
 
         return mov_card;
+    
+    def grab_mov_cards(self, player_id: int, game_id: int,db: Session):
+        movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id,
+                                                    MovementCard.game_id==game_id, MovementCard.used == False).all()
+        
+        cards_needed = 3 - len(movement_cards)
+        
+        if cards_needed > 0:
+            db.query(MovementCard).filter(
+                MovementCard.player_id.is_(None),
+                MovementCard.game_id == game_id
+            ).limit(cards_needed).update({MovementCard.player_id: player_id}, synchronize_session=False)
+            
+            db.commit()
+            
+        
