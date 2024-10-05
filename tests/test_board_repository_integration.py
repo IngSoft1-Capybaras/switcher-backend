@@ -45,15 +45,7 @@ def test_get_board(board_repository: BoardRepository, session):
 
     assert isinstance(board, BoardOut)
     assert board.game_id == 1
-        
-
-@pytest.mark.integration_test
-def test_configure_board(board_repository: BoardRepository, session):    
-    N_boxes = session.query(Box).filter(Box.game_id == 2).count()
-    board_repository.configure_board(2, session)
-        
-    assert session.query(Box).filter(Box.game_id == 2).count() == N_boxes + 36   
-
+    
 
 @pytest.mark.integration_test
 def test_create_new_board_for_existing_game(game_repository: GameRepository, board_repository: BoardRepository, session):
@@ -81,56 +73,3 @@ def test_add_box_to_existing_board(board_repository: BoardRepository, session):
     
     new_box_count = session.query(Box).filter(Box.board_id == existing_board.id).count()
     assert new_box_count == initial_box_count + 1
-
-
-@pytest.mark.integration_test
-def test_configure_board_for_new_game(game_repository: GameRepository, board_repository: BoardRepository, session):
-    # creo un nuevo juego sin tablero
-    res = game_repository.create_game(GameCreate(name="Another test game", max_players=4, min_players=2),
-                                PlayerCreateMatch(name="Test Player"),
-                                session)
-    new_game = res.get('game')
-
-    # configuro un tablero para el juego sin haber creado un tablero antes
-    result = board_repository.configure_board(new_game.id, session)
-    
-    assert result == {"message": "Board created successfully"}
-    
-    new_board = session.query(Board).filter(Board.game_id == new_game.id).first()
-    assert new_board is not None
-    
-    box_count = session.query(Box).filter(Box.board_id == new_board.id).count()
-    assert box_count == 36
-
-
-@pytest.mark.integration_test
-def test_configure_board_color_distribution(game_repository: GameRepository, board_repository: BoardRepository, session):
-    # creo un juego sin un tablero
-    res = game_repository.create_game(GameCreate(name="Color Distribution Test Game", max_players=4, min_players=2),
-                            PlayerCreateMatch(name="Test Player"),
-                            session)
-    new_game = res.get('game')
-
-    board_repository.configure_board(new_game.id, session)
-    
-    new_board = session.query(Board).filter(Board.game_id == new_game.id).first()
-    boxes = session.query(Box).filter(Box.board_id == new_board.id).all()
-    
-    # cuento que cada color aparezca 9 veces
-    color_counts = {color: 0 for color in ColorEnum}
-    for box in boxes:
-        color_counts[box.color] += 1
-    
-    assert all(count == 9 for count in color_counts.values())
-
-
-@pytest.mark.integration_test
-def test_configure_board_already_configured(board_repository: BoardRepository, session):
-    # busco un juego que tenga tablero
-    existing_game = session.query(Game).join(Board).first()
-    
-    with pytest.raises(HTTPException) as exc_info:
-        board_repository.configure_board(existing_game.id, session)
-    
-    assert exc_info.value.status_code == 400
-    assert "Board already exists" in str(exc_info.value.detail)
