@@ -44,4 +44,7 @@ class FigureCardsRepository:
         )
         db.add(new_card)
         db.commit()
-        
+
+
+def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
+    return figure_cards_repo

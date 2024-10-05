@@ -18,8 +18,8 @@ from figureCards.figure_cards_repository import FigureCardsRepository
 
 from player.utils import PlayerUtils, get_player_utils
 from player.player_repository import PlayerRepository
-from movementCards.utils import MovementCardUtils, get_mov_cards_utils
-from figureCards.utils import FigureCardUtils, get_fig_cards_utils
+from movementCards.movement_cards_logic import MovementCardLogic, get_mov_cards_logic
+from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 from connection_manager import manager
 
 
@@ -57,8 +57,8 @@ async def start_game(
     game_state_repo: GameStateRepository = Depends(),
     player_utils: PlayerUtils = Depends(get_player_utils),
     board_repo: BoardRepository = Depends(),
-    mov_cards_utils: MovementCardUtils = Depends(get_mov_cards_utils),
-    fig_cards_utils: FigureCardUtils = Depends(get_fig_cards_utils)
+    mov_cards_logic: MovementCardLogic = Depends(get_mov_cards_logic),
+    fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic)
 ):
     
     #Verificar que existan jugadores en la partida
@@ -71,11 +71,11 @@ async def start_game(
     board_creation_result = board_repo.configure_board(game_id, db)
     
     #Crear Mazo Movimientos y asignar 3 a cada jugador
-    mov_deck_creation = mov_cards_utils.create_mov_deck(game_id, db)
+    mov_deck_creation = mov_cards_logic.create_mov_deck(game_id, db)
 
     
     #Crear Mazo Figuras para cada jugador
-    fig_deck_creation = fig_cards_utils.create_fig_deck(db, game_id)
+    fig_deck_creation = fig_cards_logic.create_fig_deck(db, game_id)
     
     # Cambiar estado de la partida
     game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
