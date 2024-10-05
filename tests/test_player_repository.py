@@ -1,15 +1,16 @@
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
+
+from fastapi import HTTPException
+
 from player.player_repository import PlayerRepository
 from game.game_repository import GameRepository
-from board.models import  Board, Box
-from figureCards.models import FigureCard
+
 from game.models import Game
 from game.schemas import GameCreate
-from gameState.models import GameState
-from movementCards.models import MovementCard
-from figureCards.models import FigureCard
+from gameState.models import GameState, StateEnum
+
 from player.models import Player, turnEnum
 from player.schemas import PlayerCreateMatch
 
@@ -61,20 +62,35 @@ def test_get_players_in_game(player_repo: PlayerRepository, session):
 @pytest.mark.integration_test     
 def test_assign_turn_player(game_repository: GameRepository, player_repo: PlayerRepository, session):
     # session = Session()
-    try:
-        res = game_repository.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
-                                          PlayerCreateMatch(name="Test Player"), 
-                                          session)
-        
-        game = res.get('game')
-        player = res.get('player')
     
-        player_repo.assign_turn_player(game.id, player.id, turnEnum.SEGUNDO, session)
-            
-        updated_player = session.query(Player).filter(Player.id == player.id).one()
-            
-        assert updated_player.turn == turnEnum.SEGUNDO
-    except NoResultFound:
-        raise ValueError(f"There is no player with id {player.id}")
-    # finally:
-    #     session.close()
+    res = game_repository.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
+                                      PlayerCreateMatch(name="Test Player"), 
+                                      session)
+    
+    game = res.get('game')
+    player = res.get('player')
+
+    player_repo.assign_turn_player(game.id, player.id, turnEnum.SEGUNDO, session)
+        
+    updated_player = session.query(Player).filter(Player.id == player.id).one()
+        
+    assert updated_player.turn == turnEnum.SEGUNDO
+
+
+@pytest.mark.integration_test
+def test_create_player_success(player_repo: PlayerRepository,game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+                                      PlayerCreateMatch(name="Test Player"), 
+                                      session)
+    
+    game = res.get('game')
+
+    player_data = player_repo.create_player(game_id=game.id, player_name="Test Player", db=session)
+
+    new_player = session.query(Player).filter(Player.id == player_data["player_id"]).first()
+
+    assert new_player is not None
+    assert new_player.name == "Test Player"
+    assert new_player.host is False
+    assert new_player.winner is False
+    
