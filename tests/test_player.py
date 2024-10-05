@@ -12,7 +12,7 @@ from player.endpoints import player_router
 
 from game.game_repository import GameRepository
 from game.schemas import GameInDB
-from game.utils import get_game_utils, GameUtils
+from game.game_logic import get_game_logic, GameLogic
 
 from main import app 
 
@@ -26,8 +26,8 @@ def mock_db():
     return MagicMock(spec=Session)
 
 @pytest.fixture
-def mock_game_utils():
-    return MagicMock(spec=GameUtils)
+def mock_game_logic():
+    return MagicMock(spec=GameLogic)
 
 # Mock repository
 @pytest.fixture
@@ -40,15 +40,15 @@ def game_repo():
     return MagicMock(spec=GameRepository)
 
 @pytest.fixture(autouse=True)
-def setup_dependency_override(game_repo, player_repo, mock_game_utils, mock_db):
+def setup_dependency_override(game_repo, player_repo, mock_game_logic, mock_db):
     def override_get_db():
         return mock_db
     
-    def override_get_game_utils():
-        return mock_game_utils
+    def override_get_game_logic():
+        return mock_game_logic
     
     app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_game_utils] = override_get_game_utils
+    app.dependency_overrides[get_game_logic] = override_get_game_logic
     app.dependency_overrides[PlayerRepository] = lambda: player_repo
     app.dependency_overrides[GameRepository] = lambda: game_repo
 
@@ -149,12 +149,12 @@ def test_leave_game(player_repo, mock_db):
         player_repo.leave_game.assert_called_once_with(game_id, player_id, mock_db)
 
 
-def test_join_game(mock_game_utils, player_repo, game_repo ,mock_db):
+def test_join_game(mock_game_logic, player_repo, game_repo ,mock_db):
     
     game_id = 1
     player_name = "player1"
 
-    mock_game_utils.count_players_in_game.return_value = 2
+    mock_game_logic.count_players_in_game.return_value = 2
 
     
     game_repo.get_game_by_id.return_value = {"id": game_id, "name": "my game", "max_players": 3, "min_players": 3}
@@ -184,7 +184,7 @@ def test_join_game(mock_game_utils, player_repo, game_repo ,mock_db):
             assert expected_message in messages
             
         game_repo.get_game_by_id.assert_called_once_with(game_id, mock_db)
-        mock_game_utils.count_players_in_game.assert_called_once_with(game_id, mock_db)
+        mock_game_logic.count_players_in_game.assert_called_once_with(game_id, mock_db)
         player_repo.create_player.assert_called_once_with(game_id, player_name, mock_db)
     
     
