@@ -9,9 +9,10 @@ from player.models import Player
 from connection_manager import manager
 
 
-def get_game_utils(game_repo: GameRepository = Depends()):
-    return GameUtils(game_repo)
-class GameUtils:
+def get_game_logic(game_repo: GameRepository = Depends()):
+    return GameLogic(game_repo)
+
+class GameLogic:
     def __init__(self, game_repository: GameRepository):
         self.game_repository = game_repository
 

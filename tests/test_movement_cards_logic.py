@@ -1,21 +1,21 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from movementCards.utils import MovementCardUtils
+from movementCards.movement_cards_logic import MovementCardLogic
 from movementCards.models import typeEnum
 
 
 @pytest.fixture
-def mov_cards_utils():
+def mov_cards_logic():
     mock_mov_cards_repo = MagicMock()
     mock_player_repo = MagicMock()
-    return MovementCardUtils(mov_card_repo=mock_mov_cards_repo, player_repo=mock_player_repo)
+    return MovementCardLogic(mov_card_repo=mock_mov_cards_repo, player_repo=mock_player_repo)
 
-def test_create_mov_deck(mov_cards_utils):
+def test_create_mov_deck(mov_cards_logic):
     mock_session = MagicMock()
     game_id = 1
     
     with patch('random.shuffle', lambda x: x):
-        response = mov_cards_utils.create_mov_deck(mock_session, game_id)
+        response = mov_cards_logic.create_mov_deck(mock_session, game_id)
     
     assert response == {"message": "Movement deck created and assigned to players"}
     
@@ -29,10 +29,10 @@ def test_create_mov_deck(mov_cards_utils):
         ((game_id, typeEnum.LINEAL_ESP, mock_session),)      
     ] * 7
 
-    # mov_cards_utils.mov_card_repo.create_movement_card.assert_has_calls(expected_calls, any_order=True)
+    # mov_cards_logic.mov_card_repo.create_movement_card.assert_has_calls(expected_calls, any_order=True)
     
     # me fijo que tenga 49 llamadas
-    assert mov_cards_utils.mov_card_repo.create_movement_card.call_count == len(expected_calls)
+    assert mov_cards_logic.mov_card_repo.create_movement_card.call_count == len(expected_calls)
     
     
     

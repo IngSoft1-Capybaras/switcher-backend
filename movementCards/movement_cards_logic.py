@@ -9,9 +9,9 @@ from .movement_cards_repository import MovementCardsRepository
 from database.db import get_db
 from player.player_repository import PlayerRepository
 
-def get_mov_cards_utils(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
-    return MovementCardUtils(mov_card_repo, player_repo)
-class MovementCardUtils:
+def get_mov_cards_logic(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
+    return MovementCardLogic(mov_card_repo, player_repo)
+class MovementCardLogic:
     
     def __init__(
         self, mov_card_repo: MovementCardsRepository, player_repo: PlayerRepository

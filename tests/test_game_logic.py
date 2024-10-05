@@ -1,16 +1,16 @@
 from tkinter import N
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from game.utils import GameUtils
+from unittest.mock import MagicMock, patch
+from game.game_logic import GameLogic
 from player.models import Player
 
 @pytest.fixture
-def game_utils():
+def game_logic():
     mock_game_repo = MagicMock()
-    return GameUtils(game_repository=mock_game_repo)
+    return GameLogic(game_repository=mock_game_repo)
 
 @pytest.mark.asyncio
-async def test_check_win_condition(game_utils):
+async def test_check_win_condition(game_logic):
     game_id = 1
     game_state_id = 1
     #Mock game 
@@ -22,8 +22,8 @@ async def test_check_win_condition(game_utils):
     mock_session = MagicMock()
     
     #Mock handle win
-    with patch.object(game_utils, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_utils.check_win_condition(mock_game, mock_session)
+    with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
+        result = await game_logic.check_win_condition(mock_game, mock_session)
     
         mock_handle_win.assert_called_once_with(mock_game.id, mock_game.players[0] ,mock_session)
         assert result

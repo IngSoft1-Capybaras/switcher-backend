@@ -7,10 +7,10 @@ from game.models import Game
 from player.player_repository import PlayerRepository
 from fastapi import Depends
 
-def get_fig_cards_utils(fig_card_repo: FigureCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
-    return FigureCardUtils(fig_card_repo, player_repo)
+def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
+    return FigureCardsLogic(fig_card_repo, player_repo)
 
-class FigureCardUtils:
+class FigureCardsLogic:
     def __init__(
         self, fig_card_repo: FigureCardsRepository, player_repo: PlayerRepository
     ):
