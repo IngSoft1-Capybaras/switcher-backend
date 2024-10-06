@@ -170,7 +170,7 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
     next_player_id = 3
     current_player_id = 7
     
-    mock_game_state_repo.get_current_player.return_value = current_player_id
+    mock_game_state_repo.get_current_player.return_value = {"current_player_id": current_player_id}
     mock_game_state_repo.get_next_player_id.return_value = next_player_id
     
     mock_game_state_repo.update_current_player.return_value = None
