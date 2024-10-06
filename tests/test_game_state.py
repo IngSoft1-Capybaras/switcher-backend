@@ -165,13 +165,18 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         mock_game_state_repo.update_current_player.assert_called_once_with(game_id, players[0].id, mock_db)
         
         
-def test_finish_turn(mock_game_state_repo, mock_db):
+def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_repo, mock_db):
     game_id = 2
     next_player_id = 3
+    current_player_id = 7
     
+    mock_game_state_repo.get_current_player.return_value = current_player_id
     mock_game_state_repo.get_next_player_id.return_value = next_player_id
     
     mock_game_state_repo.update_current_player.return_value = None
+    
+    mock_fig_card_repo.grab_figure_cards.return_value = None
+    mock_mov_card_repo.grab_mov_cards.return_value = None
     
     with client.websocket_connect("/ws") as websocket:
 
@@ -185,7 +190,8 @@ def test_finish_turn(mock_game_state_repo, mock_db):
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}:NEXT_TURN"
         
+        mock_game_state_repo.get_current_player.called_once_with(game_id, mock_db)
         mock_game_state_repo.get_next_player_id.called_once_with(game_id, mock_db)
         mock_game_state_repo.update_current_player.called_once_with(game_id, next_player_id, mock_db)
-        
-        
+        mock_fig_card_repo.grab_figure_cards.called_once_with(current_player_id, game_id, mock_db)
+        mock_mov_card_repo.grab_mov_cards.called_once_with(current_player_id, game_id, mock_db)
