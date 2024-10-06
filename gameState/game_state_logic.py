@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from .models import GameState, StateEnum
 from .game_state_repository import GameStateRepository
 
-class GameStateGameLogic:
+class GameStateLogic:
     def __init__(
         self, game_repo: GameRepository, game_state_repo: GameStateRepository
     ):

@@ -11,11 +11,11 @@ from board.board_repository import BoardRepository
 from figureCards.figure_cards_repository import FigureCardsRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
 
-from player.game_logic import PlayerGameLogic, get_player_game_logic
+from player.player_logic import PlayerLogic, get_player_logic
 from figureCards.utils import FigureCardUtils, get_fig_cards_utils
 from movementCards.utils import MovementCardUtils, get_mov_cards_utils
 
-from board.game_logic import BoardGameLogic, get_board_game_logic
+from board.board_logic import BoardLogic, get_board_logic
 
 from gameState.models import StateEnum
 from player.schemas import turnEnum, PlayerInDB
@@ -34,8 +34,8 @@ def mock_db():
 
 
 @pytest.fixture
-def mock_player_game_logic():
-    return MagicMock(spec=PlayerGameLogic)
+def mock_player_logic():
+    return MagicMock(spec=PlayerLogic)
 
 @pytest.fixture
 def mock_movement_cards_utils():
@@ -46,8 +46,8 @@ def mock_figure_cards_utils():
     return MagicMock(spec=FigureCardUtils)
 
 @pytest.fixture
-def mock_board_game_logic():
-    return MagicMock(spec=BoardGameLogic)
+def mock_board_logic():
+    return MagicMock(spec=BoardLogic)
 
 @pytest.fixture
 def mock_player_repo():
@@ -76,12 +76,12 @@ def mock_mov_card_repo():
 
 # Apply the override before running the tests
 @pytest.fixture(autouse=True)
-def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_utils, mock_game_state_repo, mock_movement_cards_utils, mock_player_game_logic,mock_board_game_logic, mock_db):
+def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_utils, mock_game_state_repo, mock_movement_cards_utils, mock_player_logic,mock_board_logic, mock_db):
     def override_get_db():
         return mock_db
     
-    def override_get_players_game_logic():
-        return mock_player_game_logic
+    def override_get_players_logic():
+        return mock_player_logic
     
     def override_get_mov_cards_utils():
         return mock_movement_cards_utils
@@ -89,8 +89,8 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     def override_get_fig_cards_utils():
         return mock_figure_cards_utils
     
-    def override_get_board_game_logic():
-        return mock_board_game_logic
+    def override_get_board_logic():
+        return mock_board_logic
     
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[GameStateRepository] = lambda: mock_game_state_repo
@@ -99,12 +99,12 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     app.dependency_overrides[BoardRepository] = lambda: mock_board_repo
     app.dependency_overrides[FigureCardsRepository] = lambda: mock_fig_card_repo
     app.dependency_overrides[MovementCardsRepository] = lambda: mock_mov_card_repo
-    app.dependency_overrides[BoardGameLogic] = lambda: mock_board_game_logic
+    app.dependency_overrides[BoardLogic] = lambda: mock_board_logic
     
     app.dependency_overrides[get_fig_cards_utils] = override_get_fig_cards_utils
     app.dependency_overrides[get_mov_cards_utils] = override_get_mov_cards_utils
-    app.dependency_overrides[get_player_game_logic] = override_get_players_game_logic
-    app.dependency_overrides[get_board_game_logic] = override_get_board_game_logic
+    app.dependency_overrides[get_player_logic] = override_get_players_logic
+    app.dependency_overrides[get_board_logic] = override_get_board_logic
 
     
     yield
@@ -115,10 +115,10 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
 @patch('figureCards.utils.random.sample')
 @patch('movementCards.utils.random.shuffle')
 @patch('movementCards.utils.random.sample')
-@patch('player.game_logic.random.sample')
+@patch('player.player_logic.random.sample')
 def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_random_shuffle,mock_fig_random_sample, mock_fig_random_shuffle,
                     mock_board_repo, mock_game_state_repo, mock_player_repo, mock_fig_card_repo,mock_mov_card_repo, mock_game_repo, 
-                    mock_figure_cards_utils, mock_movement_cards_utils, mock_player_game_logic, mock_board_game_logic, mock_db
+                    mock_figure_cards_utils, mock_movement_cards_utils, mock_player_logic, mock_board_logic, mock_db
                     ):
     game_id = 3
     game_state_id = 3
@@ -130,11 +130,11 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
     mock_player_repo.get_players_in_game.return_value = players
     
     mock_player_random_sample.return_value = [1, 2]
-    mock_player_game_logic.assign_random_turns.return_value = players[0].id
+    mock_player_logic.assign_random_turns.return_value = players[0].id
     
     mock_movement_cards_utils.mov_card_repo = mock_mov_card_repo
     
-    mock_board_game_logic.configure_board.return_value = {"message": "Board created successfully"}
+    mock_board_logic.configure_board.return_value = {"message": "Board created successfully"}
     mock_movement_cards_utils.create_mov_deck.return_value = {"message": "Movement deck created and assigned to players"}
     mock_figure_cards_utils.create_fig_deck.return_value = {"message": "Figure deck created"}
     
@@ -171,7 +171,7 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         
         mock_figure_cards_utils.create_fig_deck.assert_called_once_with(mock_db, game_id)
         mock_movement_cards_utils.create_mov_deck.assert_called_once_with(game_id, mock_db)
-        mock_player_game_logic.assign_random_turns.assert_called_once_with(players, mock_db)
+        mock_player_logic.assign_random_turns.assert_called_once_with(players, mock_db)
         
         mock_game_state_repo.update_game_state.assert_called_once_with(game_id, StateEnum.PLAYING, mock_db)
         mock_game_state_repo.update_current_player.assert_called_once_with(game_id, players[0].id, mock_db)

@@ -5,10 +5,10 @@ from .schemas import BoardAndBoxesOut
 from fastapi import HTTPException, status, Depends
 from .board_repository import BoardRepository
 
-def get_board_game_logic(board_repo: BoardRepository = Depends()):
-    return BoardGameLogic(board_repo)
+def get_board_logic(board_repo: BoardRepository = Depends()):
+    return BoardLogic(board_repo)
 
-class BoardGameLogic:
+class BoardLogic:
     
     def __init__(self, board_repo: BoardRepository):
         self.board_repo = board_repo

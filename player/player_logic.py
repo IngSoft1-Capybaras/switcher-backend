@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from database.db import get_db
 from fastapi import Depends
 
-def get_player_game_logic(player_repo: PlayerRepository = Depends()):
-    return PlayerGameLogic(player_repo)
+def get_player_logic(player_repo: PlayerRepository = Depends()):
+    return PlayerLogic(player_repo)
 
-class PlayerGameLogic:
+class PlayerLogic:
     def __init__(self, player_repo: PlayerRepository):
         self.player_repo = player_repo
 
