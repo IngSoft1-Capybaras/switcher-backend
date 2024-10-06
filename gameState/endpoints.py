@@ -16,10 +16,12 @@ from board.board_repository import BoardRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
 from figureCards.figure_cards_repository import FigureCardsRepository
 
-from player.utils import PlayerUtils, get_player_utils
+from player.player_logic import PlayerLogic, get_player_logic
 from player.player_repository import PlayerRepository
 from movementCards.movement_cards_logic import MovementCardLogic, get_mov_cards_logic
 from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
+
+from board.board_logic import BoardLogic, get_board_logic
 from connection_manager import manager
 
 
@@ -55,20 +57,21 @@ async def start_game(
     db: Session = Depends(get_db),
     player_repo: PlayerRepository = Depends(),
     game_state_repo: GameStateRepository = Depends(),
-    player_utils: PlayerUtils = Depends(get_player_utils),
+    player_logic: PlayerLogic = Depends(get_player_logic),
     board_repo: BoardRepository = Depends(),
     mov_cards_logic: MovementCardLogic = Depends(get_mov_cards_logic),
-    fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic)
+    fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic),
+    board_logic: BoardLogic = Depends(get_board_logic)
 ):
     
     #Verificar que existan jugadores en la partida
     players = player_repo.get_players_in_game(game_id, db)
     
     # Asignar turnos aleatoriamente cada jugador y obtener primer jugador
-    first_player_id = player_utils.assign_random_turns(players,db)
+    first_player_id = player_logic.assign_random_turns(players,db)
     
     #Crear tablero
-    board_creation_result = board_repo.configure_board(game_id, db)
+    board_creation_result = board_logic.configure_board(game_id, db)
     
     #Crear Mazo Movimientos y asignar 3 a cada jugador
     mov_deck_creation = mov_cards_logic.create_mov_deck(game_id, db)

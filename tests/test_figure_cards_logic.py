@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from figureCards.figure_cards_logic import FigureCardsLogic
 from figureCards.models import typeEnum
-from player.utils import PlayerUtils
+from player.player_logic import PlayerLogic
 
 @pytest.fixture
 def player_repo():
@@ -14,16 +14,16 @@ def fig_cards_logic(player_repo):
     return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=mock_fig_cards_repo)
 
 @pytest.fixture
-def player_utils(player_repo):
-    return PlayerUtils(player_repo= player_repo)
+def player_logic(player_repo):
+    return PlayerLogic(player_repo= player_repo)
 
-def test_create_fig_deck(fig_cards_logic, player_utils):
+def test_create_fig_deck(fig_cards_logic, player_logic):
     mock_session = MagicMock()
     game_id = 1
     
     mock_player_1 = MagicMock(id=1)
     
-    player_utils.player_repo.get_players_in_game.return_value = [mock_player_1]
+    player_logic.player_repo.get_players_in_game.return_value = [mock_player_1]
     
     with patch('random.shuffle', lambda x: x):
         response = fig_cards_logic.create_fig_deck(mock_session, game_id)

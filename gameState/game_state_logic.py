@@ -4,9 +4,8 @@ from game.game_repository import GameRepository
 from sqlalchemy.orm import Session
 from .models import GameState, StateEnum
 from .game_state_repository import GameStateRepository
-from fastapi import HTTPException, status
 
-class GameStateUtils:
+class GameStateLogic:
     def __init__(
         self, game_repo: GameRepository, game_state_repo: GameStateRepository
     ):
