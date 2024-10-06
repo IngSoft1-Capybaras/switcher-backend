@@ -6,24 +6,18 @@ from game.game_repository import GameRepository
 from gameState.game_state_repository import GameStateRepository
 from gameState.models import StateEnum
 from player.models import Player
+from player.player_repository import PlayerRepository
 from connection_manager import manager
 
 
-def get_game_utils(game_repo: GameRepository = Depends()):
-    return GameUtils(game_repo)
-class GameUtils:
-    def __init__(self, game_repository: GameRepository):
-        self.game_repository = game_repository
+def get_game_logic(game_repo: GameRepository = Depends(), game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends()):
+    return GameLogic(game_repo,game_state_repo, player_repo)
 
-    def count_players_in_game(self, game_id: int, db: Session) -> int:
-        try:
-            game = db.query(Game).filter(Game.id == game_id).one()
-            
-        except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "Game not found")
-        
-        player_count = game.players_count()
-        return player_count
+class GameLogic:
+    def __init__(self, game_repository: GameRepository, game_state_repository: GameStateRepository, player_repository: PlayerRepository):
+        self.game_repository = game_repository
+        self.game_state_repo = game_state_repository
+        self.player_repo = player_repository
 
 
     async def check_win_condition(self, game: Game, db: Session):
@@ -40,15 +34,12 @@ class GameUtils:
 
 
     async def handle_win(self, game_id: int, last_player: Player, db: Session):
-        game_state_repository = GameStateRepository()
 
         # actualizo partida a finalizada
-        game_state_repository.update_game_state(game_id, StateEnum.FINISHED, db)
+        self.game_state_repo.update_game_state(game_id, StateEnum.FINISHED, db)
         
         # asigno al ultimo jugador como ganador
-        last_player.winner = True
-        db.add(last_player)
-        db.commit()
+        self.player_repo.assign_winner_of_game(last_player, db)
         
         player_update = {
                 "type": "PLAYER_WINNER",

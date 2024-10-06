@@ -5,7 +5,6 @@ from .models import Player, turnEnum
 from .schemas import PlayerInDB
 from game.models import Game
 from game.game_repository import GameRepository
-from game.utils import GameUtils
 from gameState.models import GameState, StateEnum
 from gameState.game_state_repository import GameStateRepository
 from connection_manager import manager
@@ -52,7 +51,7 @@ class PlayerRepository:
         
         
     
-    async def leave_game(self, game_id: int, player_id: int, db: Session):
+    async def leave_game(self, game_id: int, player_id: int, game_logic, db: Session):
         try:
             game = db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound :
@@ -104,11 +103,11 @@ class PlayerRepository:
 
         db.commit()
 
-        game_utils = GameUtils(GameRepository())
+        # game_logic = GameLogic(GameRepository())
 
         if game_state.state == StateEnum.PLAYING:
             # chequeo la condicion de ganar por abandono
-            await game_utils.check_win_condition(game, db)
+            await game_logic.check_win_condition(game, db)
         
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
     
@@ -139,3 +138,8 @@ class PlayerRepository:
             db.close()
             
         return {"player_id": player_id}
+    
+    def assign_winner_of_game(self, player: Player, db: Session):
+        player.winner = True
+        db.add(player)
+        db.commit()

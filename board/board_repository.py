@@ -35,28 +35,6 @@ class BoardRepository:
         db.add(new_box)
         db.commit()
 
-            
-    def configure_board(self, game_id: int, db: Session):
-        # Nos aseguramos que un tablero no haya sido creado
-        existing_board = self.get_existing_board(game_id, db)
-        
-        if existing_board:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Board already exists")
-        
-        #Creamos un nuevo tablero
-        new_board = self.create_new_board(game_id, db)
-        
-        #Creamos una lista con los colores de las casillas
-        colors = [ColorEnum.BLUE] * 9 + [ColorEnum.GREEN] * 9 + [ColorEnum.RED] * 9 + [ColorEnum.YELLOW] * 9
-        random.shuffle(colors) # le damos un orden aleatorio
-        
-        #Creamos cada casilla y las guardamos en la DB
-        for i, color in enumerate(colors):
-                pos_x = i % 6
-                pos_y = i // 6
-                self.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y, db)
-        return {"message": "Board created successfully"}
-
     def get_configured_board(self, game_id: int, db: Session):
         """
         Get the board and its boxes of a given game

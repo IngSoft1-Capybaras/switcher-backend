@@ -23,8 +23,6 @@ def figure_cards_repository():
 
 @pytest.mark.integration_test
 def test_get_figure_cards(figure_cards_repository: FigureCardsRepository, session):
-    # session = Session()
-    # try:
     N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1, 
                                                 FigureCard.player_id == 1).count()
     
@@ -32,13 +30,9 @@ def test_get_figure_cards(figure_cards_repository: FigureCardsRepository, sessio
     
     assert len(list_of_cards) == N_cards
 
-    # finally:
-    #     session.close()
-
 
 @pytest.mark.integration_test
 def test_get_figure_card_by_id(figure_cards_repository: FigureCardsRepository, session):
-    # session = Session()
     try:
         # busco la cantidad de cartas con todos id 1
         test_card = session.query(FigureCard).filter(FigureCard.game_id == 1,
@@ -50,18 +44,14 @@ def test_get_figure_card_by_id(figure_cards_repository: FigureCardsRepository, s
         assert test_card.id == figure_card.id
     except NoResultFound:
         raise ValueError("There is no figure card with game_id=1, player_id=1 and id=1")
-    # finally:
-    #     session.close()
+
 
 
 @pytest.mark.integration_test
 def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, session):
-    # session = Session()
-    # try:
     N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1,
                                                FigureCard.player_id == 1).count()
-    # finally:
-    #     session.close()
+
     
     figure_cards_repository.create_figure_card(1, 1, typeEnum.TYPE_4, True, session)
     
