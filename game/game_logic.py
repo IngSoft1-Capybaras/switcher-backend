@@ -31,8 +31,9 @@ class GameLogic:
         # aca irian el resto de las condiciones que se veran en otros sprints
 
 
-    async def handle_win(self, game_id: int, last_player: Player, db: Session, player_repo: PlayerRepository = Depends()):
+    async def handle_win(self, game_id: int, last_player: Player, db: Session):
         game_state_repository = GameStateRepository()
+        player_repo = PlayerRepository()
 
         # actualizo partida a finalizada
         game_state_repository.update_game_state(game_id, StateEnum.FINISHED, db)
