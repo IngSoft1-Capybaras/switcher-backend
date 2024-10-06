@@ -54,7 +54,3 @@ async def get_game_by_id(game_id: int, db: Session = Depends(get_db), repo: Game
 @game_router.get("/games/{game_id}/winner")
 async def get_game_winner(game_id: int, db: Session = Depends(get_db), repo: GameRepository = Depends(get_game_repository)):
     return repo.get_game_winner(game_id, db)
-
-@game_router.get("/games/{game_id}/board")
-async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepository = Depends()):
-    return repo.get_configured_board(game_id, db)
