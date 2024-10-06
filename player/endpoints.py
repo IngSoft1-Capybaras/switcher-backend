@@ -5,7 +5,7 @@ from .player_repository import PlayerRepository
 from .schemas import PlayerJoinRequest
 from game.game_repository import GameRepository
 from connection_manager import manager
-from game.utils import get_game_utils, GameUtils
+from game.game_logic import get_game_logic, GameLogic
 
 player_router = APIRouter()
 
@@ -23,8 +23,10 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 
 # Abandonar juego
 @player_router.post("/players/{player_id}/leave")
-async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), repo: PlayerRepository = Depends()):
-    response = await repo.leave_game(game_id, player_id, db)
+async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), 
+                     repo: PlayerRepository = Depends(), game_logic: GameLogic = Depends(get_game_logic)):
+    
+    response = await repo.leave_game(game_id, player_id, game_logic, db)
 
     #Si se cambia el turno del jugador actual porque este decidio abandonar la partida
     if response.get("changed_turn"):
@@ -52,12 +54,12 @@ async def join_game(game_id: int,
                     db: Session = Depends(get_db), 
                     repo: PlayerRepository = Depends(), 
                     game_repo: GameRepository = Depends(),
-                    game_utils: GameUtils = Depends(get_game_utils)
+                    game_logic: GameLogic = Depends(get_game_logic)
                     ):
 
     #Verificar que no se supere el maximo de jugadores
     game = game_repo.get_game_by_id(game_id, db)
-    players_in_game = game_utils.count_players_in_game(game_id, db)
+    players_in_game = game_repo.count_players_in_game(game_id, db)
     
     if game.get('max_players') == players_in_game:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The game is full.")

@@ -12,8 +12,8 @@ from figureCards.figure_cards_repository import FigureCardsRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
 
 from player.player_logic import PlayerLogic, get_player_logic
-from figureCards.utils import FigureCardUtils, get_fig_cards_utils
-from movementCards.utils import MovementCardUtils, get_mov_cards_utils
+from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
+from movementCards.movement_cards_logic import MovementCardLogic, get_mov_cards_logic
 
 from board.board_logic import BoardLogic, get_board_logic
 
@@ -38,12 +38,13 @@ def mock_player_logic():
     return MagicMock(spec=PlayerLogic)
 
 @pytest.fixture
-def mock_movement_cards_utils():
-    return MagicMock(spec=MovementCardUtils)
+def mock_movement_cards_logic():
+    return MagicMock(spec=MovementCardLogic)
+
 
 @pytest.fixture
-def mock_figure_cards_utils():
-    return MagicMock(spec=FigureCardUtils)
+def mock_figure_cards_logic():
+    return MagicMock(spec=FigureCardsLogic)
 
 @pytest.fixture
 def mock_board_logic():
@@ -76,18 +77,18 @@ def mock_mov_card_repo():
 
 # Apply the override before running the tests
 @pytest.fixture(autouse=True)
-def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_utils, mock_game_state_repo, mock_movement_cards_utils, mock_player_logic,mock_board_logic, mock_db):
+def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_logic, mock_game_state_repo, mock_movement_cards_logic, mock_player_logic,mock_board_logic, mock_db):
     def override_get_db():
         return mock_db
     
     def override_get_players_logic():
         return mock_player_logic
     
-    def override_get_mov_cards_utils():
-        return mock_movement_cards_utils
+    def override_get_mov_cards_logic():
+        return mock_movement_cards_logic
     
-    def override_get_fig_cards_utils():
-        return mock_figure_cards_utils
+    def override_get_fig_cards_logic():
+        return mock_figure_cards_logic
     
     def override_get_board_logic():
         return mock_board_logic
@@ -101,8 +102,8 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     app.dependency_overrides[MovementCardsRepository] = lambda: mock_mov_card_repo
     app.dependency_overrides[BoardLogic] = lambda: mock_board_logic
     
-    app.dependency_overrides[get_fig_cards_utils] = override_get_fig_cards_utils
-    app.dependency_overrides[get_mov_cards_utils] = override_get_mov_cards_utils
+    app.dependency_overrides[get_fig_cards_logic] = override_get_fig_cards_logic
+    app.dependency_overrides[get_mov_cards_logic] = override_get_mov_cards_logic
     app.dependency_overrides[get_player_logic] = override_get_players_logic
     app.dependency_overrides[get_board_logic] = override_get_board_logic
 
@@ -111,14 +112,14 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     app.dependency_overrides = {}  # Clean up overrides after test
 
 
-@patch('figureCards.utils.random.shuffle')
-@patch('figureCards.utils.random.sample')
-@patch('movementCards.utils.random.shuffle')
-@patch('movementCards.utils.random.sample')
+@patch('figureCards.figure_cards_logic.random.shuffle')
+@patch('figureCards.figure_cards_logic.random.sample')
+@patch('movementCards.movement_cards_logic.random.shuffle')
+@patch('movementCards.movement_cards_logic.random.sample')
 @patch('player.player_logic.random.sample')
 def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_random_shuffle,mock_fig_random_sample, mock_fig_random_shuffle,
                     mock_board_repo, mock_game_state_repo, mock_player_repo, mock_fig_card_repo,mock_mov_card_repo, mock_game_repo, 
-                    mock_figure_cards_utils, mock_movement_cards_utils, mock_player_logic, mock_board_logic, mock_db
+                    mock_figure_cards_logic, mock_movement_cards_logic, mock_player_logic, mock_board_logic, mock_db
                     ):
     game_id = 3
     game_state_id = 3
@@ -132,11 +133,11 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
     mock_player_random_sample.return_value = [1, 2]
     mock_player_logic.assign_random_turns.return_value = players[0].id
     
-    mock_movement_cards_utils.mov_card_repo = mock_mov_card_repo
+    mock_movement_cards_logic.mov_card_repo = mock_mov_card_repo
     
     mock_board_logic.configure_board.return_value = {"message": "Board created successfully"}
-    mock_movement_cards_utils.create_mov_deck.return_value = {"message": "Movement deck created and assigned to players"}
-    mock_figure_cards_utils.create_fig_deck.return_value = {"message": "Figure deck created"}
+    mock_movement_cards_logic.create_mov_deck.return_value = {"message": "Movement deck created and assigned to players"}
+    mock_figure_cards_logic.create_fig_deck.return_value = {"message": "Figure deck created"}
     
     mock_game_state_repo.update_game_state.return_value = None
     mock_game_state_repo.update_current_player.return_value = None
@@ -145,7 +146,7 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
     mock_fig_random_sample.side_effect = lambda x, y: x[:y]
     
     
-    mock_movement_cards_utils.mov_card_repo.get_movement_deck.return_value = [
+    mock_movement_cards_logic.mov_card_repo.get_movement_deck.return_value = [
     MovementCardSchema(id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=None, game_id=game_id),
     MovementCardSchema(id=2, type=typeEnum.EN_L_DER, description="test", used=False, player_id=None, game_id=game_id),
     MovementCardSchema(id=3, type=typeEnum.LINEAL_CONT, description="test", used=False, player_id=None, game_id=game_id)]
@@ -169,8 +170,8 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         
         mock_player_repo.get_players_in_game.assert_called_with(game_id, mock_db)
         
-        mock_figure_cards_utils.create_fig_deck.assert_called_once_with(mock_db, game_id)
-        mock_movement_cards_utils.create_mov_deck.assert_called_once_with(game_id, mock_db)
+        mock_figure_cards_logic.create_fig_deck.assert_called_once_with(mock_db, game_id)
+        mock_movement_cards_logic.create_mov_deck.assert_called_once_with(game_id, mock_db)
         mock_player_logic.assign_random_turns.assert_called_once_with(players, mock_db)
         
         mock_game_state_repo.update_game_state.assert_called_once_with(game_id, StateEnum.PLAYING, mock_db)

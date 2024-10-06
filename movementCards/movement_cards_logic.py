@@ -9,9 +9,8 @@ from .movement_cards_repository import MovementCardsRepository
 from database.db import get_db
 from player.player_repository import PlayerRepository
 
-def get_mov_cards_utils(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
-    return MovementCardUtils(mov_card_repo, player_repo)
-class MovementCardUtils:
+
+class MovementCardLogic:
     
     def __init__(
         self, mov_card_repo: MovementCardsRepository, player_repo: PlayerRepository
@@ -40,9 +39,13 @@ class MovementCardUtils:
         # asigno 3 a cada jugador
         players = self.player_repo.get_players_in_game(game_id,db)
 
+        if len(players) == 0:
+            return {"message": "Movement deck was not created because there are no players in game"}
+
         for player in players:
             # obtengo las cartas del juego que quedan en el deck (las que no fueron asignadas a un player aun)
             movDeck = self.mov_card_repo.get_movement_deck(game_id, db)
+
             # tomo 3 random
             asigned_mov_cards = random.sample(movDeck, 3)
             print(asigned_mov_cards)
@@ -55,5 +58,6 @@ class MovementCardUtils:
         return {"message": "Movement deck created and assigned to players"}
     
     
-    
+def get_mov_cards_logic(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
+    return MovementCardLogic(mov_card_repo, player_repo)
     
