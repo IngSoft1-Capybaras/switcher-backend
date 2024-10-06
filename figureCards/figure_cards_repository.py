@@ -4,6 +4,12 @@ from sqlalchemy.exc import NoResultFound
 from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+import pdb
 
 class FigureCardsRepository:
 
@@ -52,13 +58,19 @@ class FigureCardsRepository:
                                                     ).all()
         
         cards_needed = 3 - len(figure_cards)
+        logger.info(f"UPDATED !!!!!!!!!!!!!!!!! {cards_needed}")
+        #pdb.set_trace()
         
         if cards_needed > 0:
-            db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+            hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
                                                         FigureCard.game_id == game_id,
                                                         FigureCard.show == False
-                                                        ).limit(cards_needed).update({FigureCard.show: True}, synchronize_session=False)
+                                                        ).limit(cards_needed).all()
             
+            # Actualizar el atributo show a True para las cartas necesarias
+            for card in hidden_cards:
+                card.show = True
+                            
             db.commit()
             
         
