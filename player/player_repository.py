@@ -73,16 +73,6 @@ class PlayerRepository:
                 game_state_repo.update_current_player(game_id, next_player_id,db)
                 changed_turn = True
                 
-            
-            # descarto sus cartas de figura
-            player_figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id).all()
-            
-            if not player_figure_cards:
-                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any figure cards")
-            
-
-            for figure_card in player_figure_cards:
-                db.delete(figure_card)
 
             # mando sus cartas de movimiento al mazo
             player_movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id).all()
@@ -93,7 +83,7 @@ class PlayerRepository:
             for movement_card in player_movement_cards:
                 movement_card.player_id = None
         
-
+        db.commit()
         # delete() devuelve la cantidad de filas afectadas por la operacion
         rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete()
 
@@ -103,13 +93,13 @@ class PlayerRepository:
 
         db.commit()
 
-        # game_logic = GameLogic(GameRepository())
 
         if game_state.state == StateEnum.PLAYING:
             # chequeo la condicion de ganar por abandono
             await game_logic.check_win_condition(game, db)
         
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
+    
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
