@@ -1,9 +1,12 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import MovementCard
 from .schemas import MovementCardSchema, typeEnum
 from player.models import Player
+from game.models import Game
+
+import pdb
 
 class MovementCardsRepository:
 
@@ -77,9 +80,19 @@ class MovementCardsRepository:
         mov_card.player = player
         db.commit()
 
-        return mov_card;
+        return mov_card
     
     def grab_mov_cards(self, player_id: int, game_id: int,db: Session):
+        try: 
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No game found")
+
+        try: 
+            db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found")
+        
         movement_cards = db.query(MovementCard).filter(
                                                         MovementCard.player_id == player_id,
                                                         MovementCard.game_id==game_id, 
@@ -89,17 +102,47 @@ class MovementCardsRepository:
         cards_needed = 3 - len(movement_cards)
         
         if cards_needed > 0:
+            #Obtengo cartas no asignadas a un jugador que no hayan sido usadas
             unassigned_cards = db.query(MovementCard).filter(
-                MovementCard.player_id.is_(None),
-                MovementCard.game_id == game_id
-            ).limit(cards_needed)
-            
+                                                                MovementCard.player_id.is_(None),
+                                                                MovementCard.game_id == game_id,
+                                                                MovementCard.used == False
+                                                            ).limit(cards_needed)
+            pdb.set_trace()
+            #Si no hay, volvemos a armar el mazo de mov con las cartas ya usadas
+            if not unassigned_cards:
+                self.reshuffle_movement_deck(game_id, db)
+                #Obtengo las cartas necesarias para asignarle al jugador
+                unassigned_cards = db.query(MovementCard).filter(
+                                                                MovementCard.player_id.is_(None),
+                                                                MovementCard.game_id == game_id,
+                                                                MovementCard.used == False
+                                                            ).limit(cards_needed)
+                pdb.set_trace()
+
+            #Se las asigno al jugador    
             for card in unassigned_cards:
                 card.player_id = player_id
             
             db.commit()
 
+    def reshuffle_movement_deck(self, game_id : int, db: Session):
+        used_cards = db.query(MovementCard).filter(
+                                                    MovementCard.player_id.is_(None),
+                                                    MovementCard.game_id == game_id,
+                                                    MovementCard.used == True
+                                                  ).all()
 
+        if not used_cards:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No used cards available to reshuffle")        
+        
+        for card in used_cards:
+            card.used = False
+        
+        db.commit()
+        
+        
+        
 def get_movement_cards_repository(movement_cards_repo: MovementCardsRepository = Depends()) -> MovementCardsRepository:
     return movement_cards_repo
 
