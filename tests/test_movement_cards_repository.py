@@ -43,16 +43,13 @@ def test_get_movement_cards_no_cards(movement_cards_repository: MovementCardsRep
 
 @pytest.mark.integration_test
 def test_get_movement_card_by_id(movement_cards_repository: MovementCardsRepository, session):
-    try:
-        # busco la cantidad de cartas con todos id 1
-        test_card = session.query(MovementCard).filter(MovementCard.game_id == 1,
-                                                  MovementCard.player_id == 1,
-                                                  MovementCard.id == 1).one()
+    # busco la cantidad de cartas con todos id 1
+    test_card = session.query(MovementCard).filter(MovementCard.game_id == 1,
+                                            MovementCard.player_id == 1,
+                                            MovementCard.id == 1).one()
         
-        movement_card = movement_cards_repository.get_movement_card_by_id(1, 1, 1, session)
-    except NoResultFound:
-        raise ValueError("There is no movement card with game_id=1, player_id=1 and id=1")
-    
+    movement_card = movement_cards_repository.get_movement_card_by_id(1, 1, 1, session)
+        
     assert test_card.id == movement_card.id
 
 
@@ -133,10 +130,7 @@ def test_assign_mov_card(movement_cards_repository: MovementCardsRepository, ses
 @pytest.mark.integration_test
 def test_discard_mov_card(movement_cards_repository: MovementCardsRepository, session):
     # busco la carta de movimiento con id 1 que se que tiene al player 1
-    try:
-        test_card = session.query(MovementCard).filter(MovementCard.id == 1).one()
-    except NoResultFound:
-        raise ValueError("There is no movement card with id 1")
+    test_card = session.query(MovementCard).filter(MovementCard.id == 1).one()
     
     # Le asigno el player 1 a la carta
     movement_cards_repository.discard_mov_card(test_card.id, session)
