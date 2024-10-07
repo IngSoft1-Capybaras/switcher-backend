@@ -107,8 +107,7 @@ class MovementCardsRepository:
                                                                 MovementCard.player_id.is_(None),
                                                                 MovementCard.game_id == game_id,
                                                                 MovementCard.used == False
-                                                            ).limit(cards_needed)
-            pdb.set_trace()
+                                                            ).limit(cards_needed).all()
             #Si no hay, volvemos a armar el mazo de mov con las cartas ya usadas
             if not unassigned_cards:
                 self.reshuffle_movement_deck(game_id, db)
@@ -117,8 +116,7 @@ class MovementCardsRepository:
                                                                 MovementCard.player_id.is_(None),
                                                                 MovementCard.game_id == game_id,
                                                                 MovementCard.used == False
-                                                            ).limit(cards_needed)
-                pdb.set_trace()
+                                                            ).limit(cards_needed).all()
 
             #Se las asigno al jugador    
             for card in unassigned_cards:

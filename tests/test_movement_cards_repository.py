@@ -157,7 +157,7 @@ def test_grab_mov_cards_no_player(movement_cards_repository: MovementCardsReposi
 @pytest.mark.integration_test
 def test_grab_mov_cards_and_reshuffle(movement_cards_repository: MovementCardsRepository, session):
     
-    game = Game(name="Test Game", max_players=4, min_players=2)
+    game = Game(name="Grab and Reshuffle Game", max_players=4, min_players=2)
     session.add(game)
     session.commit()
     
@@ -172,6 +172,7 @@ def test_grab_mov_cards_and_reshuffle(movement_cards_repository: MovementCardsRe
     
     session.add_all([
         MovementCard(player_id = player1.id ,game_id=game.id,type=typeEnum.DIAGONAL_CONT, description = '', used= False),
+        MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
         MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
         MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= True),
         MovementCard(player_id = player2.id , game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description = '', used= False),
