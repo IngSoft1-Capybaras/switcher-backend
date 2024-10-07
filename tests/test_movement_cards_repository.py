@@ -1,3 +1,4 @@
+from turtle import position
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
@@ -62,7 +63,7 @@ def test_create_new_movement_card(movement_cards_repository: MovementCardsReposi
     # finally:
     #     session.close()
     
-    movement_cards_repository.create_movement_card(1, typeEnum.EN_L_DER, session)
+    movement_cards_repository.create_movement_card(1, typeEnum.EN_L_DER,1, session)
     # session = Session()
     
     # try:
@@ -89,13 +90,13 @@ def test_grab_mov_cards(movement_cards_repository: MovementCardsRepository, sess
     session.add_all([
         MovementCard(player_id = player1.id ,game_id=game.id,type=typeEnum.DIAGONAL_CONT, description = '', used= False),
         MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_ESP, description = '', used= False , position = 1),
         MovementCard(player_id = player2.id , game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False),
-        MovementCard(game_id=game.id, type=typeEnum.LINEAL_ESP, description = '', used= False)
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False, position = 0),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_ESP, description = '', used= False, position = 2),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description = '', used= False, position = 3),
+        MovementCard(game_id=game.id, type=typeEnum.EN_L_IZQ, description = '', used= False, position = 5),
+        MovementCard(game_id=game.id, type=typeEnum.EN_L_IZQ, description = '', used= False, position = 4)
     ])
     session.commit()
     
@@ -112,8 +113,23 @@ def test_grab_mov_cards(movement_cards_repository: MovementCardsRepository, sess
         MovementCard.game_id == game.id,
     ).all()
     
+    cards_left = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == False
+    ).all()
+    
     assert len(shown_cards_player1) == 3
+    for card in shown_cards_player1:
+        assert card.position == None
+        
     assert len(shown_cards_player2) == 3
+    for card in shown_cards_player2:
+        assert card.position == None
+        assert card.type in [typeEnum.LINEAL_ESP, typeEnum.LINEAL_AL_LAT, typeEnum.DIAGONAL_ESP]
+    
+    positions_left = {card.position for card in cards_left}
+    assert positions_left == {3, 4, 5}
     
 @pytest.mark.integration_test
 def test_grab_mov_cards_no_game(movement_cards_repository: MovementCardsRepository, session):
@@ -197,9 +213,19 @@ def test_grab_mov_cards_and_reshuffle(movement_cards_repository: MovementCardsRe
         MovementCard.game_id == game.id,
     ).all()
     
+    cards_left = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == False
+    ).all()
+    
     assert len(shown_cards_player1) == 3
     assert len(shown_cards_player2) == 3
+    assert len(cards_left) == 4
     
+    positions_left = {card.position for card in cards_left}
+    assert positions_left == {2, 3, 4, 5}
+
 @pytest.mark.integration_test
 def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsRepository, session):
     # Crear un juego y agregarlo a la sesión
@@ -220,7 +246,7 @@ def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsReposit
     session.add_all([
         MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description='', used=True),
         MovementCard(game_id=game.id, type=typeEnum.EN_L_DER, description='', used=True),
-        MovementCard(game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description='', used=False),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description='', used=False, position = 7),
         MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description='', used=True),
         MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=True),
         MovementCard(player_id = player1.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
@@ -249,3 +275,5 @@ def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsReposit
     ).all()
     
     assert len(unused_cards_after_reshuffle) == 5
+    positions_left = {card.position for card in unused_cards_after_reshuffle}
+    assert positions_left == {0, 1, 2, 3, 4}
