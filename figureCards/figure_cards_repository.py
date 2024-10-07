@@ -80,7 +80,7 @@ class FigureCardsRepository:
                                                         FigureCard.show == False
                                                         ).limit(cards_needed).all()
             except NoResultFound:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No figure cards found for player")
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No figure cards found for player, player should have won")
             
             # Actualizar el atributo show a True para las cartas necesarias
             for card in hidden_cards:
