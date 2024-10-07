@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import logging
 from fastapi import HTTPException
 from sqlalchemy.orm import sessionmaker
 
@@ -16,6 +17,8 @@ from gameState.game_state_repository import GameStateRepository
 from main import app
 from player.models import Player
 from player.schemas import PlayerCreateMatch
+
+logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR) # Para evitar que se muestren los logs de SQL Alchemy, setear en INFO para ver comportamiento anterior
 
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
@@ -69,6 +72,77 @@ def test_create_new_board_for_existing_game(game_repository: GameRepository, boa
     
     assert isinstance(board, BoardOut)
     assert board.game_id == new_game.id
+
+@pytest.mark.integration_test
+def test_create_new_board_for_non_existing_game(board_repository: BoardRepository, session):
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.create_new_board(999, session)
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not found"
+
+@pytest.mark.integration_test
+def test_get_configured_board_for_non_existing_game(board_repository: BoardRepository, session):
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_configured_board(999, session)
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not found"
+
+@pytest.mark.integration_test
+def test_get_configured_board_for_game_not_started(board_repository: BoardRepository, game_repository: GameRepository, session):
+    # creo un nuevo juego sin tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_configured_board(new_game.id, session)
+    
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Game not started"
+
+@pytest.mark.integration_test
+def test_get_configured_board_for_game_with_no_board(   board_repository: BoardRepository, 
+                                                        game_repository: GameRepository,
+                                                        game_state_repository: GameStateRepository, 
+                                                        session):
+    # creo un nuevo juego sin tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+
+    # inicializo el juego
+    game_state_repository.update_game_state(new_game.id, "PLAYING", session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_configured_board(new_game.id, session)
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Board not found"
+
+@pytest.mark.integration_test
+def test_get_configured_board_for_board_not_configured(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, session):
+    # creo un nuevo juego sin tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+
+    # inicializo el juego
+    game_state_repository.update_game_state(new_game.id, "PLAYING", session)
+
+    # creo un tablero
+    board_repository.create_new_board(new_game.id, session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_configured_board(new_game.id, session)
+    
+    assert exc_info.value.status_code == 404
+    # assert it contains the string "Boxes not found in row "
+    assert "Boxes not found in row " in exc_info.value.detail
 
 @pytest.mark.integration_test
 def test_get_configured_board(board_repository: BoardRepository, game_state_repository: GameStateRepository, session):
