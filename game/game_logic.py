@@ -20,32 +20,34 @@ class GameLogic:
         self.player_repo = player_repository
 
 
-    async def check_win_condition(self, game: Game, db: Session):
+    async def check_win_condition(self, game_id: int, db: Session):
         # chequeo si queda solo uno
         
-        players_left = game.players
+        players_left = self.player_repo.get_players_in_game(game_id, db)
         
         if len(players_left) == 1:
-            await self.handle_win(game.id, players_left[0], db)
+            await self.handle_win(game_id, players_left[0].id, db)
             return True
         
         return False
         # aca irian el resto de las condiciones que se veran en otros sprints
 
 
-    async def handle_win(self, game_id: int, last_player: Player, db: Session):
+    async def handle_win(self, game_id: int, winner_player_id: int, db: Session):
+        
+        winner_player = self.player_repo.get_player_by_id(game_id, winner_player_id, db)
 
         # actualizo partida a finalizada
         self.game_state_repo.update_game_state(game_id, StateEnum.FINISHED, db)
         
         # asigno al ultimo jugador como ganador
-        self.player_repo.assign_winner_of_game(last_player, db)
+        self.player_repo.assign_winner_of_game(game_id, winner_player_id, db)
         
         player_update = {
                 "type": "PLAYER_WINNER",
                 "game_id": game_id,
-                "winner_id": last_player.id,
-                "winner_name": last_player.name
+                "winner_id": winner_player.id,
+                "winner_name": winner_player.name
         }
 
         await manager.broadcast(player_update)
