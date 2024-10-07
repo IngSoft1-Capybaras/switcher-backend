@@ -50,3 +50,6 @@ class GameLogic:
 
         await manager.broadcast(player_update)
         
+        # borro el juego
+        self.game_repository.delete_game(game_id, db)
+        
