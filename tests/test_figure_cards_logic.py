@@ -31,33 +31,35 @@ def test_create_fig_deck(fig_cards_logic, player_logic):
     assert response == {"message": "Figure deck created"}
     
     expected_calls = [
-        ((1, game_id, typeEnum.TYPE_4, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_4, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_4, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_5, True, mock_session),),
-        ((1, game_id, typeEnum.TYPE_5, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_5, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_5, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_6, True, mock_session),),
-        ((1, game_id, typeEnum.TYPE_6, True, mock_session),),
-        ((1, game_id, typeEnum.TYPE_6, True, mock_session),),
-        ((1, game_id, typeEnum.TYPE_1, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_1, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_1, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_1, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_1, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_2, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_2, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_2, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_2, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_3, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_3, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_3, False, mock_session),),
-        ((1, game_id, typeEnum.TYPE_3, False, mock_session),)
+        ((1, game_id, typeEnum.FIGE01, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE02, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE03, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE04, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE05, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE06, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE07, False, mock_session),),
+        ((1, game_id, typeEnum.FIG01, True, mock_session),),
+        ((1, game_id, typeEnum.FIG02, True, mock_session),),
+        ((1, game_id, typeEnum.FIG03, True, mock_session),),
+        ((1, game_id, typeEnum.FIG04, False, mock_session),),
+        ((1, game_id, typeEnum.FIG05, False, mock_session),),
+        ((1, game_id, typeEnum.FIG06, False, mock_session),),
+        ((1, game_id, typeEnum.FIG07, False, mock_session),),
+        ((1, game_id, typeEnum.FIG08, False, mock_session),),
+        ((1, game_id, typeEnum.FIG09, False, mock_session),),
+        ((1, game_id, typeEnum.FIG10, False, mock_session),),
+        ((1, game_id, typeEnum.FIG11, False, mock_session),),
+        ((1, game_id, typeEnum.FIG12, False, mock_session),),
+        ((1, game_id, typeEnum.FIG13, False, mock_session),),
+        ((1, game_id, typeEnum.FIG14, False, mock_session),),
+        ((1, game_id, typeEnum.FIG15, False, mock_session),),
+        ((1, game_id, typeEnum.FIG16, False, mock_session),),
+        ((1, game_id, typeEnum.FIG17, False, mock_session),),
+        ((1, game_id, typeEnum.FIG18, False, mock_session),)
     ]
     
     # fig_cards_logic.fig_card_repo.create_figure_card.assert_has_calls(expected_calls, any_order=True)
-    # me fijo que tenga 23 llamadas
+    # me fijo que tenga 25 llamadas
     assert fig_cards_logic.fig_card_repo.create_figure_card.call_count == len(expected_calls)
     
     calls = fig_cards_logic.fig_card_repo.create_figure_card.call_args_list
