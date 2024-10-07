@@ -53,6 +53,6 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, 
                                                FigureCard.player_id == 1).count()
 
     
-    figure_cards_repository.create_figure_card(1, 1, typeEnum.TYPE_4, True, session)
+    figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, session)
     
     assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
