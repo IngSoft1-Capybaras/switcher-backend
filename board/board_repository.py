@@ -16,10 +16,22 @@ class BoardRepository:
         return BoardOut.model_validate(board) if board else None
     
     def create_new_board(self, game_id: int, db: Session):
+        # Nos aseguramos que un tablero no haya sido creado TODO: Ver si es necesario
+        # existing_board = self.get_existing_board(game_id, db)
+        # if existing_board:
+        #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Board already exists")
+        
+        # Chequeamos que el juego exista
+        game = db.query(Game).filter(Game.id == game_id).first()
+        if not game:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+
+        #Creamos un nuevo tablero
         new_board = Board(game_id=game_id)
         db.add(new_board)
         db.commit()
         db.refresh(new_board)
+
         # return new_board
         return BoardOut.model_validate(new_board) if new_board else None
         
@@ -65,7 +77,7 @@ class BoardRepository:
             boxes_row = db.query(Box).filter(Box.board_id == board.id, Box.pos_y == index).all()
 
             if not boxes_row:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Boxes not found in row " . index)
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Boxes not found in row {index}")
 
             rows_in_board.append(boxes_row)
 
