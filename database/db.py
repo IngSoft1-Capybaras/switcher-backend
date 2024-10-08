@@ -17,6 +17,7 @@ def init_db():
     import player.models
     import figureCards.models
     import movementCards.models
+    import partial_movement.models
     Base.metadata.create_all(engine)
     
 def get_db(session=None):
