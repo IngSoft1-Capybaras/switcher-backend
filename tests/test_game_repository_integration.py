@@ -43,6 +43,7 @@ def test_get_games(game_repository: GameRepository, session):
 
     assert len(list_of_games) == min(5, N_games)
 
+@pytest.mark.integration_test
 def test_get_game_by_id(game_repository: GameRepository, session):
     game_id = 1
     game_in_db = session.query(Game).join(GameState).filter(Game.id == game_id).one()
@@ -191,6 +192,7 @@ def test_delete_game(game_repository: GameRepository, game_state_repository: Gam
     assert boxes == None
 
 
+@pytest.mark.integration_test
 def test_delete_game_not_finished(game_repository: GameRepository, game_state_repository: GameStateRepository, session):
     game_id = 2
 
