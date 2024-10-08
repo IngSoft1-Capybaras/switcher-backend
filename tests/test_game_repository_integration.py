@@ -124,7 +124,7 @@ def test_get_game_winner(game_repository: GameRepository, player_repository: Pla
     assert winner != None 
     game_state_repository.update_game_state(finished_game_id, StateEnum.FINISHED, session)
 
-    player_repository.assign_winner_of_game(winner, session)
+    player_repository.assign_winner_of_game(finished_game_id, winner.id, session)
     
     player = game_repository.get_game_winner(finished_game_id, session)
 
