@@ -33,8 +33,8 @@ class MovementCardLogic:
         random.shuffle(types_list)
         
         #
-        for type in types_list:
-            self.mov_card_repo.create_movement_card(game_id, type, db)
+        for index,type in enumerate(types_list):
+            self.mov_card_repo.create_movement_card(game_id, type, index, db)
         
         # asigno 3 a cada jugador
         players = self.player_repo.get_players_in_game(game_id,db)
@@ -48,10 +48,9 @@ class MovementCardLogic:
 
             # tomo 3 random
             asigned_mov_cards = random.sample(movDeck, 3)
-            print(asigned_mov_cards)
+
             # las asigno
             for asigned_mov_card in asigned_mov_cards:
-                print(f"Assigning card {asigned_mov_card.id} to player {player.id}")
                 self.mov_card_repo.assign_mov_card(asigned_mov_card.id, player.id, db);
 
 
