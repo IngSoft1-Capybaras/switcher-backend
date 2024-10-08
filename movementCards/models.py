@@ -14,6 +14,7 @@ class MovementCard(Base):
     player_id = Column(Integer, ForeignKey('players.id', use_alter=True, ondelete='CASCADE'), nullable=True)
     game_id = Column(Integer, ForeignKey('games.id', use_alter=True, ondelete='CASCADE'))
     type = Column(SQLAEnum(typeEnum), nullable=False)
+    position = Column(Integer,nullable=True)
     
     player = relationship("Player", back_populates="movement_cards")
     game = relationship("Game", back_populates="movement_cards")

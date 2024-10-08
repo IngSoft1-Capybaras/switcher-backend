@@ -1,9 +1,17 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
+from player.models import Player
+from game.models import Game
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+import pdb
 
 class FigureCardsRepository:
 
@@ -44,6 +52,42 @@ class FigureCardsRepository:
         )
         db.add(new_card)
         db.commit()
+    
+    def grab_figure_cards(self, player_id: int, game_id: int,db: Session):
+        
+        try: 
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No game found")
+
+        try: 
+            db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found in the game")
+        
+        figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                    FigureCard.game_id == game_id,
+                                                    FigureCard.show == True
+                                                    ).all()
+        
+        cards_needed = 3 - len(figure_cards)
+        #pdb.set_trace()
+        
+        if cards_needed > 0:
+            try:
+                hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                        FigureCard.game_id == game_id,
+                                                        FigureCard.show == False
+                                                        ).limit(cards_needed).all()
+            except NoResultFound:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No figure cards found for player, player should have won")
+            
+            # Actualizar el atributo show a True para las cartas necesarias
+            for card in hidden_cards:
+                card.show = True
+                            
+            db.commit()
+            
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:

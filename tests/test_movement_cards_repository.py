@@ -1,13 +1,14 @@
+from turtle import position
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
+
+from fastapi import HTTPException
+
 from movementCards.movement_cards_repository import MovementCardsRepository
-from board.models import  Board, Box
-from figureCards.models import FigureCard
 from game.models import Game
-from gameState.models import GameState
+from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard, typeEnum
-from figureCards.models import FigureCard
 from player.models import Player
 from fastapi import HTTPException
 
@@ -67,9 +68,217 @@ def test_get_movement_card_by_id_not_found(movement_cards_repository: MovementCa
 def test_create_new_movement_card(movement_cards_repository: MovementCardsRepository, session):
     N_cards = session.query(MovementCard).filter(MovementCard.game_id == 1).count()
     
-    movement_cards_repository.create_movement_card(1, typeEnum.EN_L_DER, session)
+    movement_cards_repository.create_movement_card(1, typeEnum.EN_L_DER,1, session)
     
     assert session.query(MovementCard).filter(MovementCard.game_id == 1).count() == N_cards + 1
+
+    
+@pytest.mark.integration_test
+def test_grab_mov_cards(movement_cards_repository: MovementCardsRepository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+    session.add_all([player1, player2])
+    session.commit()
+    
+    session.add_all([
+        MovementCard(player_id = player1.id ,game_id=game.id,type=typeEnum.DIAGONAL_CONT, description = '', used= False),
+        MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_ESP, description = '', used= False , position = 1),
+        MovementCard(player_id = player2.id , game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description = '', used= False),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= False, position = 0),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_ESP, description = '', used= False, position = 2),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description = '', used= False, position = 3),
+        MovementCard(game_id=game.id, type=typeEnum.EN_L_IZQ, description = '', used= False, position = 5),
+        MovementCard(game_id=game.id, type=typeEnum.EN_L_IZQ, description = '', used= False, position = 4)
+    ])
+    session.commit()
+    
+    movement_cards_repository.grab_mov_cards(player1.id, game.id, session)
+    movement_cards_repository.grab_mov_cards(player2.id, game.id, session)
+
+    shown_cards_player1 = session.query(MovementCard).filter(
+        MovementCard.player_id == player1.id,
+        MovementCard.game_id == game.id,
+    ).all()
+    
+    shown_cards_player2 = session.query(MovementCard).filter(
+        MovementCard.player_id == player2.id,
+        MovementCard.game_id == game.id,
+    ).all()
+    
+    cards_left = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == False
+    ).all()
+    
+    assert len(shown_cards_player1) == 3
+    for card in shown_cards_player1:
+        assert card.position == None
+        
+    assert len(shown_cards_player2) == 3
+    for card in shown_cards_player2:
+        assert card.position == None
+        assert card.type in [typeEnum.LINEAL_ESP, typeEnum.LINEAL_AL_LAT, typeEnum.DIAGONAL_ESP]
+    
+    positions_left = {card.position for card in cards_left}
+    assert positions_left == {3, 4, 5}
+    
+@pytest.mark.integration_test
+def test_grab_mov_cards_no_game(movement_cards_repository: MovementCardsRepository, session):
+    
+    game_id = 45363
+    player_id = 1
+    
+    with pytest.raises(HTTPException) as exc_info:
+        movement_cards_repository.grab_mov_cards(player_id, game_id, session)
+
+    # Verificar que la excepción HTTP tiene el código de estado correcto
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "No game found"
+    
+@pytest.mark.integration_test
+def test_grab_mov_cards_no_player(movement_cards_repository: MovementCardsRepository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+    session.add_all([player1, player2])
+    session.commit()
+    
+    player_id = 123141
+    
+    with pytest.raises(HTTPException) as exc_info:
+        movement_cards_repository.grab_mov_cards(player_id, game.id, session)
+
+    # Verificar que la excepción HTTP tiene el código de estado correcto
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Player not found"
+    
+    
+@pytest.mark.integration_test
+def test_grab_mov_cards_and_reshuffle(movement_cards_repository: MovementCardsRepository, session):
+    
+    game = Game(name="Grab and Reshuffle Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+    session.add_all([player1, player2])
+    session.commit()
+    
+    session.add_all([
+        MovementCard(player_id = player1.id ,game_id=game.id,type=typeEnum.DIAGONAL_CONT, description = '', used= False),
+        MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
+        MovementCard(player_id = player1.id , game_id=game.id, type=typeEnum.EN_L_DER, description = '', used= False),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= True),
+        MovementCard(player_id = player2.id , game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description = '', used= False),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= True),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= True),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description = '', used= True),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description = '', used= True),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_ESP, description = '', used= True)
+    ])
+    session.commit()
+    
+    movement_cards_repository.grab_mov_cards(player1.id, game.id, session)
+    movement_cards_repository.grab_mov_cards(player2.id, game.id, session)
+
+    shown_cards_player1 = session.query(MovementCard).filter(
+        MovementCard.player_id == player1.id,
+        MovementCard.game_id == game.id,
+    ).all()
+    
+    shown_cards_player2 = session.query(MovementCard).filter(
+        MovementCard.player_id == player2.id,
+        MovementCard.game_id == game.id,
+    ).all()
+    
+    cards_left = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == False
+    ).all()
+    
+    assert len(shown_cards_player1) == 3
+    assert len(shown_cards_player2) == 3
+    assert len(cards_left) == 4
+    
+    positions_left = {card.position for card in cards_left}
+    assert positions_left == {2, 3, 4, 5}
+
+@pytest.mark.integration_test
+def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsRepository, session):
+    # Crear un juego y agregarlo a la sesión
+    game = Game(name="My Game", max_players=3, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+    session.add_all([player1, player2])
+    session.commit()
+
+    # Agregar cartas de movimiento usadas y no usadas al juego
+    session.add_all([
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description='', used=True),
+        MovementCard(game_id=game.id, type=typeEnum.EN_L_DER, description='', used=True),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_AL_LAT, description='', used=False, position = 7),
+        MovementCard(game_id=game.id, type=typeEnum.DIAGONAL_CONT, description='', used=True),
+        MovementCard(game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=True),
+        MovementCard(player_id = player1.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+        MovementCard(player_id = player1.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+        MovementCard(player_id = player2.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+    ])
+    session.commit()
+
+    # Llamar al método reshuffle_movement_deck
+    movement_cards_repository.reshuffle_movement_deck(game.id, session)
+    
+    # Verificar que todas las cartas usadas ahora est
+    # án marcadas como no usadas
+    used_cards_after_reshuffle = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == True
+    ).all()
+
+    assert len(used_cards_after_reshuffle) == 0
+
+    unused_cards_after_reshuffle = session.query(MovementCard).filter(
+        MovementCard.game_id == game.id,
+        MovementCard.player_id.is_(None),
+        MovementCard.used == False
+    ).all()
+    
+    assert len(unused_cards_after_reshuffle) == 5
+    positions_left = {card.position for card in unused_cards_after_reshuffle}
+    assert positions_left == {0, 1, 2, 3, 4}
 
 
 @pytest.mark.integration_test
@@ -78,7 +287,7 @@ def test_create_movement_card_invalid_type(movement_cards_repository: MovementCa
     N_cards = session.query(MovementCard).filter(MovementCard.game_id == 1).count()
 
     with pytest.raises(HTTPException) as excinfo:
-        movement_cards_repository.create_movement_card(1, "INVALID_TYPE", session)
+        movement_cards_repository.create_movement_card(1, "INVALID_TYPE", 1, session)
 
     # Me fijo que no se haya creado ninguna carta de movimiento
     assert session.query(MovementCard).filter(MovementCard.game_id == 1).count() == N_cards
@@ -89,7 +298,7 @@ def test_create_movement_card_invalid_type(movement_cards_repository: MovementCa
 @pytest.mark.integration_test
 def test_create_movement_card_with_invalid_game_id(movement_cards_repository: MovementCardsRepository, session):
     with pytest.raises(HTTPException) as excinfo:
-        movement_cards_repository.create_movement_card(-1, typeEnum.EN_L_DER, session)
+        movement_cards_repository.create_movement_card(-1, typeEnum.EN_L_DER, 1, session)
 
     assert excinfo.value.status_code == 404
 
@@ -138,6 +347,7 @@ def test_discard_mov_card(movement_cards_repository: MovementCardsRepository, se
     
     assert test_card.player_id == None # Me fijo que la carta no tenga mas duenio
     assert test_card.used == True # Me fijo que la carta esta como usada
+    assert test_card.position == None # Me fijo que la position sea None
 
 
 # dejar este test debajo del discard_mov_card, asi se descarta la unica carta sin player y no da error la query
@@ -172,6 +382,4 @@ def test_discard_mov_card_invalid_card(movement_cards_repository: MovementCardsR
 
     assert excinfo.value.status_code == 404
     assert f"There no movement cards associated with this id 999" in str(excinfo.value.detail)
-
-
 
