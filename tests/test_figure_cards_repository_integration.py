@@ -81,15 +81,15 @@ def test_grab_figure_cards(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player2.id, game_id=game.id, show=True, type=typeEnum.TYPE_2)
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player2.id, game_id=game.id, show=True, type=typeEnum.FIG02)
     ])
     session.commit()
     
@@ -120,14 +120,14 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.TYPE_1),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
     ])
     session.commit()
     
