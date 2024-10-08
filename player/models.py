@@ -30,3 +30,4 @@ class Player(Base):
     game = relationship("Game", back_populates="players")
     figure_cards = relationship("FigureCard", back_populates="player")
     movement_cards = relationship("MovementCard", back_populates="player")
+    partial_movements = relationship("PartialMovements", back_populates="player")

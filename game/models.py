@@ -20,6 +20,7 @@ class Game(Base):
     board = relationship("Board", back_populates="game", passive_deletes=True)
     movement_cards = relationship("MovementCard", back_populates="game", passive_deletes=True)
     figure_cards = relationship("FigureCard", back_populates="game", passive_deletes=True)
+    partial_movements = relationship("PartialMovements", back_populates="game", passive_deletes=True)
 
     def players_count(self):
         return len(self.players)

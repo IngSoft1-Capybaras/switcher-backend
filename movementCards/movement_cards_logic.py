@@ -56,6 +56,11 @@ class MovementCardLogic:
 
         return {"message": "Movement deck created and assigned to players"}
     
+    def validate_movement():
+        #ver tipo de figura
+        #una funcion de validar por cada caso
+        #7 funciones en total
+        pass
     
 def get_mov_cards_logic(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
     return MovementCardLogic(mov_card_repo, player_repo)
