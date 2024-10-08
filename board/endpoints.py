@@ -11,3 +11,6 @@ board_router = APIRouter(
     tags=['Board']
 )
 
+@board_router.get("/{game_id}")
+async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepository = Depends()):
+    return repo.get_configured_board(game_id, db)
