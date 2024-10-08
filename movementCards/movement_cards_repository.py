@@ -99,7 +99,7 @@ class MovementCardsRepository:
         try: 
             db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No game found"
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No game found")
         
         try: 
             db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
