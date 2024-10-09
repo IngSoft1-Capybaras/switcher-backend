@@ -1,13 +1,14 @@
 import random
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from .models import MovementCard
-from .schemas import MovementCardOut, typeEnum
-from game.models import Game
-from game.game_repository import GameRepository
+from .schemas import typeEnum
 from .movement_cards_repository import MovementCardsRepository
-from database.db import get_db
+
+from board.schemas import BoardPosition
+
 from player.player_repository import PlayerRepository
+
+from database.db import get_db
 
 
 class MovementCardLogic:
@@ -18,7 +19,7 @@ class MovementCardLogic:
         self.mov_card_repo = mov_card_repo
         self.player_repo = player_repo
         
-    def create_mov_deck(self, game_id: int, db: Session = Depends(get_db),):
+    def create_mov_deck(self, game_id: int, db: Session = Depends(get_db)):
         
         #Creamos una lista con los tipos de cartas de movimiento
         types_list = ([typeEnum.DIAGONAL_CONT] * 7 +
@@ -56,11 +57,55 @@ class MovementCardLogic:
 
         return {"message": "Movement deck created and assigned to players"}
     
-    def validate_movement():
+    def validate_movement(self, card_id: int , pos_from: BoardPosition , pos_to: BoardPosition, mov_card_repo: MovementCardsRepository = Depends(), db: Session = Depends(get_db)):
         #ver tipo de figura
+        movement_type = mov_card_repo.get_movement_card_type(card_id, db)
+        
         #una funcion de validar por cada caso
-        #7 funciones en total
+        validation_functions = {
+            typeEnum.LINEAL_CONT: self.validate_lineal_cont,
+            typeEnum.LINEAL_ESP: self.validate_lineal_esp,
+            typeEnum.DIAGONAL_CONT: self.validate_diagonal_cont,
+            typeEnum.DIAGONAL_ESP: self.validate_diagonal_esp,
+            typeEnum.EN_L_DER: self.validate_en_l_der,
+            typeEnum.EN_L_IZQ: self.validate_en_l_izq,
+            typeEnum.LINEAL_AL_LAT: self.validate_lineal_al_lat,
+        }
+        validate_function = validation_functions.get(movement_type)
+        
+        if not validate_function:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid movement type")
+        
+        return validate_function(pos_from, pos_to)
+    
+    def validate_lineal_cont(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para LINEAL_CONT
         pass
+
+    def validate_lineal_esp(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para LINEAL_ESP
+        pass
+
+    def validate_diagonal_cont(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para DIAGONAL_CONT
+        pass
+
+    def validate_diagonal_esp(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para DIAGONAL_ESP
+        pass
+
+    def validate_en_l_der(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para EN_L_DER
+        pass
+
+    def validate_en_l_izq(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para EN_L_IZQ
+        pass
+
+    def validate_lineal_al_lat(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para LINEAL_AL_LAT
+        pass
+                
     
 def get_mov_cards_logic(mov_card_repo: MovementCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
     return MovementCardLogic(mov_card_repo, player_repo)
