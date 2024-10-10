@@ -73,6 +73,7 @@ def test_create_new_board_for_existing_game(game_repository: GameRepository, boa
     assert isinstance(board, BoardOut)
     assert board.game_id == new_game.id
 
+
 @pytest.mark.integration_test
 def test_create_new_board_for_non_existing_game(board_repository: BoardRepository, session):
     with pytest.raises(HTTPException) as exc_info:
@@ -81,6 +82,7 @@ def test_create_new_board_for_non_existing_game(board_repository: BoardRepositor
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Game not found"
 
+
 @pytest.mark.integration_test
 def test_get_configured_board_for_non_existing_game(board_repository: BoardRepository, session):
     with pytest.raises(HTTPException) as exc_info:
@@ -88,6 +90,7 @@ def test_get_configured_board_for_non_existing_game(board_repository: BoardRepos
     
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Game not found"
+
 
 @pytest.mark.integration_test
 def test_get_configured_board_for_game_not_started(board_repository: BoardRepository, game_repository: GameRepository, session):
@@ -102,6 +105,7 @@ def test_get_configured_board_for_game_not_started(board_repository: BoardReposi
     
     assert exc_info.value.status_code == 400
     assert exc_info.value.detail == "Game not started"
+
 
 @pytest.mark.integration_test
 def test_get_configured_board_for_game_with_no_board(   board_repository: BoardRepository, 
@@ -123,6 +127,7 @@ def test_get_configured_board_for_game_with_no_board(   board_repository: BoardR
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Board not found"
 
+
 @pytest.mark.integration_test
 def test_get_configured_board_for_board_not_configured(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, session):
     # creo un nuevo juego sin tablero
@@ -143,6 +148,7 @@ def test_get_configured_board_for_board_not_configured(board_repository: BoardRe
     assert exc_info.value.status_code == 404
     # assert it contains the string "Boxes not found in row "
     assert "Boxes not found in row " in exc_info.value.detail
+
 
 @pytest.mark.integration_test
 def test_get_configured_board(board_repository: BoardRepository, game_state_repository: GameStateRepository, session):
@@ -169,6 +175,7 @@ def test_get_configured_board(board_repository: BoardRepository, game_state_repo
             assert box.pos_y in range(6)
     assert configured_board.game_id == game.id
     assert configured_board.board_id == board.id
+
 
 @pytest.mark.integration_test
 def test_get_not_configured_board(  board_repository: BoardRepository, 
@@ -202,3 +209,74 @@ def test_add_box_to_existing_board(board_repository: BoardRepository, session):
     
     new_box_count = session.query(Box).filter(Box.board_id == existing_board.id).count()
     assert new_box_count == initial_box_count + 1
+
+
+@pytest.mark.integration_test
+def test_swap_pieces(board_repository: BoardRepository, session):
+    game_id = 1
+    pos_from_x = 0
+    pos_from_y = 0
+    pos_to_x = 1
+    pos_to_y = 1
+    
+    # busco el tablero de la partida 1
+    pre_swap_board = board_repository.get_existing_board(game_id, session)
+
+    # busco los boxes para cada posicion antes del swap
+    pre_swap_box_from = session.query(Box).filter(Box.game_id == game_id, Box.board_id == pre_swap_board.id,
+                                         Box.pos_x == pos_from_x, Box.pos_y == pos_from_y).one()
+    
+    
+    pre_swap_box_to = session.query(Box).filter(Box.game_id == game_id, Box.board_id == pre_swap_board.id, 
+                                       Box.pos_x == pos_to_x, Box.pos_y == pos_to_y).one()
+
+    # hago el swap
+    response = board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)
+
+    # ahora busco los valores de nuevo
+    # post_swap_board = session.query(Board).filter(Board.game_id == game_id).f
+    post_swap_board = board_repository.get_existing_board(game_id, session)
+
+
+    post_swap_box_from = session.query(Box).filter(Box.game_id == game_id, Box.board_id == post_swap_board.id, 
+                                         Box.pos_x == pos_from_x, Box.pos_y == pos_from_y).one()
+    
+    post_swap_box_to = session.query(Box).filter(Box.game_id == game_id, Box.board_id == post_swap_board.id, 
+                                       Box.pos_x == pos_to_x, Box.pos_y == pos_to_y).one()
+
+
+    # me fijo que se devuelva el mismo mensaje de exito
+    assert response == {"message": "The board was succesfully updated"}
+    # chequeo el swap
+    assert pre_swap_box_from.color == post_swap_box_to.color
+    assert pre_swap_box_to.color == post_swap_box_from.color
+
+
+@pytest.mark.integration_test
+def test_swap_pieces_inexistent_box_from(board_repository: BoardRepository, session):
+    game_id = 1
+    pos_from_x = 999 # pos_from exageradamente grandes
+    pos_from_y = 999
+    pos_to_x = 1
+    pos_to_y = 1
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)    
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Box in position {(pos_from_x, pos_from_y)} not found"
+
+
+@pytest.mark.integration_test
+def test_swap_pieces_inexistent_box_to(board_repository: BoardRepository, session):
+    game_id = 1
+    pos_from_x = 0
+    pos_from_y = 0
+    pos_to_x = 999 # pos_from exageradamente grandes
+    pos_to_y = 999
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)    
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Box in position {(pos_to_x, pos_to_y)} not found"
