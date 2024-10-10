@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 from sqlalchemy import Column, Integer, Boolean, Enum as SQLAEnum, ForeignKey
 from sqlalchemy.orm import relationship
 from database.db import Base
@@ -48,3 +49,49 @@ class FigureCard(Base):
 
     player = relationship("Player", back_populates="figure_cards")
     game = relationship("Game", back_populates="figure_cards")
+
+
+class DirectionEnum(str, Enum):
+    UP = "UP"
+    DOWN = "DOWN"
+    LEFT = "LEFT"
+    RIGHT = "RIGHT"
+
+# Clase que relaciona el tipo con su path correspondiente, no esta en la base de datos
+class FigurePath:
+    def __init__(self, type: typeEnum, path: List[DirectionEnum]):
+        self.type = type
+        self.path = path
+
+    def __repr__(self):
+        return f"FigurePath(type={self.type}, path={self.path})"
+
+# Lista de paths de las figuras (El punto de origen es el bloque de mas a la izquierda y
+# si hubiese varios bloques a la izquierda se elige el de mas arriba)
+FigurePaths = [
+    FigurePath("FIG01", ["DOWN","RIGHT","RIGHT","DOWN"]), #punto de origen izq arriba
+    FigurePath("FIG02", ["RIGHT","DOWN","RIGHT","RIGHT"]), #punto de origen izq
+    FigurePath("FIG03", ["RIGHT","RIGHT","UP","RIGHT"]), #punto de origen izq
+    FigurePath("FIG04", ["DOWN","RIGHT","DOWN","RIGHT"]), #punto de origen izq arriba
+    FigurePath("FIG05", ["RIGHT","RIGHT","RIGHT","RIGHT"]), #punto de origen izq
+    FigurePath("FIG06", ["DOWN","DOWN","RIGHT","RIGHT"]), #punto de origen izq arriba
+    FigurePath("FIG07", ["RIGHT","RIGHT","RIGHT","DOWN"]), #punto de origen izq
+    FigurePath("FIG08", ["RIGHT","RIGHT","RIGHT","UP"]), #punto de origen izq
+    FigurePath("FIG09", ["RIGHT","DOWN","UP","RIGHT","UP"]), #punto de origen izq
+    FigurePath("FIG10", ["DOWN","UP","RIGHT","RIGHT","UP"]), #punto de origen izq arriba
+    FigurePath("FIG11", ["DOWN","RIGHT","DOWN","UP","RIGHT"]), #punto de origen izq arriba
+    FigurePath("FIG12", ["DOWN","DOWN","UP","RIGHT","RIGHT"]), #punto de origen izq arriba
+    FigurePath("FIG13", ["RIGHT","RIGHT","DOWN","UP","RIGHT"]), #punto de origen izq
+    FigurePath("FIG14", ["RIGHT","RIGHT","UP","DOWN","RIGHT"]), #punto de origen izq
+    FigurePath("FIG15", ["RIGHT","UP","RIGHT","DOWN"]), #punto de origen izq
+    FigurePath("FIG16", ["DOWN","RIGHT","RIGHT","UP"]), #punto de origen izq arriba
+    FigurePath("FIG17", ["RIGHT","DOWN","UP","UP","DOWN","RIGHT"]), #punto de origen izq
+    FigurePath("FIG18", ["RIGHT","DOWN","RIGHT","UP"]), #punto de origen izq
+    FigurePath("FIGE01", ["RIGHT","UP","RIGHT"]), #punto de origen izq
+    FigurePath("FIGE02", ["RIGHT","DOWN","LEFT"]), #punto de origen izq arriba
+    FigurePath("FIGE03", ["RIGHT","DOWN","RIGHT"]), #punto de origen izq
+    FigurePath("FIGE04", ["RIGHT","UP","DOWN","RIGHT"]), #punto de origen izq
+    FigurePath("FIGE05", ["RIGHT","RIGHT","DOWN"]), #punto de origen izq
+    FigurePath("FIGE06", ["RIGHT","RIGHT","RIGHT"]), #punto de origen izq
+    FigurePath("FIGE07", ["RIGHT","RIGHT","UP"]) #punto de origen izq
+]
