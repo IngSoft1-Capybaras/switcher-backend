@@ -89,7 +89,7 @@ class FigureCardsRepository:
             db.commit()
     
 
-    def discard_figure_card(self, game_id: int, player_id: int, figure_card_id: int, db: Session):
+    def discard_figure_card(self, figure_card_id: int, db: Session):
         # Fetch figure card by id
         try:
             figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
