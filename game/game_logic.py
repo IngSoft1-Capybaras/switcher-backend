@@ -35,7 +35,6 @@ class GameLogic:
             await self.handle_win(game_id, players_left[0].id, db)
             return True
         else:
-            player = self.player_repo.get_player_by_id(game_id, player_id, db)
             if len(self.figure_cards_repo.get_figure_cards(game_id, player_id, db)) == 0:
                 await self.handle_win(game_id, player_id, db)
                 return True
