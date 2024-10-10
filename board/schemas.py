@@ -38,3 +38,6 @@ class BoardAndBoxesOut(BaseModel):
 
 class BoardPosition(BaseModel):
     pos: Tuple[Annotated[int, Field(ge=0, le=5)], Annotated[int, Field(ge=0, le=5)]]
+    class ConfigDict:
+        # Allows validation at the time of initialization
+        validate_assignment = True
