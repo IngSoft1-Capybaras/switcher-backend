@@ -56,12 +56,7 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, 
     
     figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, session)
     
-    # session = Session()
-    
-    # try:
     assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
-    # finally:
-    #     session.close()
     
 
 @pytest.mark.integration_test
@@ -141,6 +136,7 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
     #Reviso que no el jugador no obtuvo mas cartas del mazo
     assert len(shown_cards_player1) == 3
     
+
 @pytest.mark.integration_test
 def test_grab_figure_cards_no_player(figure_cards_repository, session):
     
@@ -162,6 +158,7 @@ def test_grab_figure_cards_no_player(figure_cards_repository, session):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Player not found in the game"
 
+
 @pytest.mark.integration_test
 def test_grab_figure_cards_no_game(figure_cards_repository, session):
     
@@ -176,3 +173,31 @@ def test_grab_figure_cards_no_game(figure_cards_repository, session):
     # Verificar que la excepción HTTP tiene el código de estado correcto
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No game found"
+
+
+@pytest.mark.integration_test
+def test_discard_figure_card(figure_cards_repository, session):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+    N_cards = session.query(FigureCard).filter(FigureCard.game_id == game_id, 
+                                                FigureCard.player_id == player_id).count()
+    
+    response = figure_cards_repository.discard_figure_card(figure_card_id, session)
+    
+
+    assert N_cards - 1 == session.query(FigureCard).filter(FigureCard.game_id == game_id, 
+                                                           FigureCard.player_id == player_id).count()
+    
+    assert response == {"message": "The figure cards was successfully discarded"}
+
+
+@pytest.mark.integration_test
+def test_discard_inexistent_figure_card(figure_cards_repository, session):
+    figure_card_id = 999
+    
+    with pytest.raises(HTTPException) as exc_info:
+        figure_cards_repository.discard_figure_card(figure_card_id, session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"There no figure card associated with this id {figure_card_id}"
