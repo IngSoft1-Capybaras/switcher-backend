@@ -24,28 +24,52 @@ def figure_cards_repository():
 
 @pytest.mark.integration_test
 def test_get_figure_cards(figure_cards_repository: FigureCardsRepository, session):
-    N_cards = session.query(FigureCard).filter(FigureCard.game_id == 1, 
-                                                FigureCard.player_id == 1).count()
+    game_id = 1
+    player_id = 1
+    N_cards = session.query(FigureCard).filter(FigureCard.game_id == game_id, 
+                                                FigureCard.player_id == player_id).count()
     
-    list_of_cards = figure_cards_repository.get_figure_cards(1, 1, session)
+    list_of_cards = figure_cards_repository.get_figure_cards(game_id, player_id, session)
     
     assert len(list_of_cards) == N_cards
 
 
 @pytest.mark.integration_test
 def test_get_figure_card_by_id(figure_cards_repository: FigureCardsRepository, session):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
     try:
         # busco la cantidad de cartas con todos id 1
-        test_card = session.query(FigureCard).filter(FigureCard.game_id == 1,
-                                                  FigureCard.player_id == 1,
-                                                  FigureCard.id == 1).one()
+        test_card = session.query(FigureCard).filter(FigureCard.game_id == game_id,
+                                                  FigureCard.player_id == player_id,
+                                                  FigureCard.id == figure_card_id).one()
         
-        figure_card = figure_cards_repository.get_figure_card_by_id(1, 1, 1, session)
+        figure_card = figure_cards_repository.get_figure_card_by_id(game_id, player_id, figure_card_id, session)
 
         assert test_card.id == figure_card.id
     except NoResultFound:
         raise ValueError("There is no figure card with game_id=1, player_id=1 and id=1")
 
+
+@pytest.mark.integration_test
+def test_get_figure_card_by_id_not_found(figure_cards_repository: FigureCardsRepository, session):
+    # uso un figure_card_id exageradamente grande para que salte la exception
+    with pytest.raises(HTTPException) as excinfo:
+        figure_cards_repository.get_figure_card_by_id(1, 1, 999, session)
+    
+    assert excinfo.value.status_code == 404
+    assert "Figure card not found" in str(excinfo.value.detail)
+
+
+@pytest.mark.integration_test
+def test_get_figure_cards_no_cards(figure_cards_repository: FigureCardsRepository, session):
+    game_id = 1
+    player_id = 999
+    
+    list_of_cards = figure_cards_repository.get_figure_cards(game_id, player_id, session)
+    
+    assert len(list_of_cards) == 0
 
 
 @pytest.mark.integration_test
