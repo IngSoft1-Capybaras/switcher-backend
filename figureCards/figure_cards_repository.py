@@ -87,7 +87,21 @@ class FigureCardsRepository:
                 card.show = True
                             
             db.commit()
-            
+
+
+    def discard_figure_card(self, figure_card_id: int, db: Session):
+        # Fetch figure card by id
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail= f"There no figure card associated with this id {figure_card_id}")
+
+        
+        # la elimino de la base de datos
+        db.delete(figure_card)
+
+        db.commit()
+
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
