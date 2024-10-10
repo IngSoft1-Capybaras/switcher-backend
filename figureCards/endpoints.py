@@ -24,13 +24,3 @@ async def get_figure_card_by_id(game_id: int, player_id: int,
     return repo.get_figure_card_by_id(game_id, player_id, card_id, db)
 
 
-# Jugar una carta de figura
-@figure_cards_router.post("/deck/figure/discard_card")
-async def discard_figure_card(game_id: int, player_id: int, 
-                              card_id: int, db: Session = Depends(get_db), 
-                              repo: FigureCardsRepository = Depends(get_figure_cards_repository), 
-                              game_logic: GameLogic = Depends(get_game_logic)):
-    
-    res = repo.discard_figure_card(game_id, player_id, card_id, db)
-
-    await game_logic.check_win_condition(game_id, player_id, db)
