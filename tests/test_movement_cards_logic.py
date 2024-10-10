@@ -1,10 +1,15 @@
+from pydantic import ValidationError
 import pytest
 from unittest.mock import MagicMock, patch
 from movementCards.movement_cards_logic import MovementCardLogic
 from movementCards.models import typeEnum
+from movementCards.movement_cards_repository import MovementCardsRepository
+
+from board.schemas import BoardPosition
 from sqlalchemy.orm import Session
 from database.db import get_db
 from main import app 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 
@@ -17,11 +22,15 @@ def mock_db():
     return MagicMock(spec=Session)
 
 @pytest.fixture
-def mov_cards_logic():
-    mock_mov_cards_repo = MagicMock()
-    mock_player_repo = MagicMock()
-    return MovementCardLogic(mov_card_repo=mock_mov_cards_repo, player_repo=mock_player_repo)
+def mock_mov_card_repo():
+    return MagicMock(spec=MovementCardsRepository)
 
+@pytest.fixture
+def mov_cards_logic(mock_mov_card_repo):
+    mock_player_repo = MagicMock()
+    return MovementCardLogic(mov_card_repo=mock_mov_card_repo, player_repo=mock_player_repo)
+
+    
 @pytest.fixture(autouse=True)
 def setup_dependency_override(mock_db):
     def override_get_db():
@@ -102,3 +111,41 @@ def test_create_mov_deck_no_players(mov_cards_logic, mock_db):
         response = mov_cards_logic.create_mov_deck(game_id, mock_db)
 
     assert response == {"message": "Movement deck was not created because there are no players in game"}
+    
+def test_validate_movement_valid(mov_cards_logic, mock_db):
+    card_id = 1 
+    pos_from = BoardPosition(pos=(0, 5)) 
+    pos_to = BoardPosition(pos=(0, 3))
+    
+    mov_cards_logic.mov_card_repo.get_movement_card_type.return_value = typeEnum.LINEAL_ESP
+    mov_cards_logic.validate_lineal_esp = MagicMock(return_value=None)
+    
+    mov_cards_logic.validate_movement(card_id, pos_from, pos_to, mock_db)
+    
+    mov_cards_logic.mov_card_repo.get_movement_card_type.assert_called_once_with(card_id, mock_db)
+    mov_cards_logic.validate_lineal_esp.assert_called_once_with(pos_from, pos_to)
+    
+def test_validate_movement_invalid_type(mov_cards_logic, mock_db):
+    card_id = 1 
+    pos_from = BoardPosition(pos=(0, 5))
+    pos_to = BoardPosition(pos=(0, 3))
+    
+    mov_cards_logic.mov_card_repo.get_movement_card_type.return_value = "Invalid type"
+    
+    with pytest.raises(HTTPException) as exc_info:
+        mov_cards_logic.validate_movement(card_id, pos_from, pos_to, mock_db)
+    
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == "Invalid movement type"
+    
+def test_validate_movement_invalid_position(mov_cards_logic, mock_db):
+    card_id = 1 
+    pos_from = (0, 8)
+    pos_to = (10, 3)
+    
+    
+    with pytest.raises(TypeError) as exc_info:
+        mov_cards_logic.validate_movement(card_id, pos_from, pos_to, mock_db)
+    
+    assert str(exc_info.value) == "pos_from and pos_to must be instances of BoardPosition"
+    

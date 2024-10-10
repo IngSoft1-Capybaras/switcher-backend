@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import logging
 from fastapi import HTTPException
@@ -8,14 +6,11 @@ from sqlalchemy.orm import sessionmaker
 from board.board_repository import BoardRepository
 from board.models import Board, Box, ColorEnum
 from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut
-from database.db import Base, engine
+from database.db import engine
 from game.game_repository import GameRepository
 from game.models import Game
 from game.schemas import GameCreate
-from gameState.models import GameState
 from gameState.game_state_repository import GameStateRepository
-from main import app
-from player.models import Player
 from player.schemas import PlayerCreateMatch
 
 logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR) # Para evitar que se muestren los logs de SQL Alchemy, setear en INFO para ver comportamiento anterior
@@ -202,3 +197,38 @@ def test_add_box_to_existing_board(board_repository: BoardRepository, session):
     
     new_box_count = session.query(Box).filter(Box.board_id == existing_board.id).count()
     assert new_box_count == initial_box_count + 1
+
+
+@pytest.mark.integration_test
+def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRepository, session):
+    # Crear una partida y un tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
+    
+    board = board_repository.create_new_board(game.id, session)
+
+    # Creo dos casillas
+    pos_from = (0, 0)
+    pos_to = (1, 1)
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from[0], pos_from[1], session)
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to[0], pos_to[1], session)
+
+    # Verifico colores iniciales
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from[0], Box.pos_y == pos_from[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to[0], Box.pos_y == pos_to[1]).one()
+    assert box_from.color == ColorEnum.BLUE
+    assert box_to.color == ColorEnum.RED
+
+    # Hacemos el intercambio
+    board_repository.switch_boxes(game.id, pos_from, pos_to, session)
+
+    # Verificamos el intercambio
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from[0], Box.pos_y == pos_from[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to[0], Box.pos_y == pos_to[1]).one()
+    assert box_from.color == ColorEnum.RED
+    assert box_to.color == ColorEnum.BLUE
+    
+#Agregar negativo
+    
