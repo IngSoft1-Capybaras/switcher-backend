@@ -9,7 +9,7 @@ from board.schemas import BoardPosition
 from player.player_repository import PlayerRepository
 
 from database.db import get_db
-
+import pdb
 
 class MovementCardLogic:
     
@@ -57,9 +57,13 @@ class MovementCardLogic:
 
         return {"message": "Movement deck created and assigned to players"}
     
-    def validate_movement(self, card_id: int , pos_from: BoardPosition , pos_to: BoardPosition, mov_card_repo: MovementCardsRepository = Depends(), db: Session = Depends(get_db)):
+    def validate_movement(self, card_id: int , pos_from: BoardPosition , pos_to: BoardPosition, db: Session = Depends(get_db)):
+        
+        if not isinstance(pos_from, BoardPosition) or not isinstance(pos_to, BoardPosition):
+            raise TypeError("pos_from and pos_to must be instances of BoardPosition")
+        
         #ver tipo de figura
-        movement_type = mov_card_repo.get_movement_card_type(card_id, db)
+        movement_type = self.mov_card_repo.get_movement_card_type(card_id, db)
         
         #una funcion de validar por cada caso
         validation_functions = {
@@ -72,7 +76,7 @@ class MovementCardLogic:
             typeEnum.LINEAL_AL_LAT: self.validate_lineal_al_lat,
         }
         validate_function = validation_functions.get(movement_type)
-        
+
         if not validate_function:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid movement type")
         
@@ -84,15 +88,34 @@ class MovementCardLogic:
 
     def validate_lineal_esp(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
         # Lógica de validación para LINEAL_ESP
-        pass
+        #Diferencia absoluta entre las posiciones x e y de las casillas
+        x_diff = pos_to.pos[0] - pos_from.pos[0]
+        y_diff = pos_to.pos[1] - pos_from.pos[1]
+        
+        is_vertical = x_diff == 0 and abs(y_diff) == 2
+        is_horizontal = y_diff == 0 and abs(x_diff) == 2
+        
+        return is_vertical or is_horizontal
 
     def validate_diagonal_cont(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
         # Lógica de validación para DIAGONAL_CONT
-        pass
+        
+        #Diferencia absoluta entre las posiciones x e y de las casillas
+        x_diff = pos_to.pos[0] - pos_from.pos[0]
+        y_diff = pos_to.pos[1] - pos_from.pos[1]
+        
+        #Chequeamos que la diferencia sea de exactamente 1 (para hacer la diagonal contigua)
+        return abs(x_diff) == 1 and abs(y_diff) == 1
 
     def validate_diagonal_esp(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
         # Lógica de validación para DIAGONAL_ESP
-        pass
+        
+        #Diferencia absoluta entre las posiciones x e y de las casillas
+        x_diff = pos_to.pos[0] - pos_from.pos[0]
+        y_diff = pos_to.pos[1] - pos_from.pos[1]
+        
+        #Chequeamos que la diferencia sea de exactamente 2 (para hacer la diagonal con un espacio)
+        return abs(x_diff) == 2 and abs(y_diff) == 2
 
     def validate_en_l_der(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
         # Lógica de validación para EN_L_DER

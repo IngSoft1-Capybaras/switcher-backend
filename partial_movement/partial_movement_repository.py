@@ -15,10 +15,10 @@ class PartialMovementRepository:
             game_id=game_id,
             player_id=player_id,
             mov_card_id=card_id,
-            pos_from_x=pos_from.x,
-            pos_from_y=pos_from.y,
-            pos_to_x=pos_to.x,
-            pos_to_y=pos_to.y
+            pos_from_x=pos_from.pos[0],
+            pos_from_y=pos_from.pos[1],
+            pos_to_x=pos_to.pos[0],
+            pos_to_y=pos_to.pos[1]
         )
         
         try: 
@@ -26,7 +26,6 @@ class PartialMovementRepository:
             db.commit()
         except IntegrityError:
             #si alguna de las FK falla (por ejemplo no existen en la DB, enviamos un mensaje de error)
-            db.rollback()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Integrity error while creating partial movement: check foreign key values")
         
         
