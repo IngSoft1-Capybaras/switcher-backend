@@ -22,6 +22,13 @@ class BoxOut(BaseModel):
     pos_y: int
 
     model_config = ConfigDict(from_attributes = True)
+
+class BoxIn(BaseModel):
+    color: ColorEnum
+    pos_x: int
+    pos_y: int
+
+    model_config = ConfigDict(from_attributes = True)
     
 class BoardOut(BaseModel):
     game_id: int
