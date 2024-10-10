@@ -12,18 +12,16 @@ from connection_manager import manager
 
 
 def get_game_logic(game_repo: GameRepository = Depends(get_game_repository), 
-                   game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends(), 
-                   figure_cards_repo: FigureCardsRepository = Depends(get_figure_cards_repository)):
+                   game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends()):
     
-    return GameLogic(game_repo,game_state_repo, player_repo, figure_cards_repo)
+    return GameLogic(game_repo,game_state_repo, player_repo)
 
 class GameLogic:
     def __init__(self, game_repository: GameRepository, game_state_repository: GameStateRepository, 
-                 player_repository: PlayerRepository, figure_cards_repo: FigureCardsRepository):
+                 player_repository: PlayerRepository):
         self.game_repository = game_repository
         self.game_state_repo = game_state_repository
         self.player_repo = player_repository
-        self.figure_cards_repo = figure_cards_repo
 
 
     async def check_win_condition(self, game_id: int, db: Session):
