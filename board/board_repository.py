@@ -87,3 +87,8 @@ class BoardRepository:
         result = BoardAndBoxesOut(game_id=board.game_id, board_id=board.id, boxes=rows_in_board)
         
         return BoardAndBoxesOut.model_validate(result)
+
+    def get_box_by_position(self, board_id: int, pos_x: int, pos_y: int, db: Session):
+        box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
+        
+        return BoxOut.model_validate(box) if box else None
