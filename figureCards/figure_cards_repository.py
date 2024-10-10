@@ -74,19 +74,16 @@ class FigureCardsRepository:
         #pdb.set_trace()
         
         if cards_needed > 0:
-            try:
-                hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+            hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
                                                         FigureCard.game_id == game_id,
                                                         FigureCard.show == False
                                                         ).limit(cards_needed).all()
-            except NoResultFound:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No figure cards found for player, player should have won")
-            
-            # Actualizar el atributo show a True para las cartas necesarias
-            for card in hidden_cards:
-                card.show = True
+            if hidden_cards:
+                # Actualizar el atributo show a True para las cartas necesarias
+                for card in hidden_cards:
+                    card.show = True
                             
-            db.commit()
+                db.commit()
     
 
     def discard_figure_card(self, figure_card_id: int, db: Session):
