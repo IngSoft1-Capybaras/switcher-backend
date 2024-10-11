@@ -7,15 +7,12 @@ from sqlalchemy.orm import sessionmaker
 
 from board.board_repository import BoardRepository
 from board.models import Board, Box, ColorEnum
-from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut
+from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
 from database.db import Base, engine
 from game.game_repository import GameRepository
 from game.models import Game
 from game.schemas import GameCreate
-from gameState.models import GameState
 from gameState.game_state_repository import GameStateRepository
-from main import app
-from player.models import Player
 from player.schemas import PlayerCreateMatch
 
 logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR) # Para evitar que se muestren los logs de SQL Alchemy, setear en INFO para ver comportamiento anterior
@@ -212,71 +209,98 @@ def test_add_box_to_existing_board(board_repository: BoardRepository, session):
 
 
 @pytest.mark.integration_test
-def test_swap_pieces(board_repository: BoardRepository, session):
-    game_id = 1
-    pos_from_x = 0
-    pos_from_y = 0
-    pos_to_x = 1
-    pos_to_y = 1
+def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRepository, session):
+    # Crear una partida y un tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
     
-    # busco el tablero de la partida 1
-    pre_swap_board = board_repository.get_existing_board(game_id, session)
+    board = board_repository.create_new_board(game.id, session)
 
-    # busco los boxes para cada posicion antes del swap
-    pre_swap_box_from = session.query(Box).filter(Box.game_id == game_id, Box.board_id == pre_swap_board.id,
-                                         Box.pos_x == pos_from_x, Box.pos_y == pos_from_y).one()
+    # Creo dos casillas
+    pos_from = BoardPosition(pos=(0, 0))
+    pos_to = BoardPosition(pos=(1, 1))
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from.pos[0], pos_from.pos[1], session)
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to.pos[0], pos_to.pos[1], session)
+
+    # Verifico colores iniciales
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from.pos[0], Box.pos_y == pos_from.pos[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to.pos[0], Box.pos_y == pos_to.pos[1]).one()
+    assert box_from.color == ColorEnum.BLUE
+    assert box_to.color == ColorEnum.RED
+
+    # Hacemos el intercambio
+    board_repository.switch_boxes(game.id, pos_from, pos_to, session)
+
+    # Verificamos el intercambio
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from.pos[0], Box.pos_y == pos_from.pos[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to.pos[0], Box.pos_y == pos_to.pos[1]).one()
+    assert box_from.color == ColorEnum.RED
+    assert box_to.color == ColorEnum.BLUE
+
+@pytest.mark.integration_test
+def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, game_repository: GameRepository, session):
+    # Crear una partida y un tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
     
+    board = board_repository.create_new_board(game.id, session)
+
+    # Creo una casillaa
+    pos_from = BoardPosition(pos=(0, 0))
+    pos_to = BoardPosition(pos=(1, 1))
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to.pos[0], pos_to.pos[1], session)
+
+    # Hacemos el intercambio
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.switch_boxes(game.id, pos_from, pos_to, session)
     
-    pre_swap_box_to = session.query(Box).filter(Box.game_id == game_id, Box.board_id == pre_swap_board.id, 
-                                       Box.pos_x == pos_to_x, Box.pos_y == pos_to_y).one()
-
-    # hago el swap
-    response = board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)
-
-    # ahora busco los valores de nuevo
-    # post_swap_board = session.query(Board).filter(Board.game_id == game_id).f
-    post_swap_board = board_repository.get_existing_board(game_id, session)
-
-
-    post_swap_box_from = session.query(Box).filter(Box.game_id == game_id, Box.board_id == post_swap_board.id, 
-                                         Box.pos_x == pos_from_x, Box.pos_y == pos_from_y).one()
-    
-    post_swap_box_to = session.query(Box).filter(Box.game_id == game_id, Box.board_id == post_swap_board.id, 
-                                       Box.pos_x == pos_to_x, Box.pos_y == pos_to_y).one()
-
-
-    # me fijo que se devuelva el mismo mensaje de exito
-    assert response == {"message": "The board was succesfully updated"}
-    # chequeo el swap
-    assert pre_swap_box_from.color == post_swap_box_to.color
-    assert pre_swap_box_to.color == post_swap_box_from.color
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"Box not found"
 
 
 @pytest.mark.integration_test
-def test_swap_pieces_inexistent_box_from(board_repository: BoardRepository, session):
-    game_id = 1
-    pos_from_x = 999 # pos_from exageradamente grandes
-    pos_from_y = 999
-    pos_to_x = 1
-    pos_to_y = 1
+def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, game_repository: GameRepository, session):
+        # Crear una partida y un tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
+    
+    board = board_repository.create_new_board(game.id, session)
+
+    # Creo una casilla
+    pos_from = BoardPosition(pos=(0, 0))
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from.pos[0], pos_from.pos[1], session)
+
+    pos_to = BoardPosition(pos=(1, 1))
+
+    # Hacemos el intercambio
 
     with pytest.raises(HTTPException) as exc_info:
-        board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)    
+        board_repository.switch_boxes(game.id, pos_from, pos_to, session)
     
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == f"Box in position {(pos_from_x, pos_from_y)} not found"
-
-
+    assert exc_info.value.detail == f"Box not found"
+    
 @pytest.mark.integration_test
-def test_swap_pieces_inexistent_box_to(board_repository: BoardRepository, session):
-    game_id = 1
-    pos_from_x = 0
-    pos_from_y = 0
-    pos_to_x = 999 # pos_from exageradamente grandes
-    pos_to_y = 999
+def test_switch_boxes_inexistent_game(board_repository: BoardRepository, session):
+    # id de juego que no existe
+    game_id = 13434242
+    
+
+    # Creo una casilla
+    pos_from = BoardPosition(pos=(0, 0))
+    pos_to = BoardPosition(pos=(1, 1))
+
+    # Hacemos el intercambio
 
     with pytest.raises(HTTPException) as exc_info:
-        board_repository.swap_pieces(game_id, pos_from_x, pos_from_y, pos_to_x, pos_to_y, session)    
+        board_repository.switch_boxes(game_id, pos_from, pos_to, session)
     
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == f"Box in position {(pos_to_x, pos_to_y)} not found"
+    assert exc_info.value.detail == f"Game not found"

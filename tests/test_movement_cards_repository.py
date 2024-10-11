@@ -1,4 +1,3 @@
-from turtle import position
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
@@ -383,3 +382,39 @@ def test_discard_mov_card_invalid_card(movement_cards_repository: MovementCardsR
     assert excinfo.value.status_code == 404
     assert f"There no movement cards associated with this id 999" in str(excinfo.value.detail)
 
+@pytest.mark.integration_test
+def test_mark_card_partially_used(movement_cards_repository, session):
+    game = Game(name='name', min_players=2, max_players=3)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+
+    card = MovementCard(player_id = player.id ,game_id=game.id,type=typeEnum.DIAGONAL_CONT, description = '', used= False)
+    session.add(card)
+    session.commit()
+
+
+    # Marco carta como parcialmente usada
+    movement_cards_repository.mark_card_in_player_hand(card.id, session)
+
+    # Verifico
+    updated_card = session.query(MovementCard).filter_by(id=card.id).one()
+    assert updated_card.used is False
+    
+@pytest.mark.integration_test
+def test_mark_card_partially_used_not_found(movement_cards_repository, session):
+    non_existent_card_id = 9999
+
+    # Llamo con un id de una carta que no existe
+    with pytest.raises(HTTPException) as exc_info:
+        movement_cards_repository.mark_card_in_player_hand(non_existent_card_id, session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "No movement card found"       
