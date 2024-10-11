@@ -6,8 +6,7 @@ from typing import List
 from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
-from .schemas import BoardOut, BoardAndBoxesOut, BoxOut
-import random
+from .schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
 
 class BoardRepository:
     
@@ -90,39 +89,36 @@ class BoardRepository:
         return BoardAndBoxesOut.model_validate(result)
     
     
-    # preguntar si en vez de la pos pueden pasar el box_from_id y el box_pos_id
-    def swap_pieces(self, game_id: int, pos_from_x: int, pos_from_y: int,   # pos_from: tuple[int, int] 
-                    pos_to_x: int, pos_to_y: int, db: Session):             # pos_to: tuple[int, int]
+    def switch_boxes(self, game_id: int, pos_from: BoardPosition, pos_to: BoardPosition, db: Session):
         
-        board = self.get_existing_board(game_id, db)
+        try:
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
         
-        # busco las boxes a swapear
         try:
-            box_from = db.query(Box).filter(Box.game_id == game_id, Box.board_id == board.id, 
-                                   Box.pos_x == pos_from_x, Box.pos_y == pos_from_y).one()
+            box_from = db.query(Box).filter(Box.game_id == game_id,
+                                            Box.pos_x == pos_from.pos[0],
+                                            Box.pos_y == pos_from.pos[1]
+                                           ).one()
         except NoResultFound:
-            raise HTTPException(status_code = 404, detail = f"Box in position {(pos_from_x, pos_from_y)} not found")
-
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
+        
         try:
-            box_to = db.query(Box).filter(Box.game_id == game_id, Box.board_id == board.id, 
-                                   Box.pos_x == pos_to_x, Box.pos_y == pos_to_y).one()
+            box_to = db.query(Box).filter(Box.game_id == game_id,
+                                            Box.pos_x == pos_to.pos[0],
+                                            Box.pos_y == pos_to.pos[1]
+                                           ).one()
         except NoResultFound:
-            raise HTTPException(status_code = 404, detail = f"Box in position {(pos_to_x, pos_to_y)} not found")
-
-        # hago el swap
-        # guardo en una variable auxiliar las posicion de from
-        aux_pos_from = (box_from.pos_x, box_from.pos_y)
-
-        # cambio la pos de box_from a la de box_to
-        box_from.pos_x = box_to.pos_x
-        box_from.pos_y = box_to.pos_y
-
-        # lo mismo para to con el aux_pos_from
-        box_to.pos_x = aux_pos_from[0]
-        box_to.pos_y = aux_pos_from[1]
-
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
+        
+        # Intercambio colores
+        box_to_new_color = box_from.color
+        
+        box_from.color = box_to.color
+        box_to.color = box_to_new_color
+        
+        #Guardo los cambios
         db.commit()
-
-        
 
         return {"message": "The board was succesfully updated"}

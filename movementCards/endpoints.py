@@ -52,12 +52,17 @@ async def play_movement_card(game_id: int, player_id: int, card_id: int, pos_fro
 @movement_cards_router.post("/undo_move")
 async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_db), 
                         partial_mov_repo:  PartialMovementRepository = Depends(get_partial_movement_repository),
-                        board_repo: BoardRepository = Depends()):
+                        board_repo: BoardRepository = Depends(),
+                        mov_cards_repo: MovementCardsRepository = Depends(get_movement_cards_repository)
+                        ):
 
     last_movement = partial_mov_repo.undo_movement(db)
+    pos_from = BoardPosition(pos=(last_movement.pos_from_x, last_movement.pos_from_y))
+    pos_to = BoardPosition(pos=(last_movement.pos_to_x, last_movement.pos_to_y))
 
-    board_repo.swap_pieces(game_id, last_movement.pos_from_x, last_movement.pos_from_y,
-                           last_movement.pos_to_x, last_movement.pos_to_y, db)
+    board_repo.switch_boxes(game_id, pos_from, pos_to, db)
+    
+    mov_cards_repo.mark_card_in_player_hand(last_movement.mov_card_id, db)
     
     movement_update = {
             "type": "MOVEMENT_UPDATE"
