@@ -22,8 +22,8 @@ class FigureCardsRepository:
                                                     FigureCard.player.has(game_id=game_id)).all()
 
         if not figure_cards:
-            raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
-
+            # raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
+            return []
         # convierto cada elemento en figure_cards a su schema
         figure_cards_list = [FigureCardSchema.model_validate(card) for card in figure_cards]
 
@@ -74,19 +74,34 @@ class FigureCardsRepository:
         #pdb.set_trace()
         
         if cards_needed > 0:
-            try:
-                hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+            hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
                                                         FigureCard.game_id == game_id,
                                                         FigureCard.show == False
                                                         ).limit(cards_needed).all()
-            except NoResultFound:
-                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No figure cards found for player, player should have won")
-            
-            # Actualizar el atributo show a True para las cartas necesarias
-            for card in hidden_cards:
-                card.show = True
+            if hidden_cards:
+                # Actualizar el atributo show a True para las cartas necesarias
+                for card in hidden_cards:
+                    card.show = True
                             
-            db.commit()
+                db.commit()
+    
+
+    def discard_figure_card(self, figure_card_id: int, db: Session):
+        # Fetch figure card by id
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail= f"There no figure card associated with this id {figure_card_id}")
+
+        
+        # la elimino de la base de datos
+        db.delete(figure_card)
+
+        db.commit()
+
+        return {"message": "The figure cards was successfully discarded"}
+
+
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:

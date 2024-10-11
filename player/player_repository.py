@@ -93,7 +93,7 @@ class PlayerRepository:
 
         if game_state.state == StateEnum.PLAYING:
             # chequeo la condicion de ganar por abandono
-            await game_logic.check_win_condition(game_id, db)
+            await game_logic.check_win_condition(game_id, player_id, db)
         
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
     

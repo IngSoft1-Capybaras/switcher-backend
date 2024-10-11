@@ -9,7 +9,10 @@ def game_logic():
     mock_game_repo = MagicMock()
     mock_game_state_repo = MagicMock()
     mock_player_repo = MagicMock()
-    return GameLogic(game_repository=mock_game_repo, game_state_repository=mock_game_state_repo, player_repository=mock_player_repo)
+    mock_figure_cards_repo = MagicMock()
+    return GameLogic(game_repository=mock_game_repo, game_state_repository=mock_game_state_repo, 
+                     player_repository=mock_player_repo, figure_cards_repo=mock_figure_cards_repo)
+
 
 @pytest.mark.asyncio
 async def test_check_win_condition(game_logic):
@@ -27,7 +30,7 @@ async def test_check_win_condition(game_logic):
     
     #Mock handle win
     with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_logic.check_win_condition(mock_game.id, mock_session)
+        result = await game_logic.check_win_condition(mock_game.id, mock_game.players[0].id, mock_session)
     
         mock_handle_win.assert_called_once_with(mock_game.id, mock_game.players[0].id ,mock_session)
         assert result

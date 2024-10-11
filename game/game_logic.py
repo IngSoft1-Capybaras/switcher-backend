@@ -12,19 +12,22 @@ from connection_manager import manager
 
 
 def get_game_logic(game_repo: GameRepository = Depends(get_game_repository), 
-                   game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends()):
+                   game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends(), 
+                   figure_cards_repo: FigureCardsRepository = Depends(get_figure_cards_repository)):
     
-    return GameLogic(game_repo,game_state_repo, player_repo)
+    return GameLogic(game_repo,game_state_repo, player_repo, figure_cards_repo)
 
 class GameLogic:
     def __init__(self, game_repository: GameRepository, game_state_repository: GameStateRepository, 
-                 player_repository: PlayerRepository):
+                 player_repository: PlayerRepository, figure_cards_repo: FigureCardsRepository):
+
         self.game_repository = game_repository
         self.game_state_repo = game_state_repository
         self.player_repo = player_repository
+        self.figure_cards_repo = figure_cards_repo
 
 
-    async def check_win_condition(self, game_id: int, db: Session):
+    async def check_win_condition(self, game_id: int, player_id: int, db: Session):
 
         # chequeo si queda solo uno
         players_left = self.player_repo.get_players_in_game(game_id, db)
@@ -32,12 +35,13 @@ class GameLogic:
         if len(players_left) == 1:
             await self.handle_win(game_id, players_left[0].id, db)
             return True
-  
+        else:
+            if len(self.figure_cards_repo.get_figure_cards(game_id, player_id, db)) == 0:
+                await self.handle_win(game_id, player_id, db)
+                return True
+            
         return False
     
-
-        # aca irian el resto de las condiciones que se veran en otros sprints
-
 
     async def handle_win(self, game_id: int, winner_player_id: int, db: Session):
         
