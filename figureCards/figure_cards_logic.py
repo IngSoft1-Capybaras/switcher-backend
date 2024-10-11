@@ -1,6 +1,6 @@
 import random
 from sqlalchemy.orm import Session
-from .models import FigureCard, typeEnum, DirectionEnum, FigurePaths
+from .models import FigureCard, typeEnum, DirectionEnum, FigurePaths, direction_map
 from .schemas import FigureCardSchema
 from .figure_cards_repository import FigureCardsRepository
 from game.models import Game
@@ -8,6 +8,7 @@ from player.player_repository import PlayerRepository
 from board.board_repository import BoardRepository
 from board.board_logic import BoardLogic
 from fastapi import Depends
+from fastapi import HTTPException
 
 SHOW_LIMIT = 3
 
@@ -42,51 +43,203 @@ class FigureCardsLogic:
 
         return {"message": "Figure deck created"}
 
-    def get_pointer_from_figure(self,figure):
+    def move_pointer(self, pointer, direction):
+        if direction == DirectionEnum.UP:
+            pointer = (pointer[0], pointer[1] - 1)
+        elif direction == DirectionEnum.DOWN:
+            pointer = (pointer[0], pointer[1] + 1)
+        elif direction == DirectionEnum.LEFT:
+            pointer = (pointer[0] - 1, pointer[1])
+        elif direction == DirectionEnum.RIGHT:
+            pointer = (pointer[0] + 1, pointer[1])
+        return pointer
+
+    def check_path(self, path, figure, pointer, board, color, db):
+        boardLogic = BoardLogic(BoardRepository())
+        result = True
+        for i, box in enumerate(figure):
+            # if not BoardLogic.is_box_in(pointer):
+            #     result = False
+            # chequear que todas las casillas de alrededor de la figura sean de distinto color
+            # exceptuando las casillas de la figura
+            # check_surroundings = check_surroundings(self, path, figure, pointer, board, color)
+
+            # inBounds should check the current pointer points to a box from our figure, not the current one
+            # inBounds = (box.pos_x == pointer[0] and box.pos_y == pointer[1]) !!esto no deberia ser asi
+            # if not inBounds:
+            #     # raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
+            #     result = {'message': "Boxes given out of type figure bounds"}
+            result = result and (boardLogic.get_box_color(board.board_id , pointer[0] , pointer[1], db) == color) # and inBounds
+            print(f"\n(72) Result: {result}\n")
+            print(f"\n(73) PointerBefore: {pointer}\n")
+            if not result:
+                break
+            # si no es la ultima casilla de la figura, mover el pointer 
+            # bug: si la figura es de mas longitud que el path - 1 
+            # (esto no deberia pasar de todas maneras a no ser que se pase una figura de tipo X y longitud X con longitud Y != X)
+            if i < len(path):
+                print(f"\n(77) Path: {path[i]}\n")
+                pointer = self.move_pointer(pointer, path[i])
+                # Antes de seguir fijarse de que no se salga de los limites del tablero
+                if pointer[0] < 0 or pointer[0] > 5 or pointer[1] < 0 or pointer[1] > 5:
+                    result = False
+                    break
+                print(f"\n(79) PointerAfter: {pointer}\n")
+
+        return result
+
+    def get_pointer_from_figure(self,figure, rot):
         if len(figure) == 0:
             raise HTTPException(status_code=404, detail="Empty figure")
+
+        # PRINT line of code also
+        print(f"\n(88) rot: {rot}\n")
         
         x = figure[0].pos_x
         y = figure[0].pos_y
-        # obtener la casilla con el x menor y el y mayor
-        for box in figure:
-            if box.pos_x < x:
-                x = box.pos_x
-            if box.pos_y > y:
-                y = box.pos_y
+        # dependiendo de la rotacion aplicada actualmente, el punto de referencia de la figura
+        # (0 grados = punta arriba izquierda) (90g = punta arriba derecha) (180 = punta abajo derecha) (270 = punta abajo izquierda)
+        # los elementos 0,0 estan en la punta izquierda mas alta
+
+        if rot == 0:
+            # Encuentra el valor mínimo de x
+            min_x = min(box.pos_x for box in figure)
+
+            # Filtra las cajas que tienen el valor mínimo de x
+            min_x_boxes = [box for box in figure if box.pos_x == min_x]
+
+            # Encuentra el valor mínimo de y entre las cajas con el valor mínimo de x
+            min_y = min(box.pos_y for box in min_x_boxes)
+
+            # Ahora min_x es el valor mínimo de x y min_y es el valor mínimo de y entre las cajas con el valor mínimo de x
+            x = min_x
+            y = min_y
+        elif rot == 1:
+            # Encuentra el valor máximo de y
+            max_y = max(box.pos_y for box in figure)
+
+            # Filtra las cajas que tienen el valor máximo de y
+            max_y_boxes = [box for box in figure if box.pos_y == max_y]
+
+            # Encuentra el valor mínimo de x entre las cajas con el valor máximo de y
+            min_x = min(box.pos_x for box in max_y_boxes)
+
+            # Ahora min_x es el valor mínimo de x y max_y es el valor máximo de y entre las cajas con el valor máximo de y
+            x = min_x
+            y = max_y
+        elif rot == 2:
+            # Encuentra el valor máximo de x
+            max_x = max(box.pos_x for box in figure)
+
+            # Filtra las cajas que tienen el valor máximo de x
+            max_x_boxes = [box for box in figure if box.pos_x == max_x]
+
+            # Encuentra el valor máximo de y entre las cajas con el valor máximo de x
+            max_y = max(box.pos_y for box in max_x_boxes)
+
+            # Ahora max_x es el valor máximo de x y max_y es el valor máximo de y entre las cajas con el valor máximo de x
+            x = max_x
+            y = max_y
+        elif rot == 3:
+            # Encuentra el valor mínimo de y
+            min_y = min(box.pos_y for box in figure)
+
+            # Filtra las cajas que tienen el valor mínimo de y
+            min_y_boxes = [box for box in figure if box.pos_y == min_y]
+
+            # Encuentra el valor máximo de x entre las cajas con el valor mínimo de y
+            max_x = max(box.pos_x for box in min_y_boxes)
+
+            # Ahora max_x es el valor máximo de x y min_y es el valor mínimo de y entre las cajas con el valor mínimo de y
+            x = max_x
+            y = min_y
+        else:
+            raise HTTPException(status_code=404, detail="Invalid rotation")
+            
 
         return (x,y)
 
+
     def check_valid_figure(self,figure,figure_type,board, db):
-        pointer = self.get_pointer_from_figure(figure)
+        pointer = self.get_pointer_from_figure(figure,0)
         boardLogic = BoardLogic(BoardRepository())
         color = BoardLogic.get_box_color(boardLogic, board.board_id, pointer[0], pointer[1], db)
+        if color != figure[0].color:
+            raise HTTPException(status_code=404, detail="Color of figure does not match with color in board")
+        validType = False
+        result = False
         for path in FigurePaths:
             if path.type == figure_type:
-                # return check_path(path.path, figure, pointer, board, color)
-                return True
+                # chequear las 4 rotaciones posibles del path
+                for i in range(4):
+                    # Chequear los 4 posibles puntos de referencia de la figura (depende de que tan rotada venga) 
+                    for j in range(4):
 
-        # for box in figure:
-        #     pointer = move_pointer(pointer, box.direction)
-        #     if not board.is_box_in(pointer):
-        #         return False
+                        # Cambiar el pointer a la posición inicial de la figura rotada 90 grados j veces
+                        pointer = self.get_pointer_from_figure(figure, j)
 
-        return True
+                        partial_result = self.check_path(path.path, figure, pointer, board, color, db)
+                        # Si una de las rotaciones sigue un path valido, la figura es valida (luego chequearemos que no se superpongan)
+                        if partial_result:
+                            result = True
+                            break
+
+                    # Rota el path 90 grados
+                    path.path = [direction_map[direction] for direction in path.path]
+                    if partial_result:
+                        break
+
+                validType = True
+                break
+        if partial_result == {'message': "Boxes given out of type figure bounds"}:
+            raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
+        return result
+
+        if not validType:
+            raise HTTPException(status_code=404, detail="Invalid figure type")
+
+        return result
+
+    def modifiyBoardTest(self, board, db):
+        boardLogic = BoardLogic(BoardRepository())
+        boardRepo = BoardRepository()
+        board = boardRepo.get_configured_board(board.game_id, db)
+        # Modificar las casillas para formar una figura valida
+        boardRepo.upd_box_color(board.board_id, 2, 2, "RED", db)
+        boardRepo.upd_box_color(board.board_id, 2, 3, "RED", db)
+        boardRepo.upd_box_color(board.board_id, 1, 3, "RED", db)
+        boardRepo.upd_box_color(board.board_id, 1, 4, "RED", db)
+        boardRepo.upd_box_color(board.board_id, 1, 5, "RED", db)
+
+        return board
+
+    # Figura de prueba = [[0,0],[1,0],[1,1],[2,1]] = FIGE03
 
     def play_figure_card(self, figureInfo, db):
         print([repr(path) for path in FigurePaths])
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
+        # chequear que sea el turno del jugador
         board_repo = BoardRepository()
         board = BoardRepository.get_configured_board(board_repo, figureInfo.game_id, db)
         figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
-        if not figure_card.show:
-            return {"message": "The card is not shown"}
+        # chequear que la carta de figura sea del jugador
+        # if figure_card.player_id != player.id:
+        #     return {"message": "The figure card does not belong to the player"}
+        # if not figure_card.show:
+        #     return {"message": "The card is not shown"}
+
+        # lets modify the existing board to have a figure to test this validation
+        board = self.modifiyBoardTest(board, db)
+        
         # chequear que la figura es valida (compara con la figura de la carta)
         valid = self.check_valid_figure( figureInfo.figure, figure_card.type, board, db)
 
         if valid:
+            # aplicar lo siguiente en el repo
             # figure_card.show = False
             # figure_card.player_id = None
+            # Pasar figuras de movimiento parcial a movimiento completo
+            # Avisar por websocket que se jugo una carta de figura
             return {"message": "Figure card played"}
         else:
             return {"message": "Invalid figure"}
