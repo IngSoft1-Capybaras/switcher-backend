@@ -6,9 +6,11 @@ from .figure_cards_repository import FigureCardsRepository
 from game.models import Game
 from player.player_repository import PlayerRepository
 from board.board_repository import BoardRepository
+from gameState.game_state_repository import GameStateRepository
 from board.board_logic import BoardLogic
 from fastapi import Depends
 from fastapi import HTTPException
+from connection_manager import manager
 
 SHOW_LIMIT = 3
 
@@ -43,6 +45,26 @@ class FigureCardsLogic:
 
         return {"message": "Figure deck created"}
 
+    def is_valid_pointer(self, pointer):
+        return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
+
+    def check_surroundings(self, path, figure, pointer, board, color, db):
+        print(f"\n(47) Checking surroundings for pointer: {pointer}\n")
+        boardLogic = BoardLogic(BoardRepository())
+        # chequear que las casillas de alrededor del pointer dado sean de distinto color
+        for direction in DirectionEnum:
+            # chequear que la casilla de alrededor de la figura sea del color de la figura
+            pointerBefore = pointer
+            pointer = self.move_pointer(pointer, direction)
+            if self.is_valid_pointer(pointer):
+                if (boardLogic.get_box_color(board.board_id, pointer[0], pointer[1], db) == color) and not self.belongs_to_figure(pointer, figure):
+                    return False
+                else: # retrotraer el pointer
+                    pointer = pointerBefore
+                
+        return True
+
+
     def move_pointer(self, pointer, direction):
         if direction == DirectionEnum.UP:
             pointer = (pointer[0], pointer[1] - 1)
@@ -54,22 +76,25 @@ class FigureCardsLogic:
             pointer = (pointer[0] + 1, pointer[1])
         return pointer
 
+    def belongs_to_figure(self, pointer, figure):
+        for fig_box in figure:
+            if fig_box.pos_x == pointer[0] and fig_box.pos_y == pointer[1]:
+                return True
+        return False
+
     def check_path(self, path, figure, pointer, board, color, db):
         boardLogic = BoardLogic(BoardRepository())
         result = True
         for i, box in enumerate(figure):
             # if not BoardLogic.is_box_in(pointer):
             #     result = False
-            # chequear que todas las casillas de alrededor de la figura sean de distinto color
-            # exceptuando las casillas de la figura
-            # check_surroundings = check_surroundings(self, path, figure, pointer, board, color)
-
-            # inBounds should check the current pointer points to a box from our figure, not the current one
-            # inBounds = (box.pos_x == pointer[0] and box.pos_y == pointer[1]) !!esto no deberia ser asi
+            check_surroundings = self.check_surroundings(path, figure, pointer, board, color, db)
+            # check if the current pointer points to a box from our figure
+            inBounds = self.belongs_to_figure(pointer, figure)
             # if not inBounds:
-            #     # raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
-            #     result = {'message': "Boxes given out of type figure bounds"}
-            result = result and (boardLogic.get_box_color(board.board_id , pointer[0] , pointer[1], db) == color) # and inBounds
+                # raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
+                # result = {'message': "Boxes given out of type figure bounds"}
+            result = result and (boardLogic.get_box_color(board.board_id , pointer[0] , pointer[1], db) == color) and inBounds and check_surroundings
             print(f"\n(72) Result: {result}\n")
             print(f"\n(73) PointerBefore: {pointer}\n")
             if not result:
@@ -81,7 +106,7 @@ class FigureCardsLogic:
                 print(f"\n(77) Path: {path[i]}\n")
                 pointer = self.move_pointer(pointer, path[i])
                 # Antes de seguir fijarse de que no se salga de los limites del tablero
-                if pointer[0] < 0 or pointer[0] > 5 or pointer[1] < 0 or pointer[1] > 5:
+                if not self.is_valid_pointer(pointer):
                     result = False
                     break
                 print(f"\n(79) PointerAfter: {pointer}\n")
@@ -211,35 +236,52 @@ class FigureCardsLogic:
         boardRepo.upd_box_color(board.board_id, 1, 4, "RED", db)
         boardRepo.upd_box_color(board.board_id, 1, 5, "RED", db)
 
+        # agrego una a los surroundings para prover nueva funcion
+        boardRepo.upd_box_color(board.board_id, 1, 2, "RED", db)
+
         return board
 
-    # Figura de prueba = [[0,0],[1,0],[1,1],[2,1]] = FIGE03
-
-    def play_figure_card(self, figureInfo, db):
+    async def play_figure_card(self, figureInfo, db):
         print([repr(path) for path in FigurePaths])
-        player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
-        # chequear que sea el turno del jugador
+
+        gameStateRepo = GameStateRepository()
         board_repo = BoardRepository()
+
+        player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
+        gameState = gameStateRepo.get_game_state_by_id(figureInfo.game_id, db)
+
+        # chequear que sea el turno del jugador
+        if player.id != gameState.current_player:
+            return {"message": "It is not the player's turn"}
+
         board = BoardRepository.get_configured_board(board_repo, figureInfo.game_id, db)
         figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
+
         # chequear que la carta de figura sea del jugador
-        # if figure_card.player_id != player.id:
-        #     return {"message": "The figure card does not belong to the player"}
-        # if not figure_card.show:
-        #     return {"message": "The card is not shown"}
+        if figure_card.player_id != player.id:
+            return {"message": "The figure card does not belong to the player"}
+        if not figure_card.show:
+            return {"message": "The card is not shown"}
 
         # lets modify the existing board to have a figure to test this validation
-        board = self.modifiyBoardTest(board, db)
+        # board = self.modifiyBoardTest(board, db)
         
         # chequear que la figura es valida (compara con la figura de la carta)
         valid = self.check_valid_figure( figureInfo.figure, figure_card.type, board, db)
 
         if valid:
-            # aplicar lo siguiente en el repo
-            # figure_card.show = False
-            # figure_card.player_id = None
-            # Pasar figuras de movimiento parcial a movimiento completo
+            # Eliminar carta de figura
+            self.fig_card_repo.delete_figure_card(figureInfo.player_id, figureInfo.game_id, figureInfo.card_id, db)
+
+            # TODO : Pasar movimientos de movimiento parcial a movimiento completo
+
             # Avisar por websocket que se jugo una carta de figura
+            game_id = figureInfo.game_id
+            message = {
+                    "type":f"{game_id}:FIGURE_UPDATE"
+                }
+            await manager.broadcast(message)
+
             return {"message": "Figure card played"}
         else:
             return {"message": "Invalid figure"}
