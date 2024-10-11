@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database.db import get_db
@@ -46,7 +46,7 @@ async def play_movement_card(
     movement_validate = mov_cards_logic.validate_movement(request.card_id, request.pos_from, request.pos_to, db)
     #si el movimiento no es valido se le debe avisar el problema al jugador (?) 
     if not movement_validate:
-        return {"message": "Invalid movement"}
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid movement")
     
     
     #si el movimiento es valido entonces lo registramos como un movimiento parcial
