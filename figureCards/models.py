@@ -57,6 +57,14 @@ class DirectionEnum(str, Enum):
     LEFT = "LEFT"
     RIGHT = "RIGHT"
 
+# Mapeo de cada dirección a la siguiente
+direction_map = {
+    "UP": "RIGHT",
+    "RIGHT": "DOWN",
+    "DOWN": "LEFT",
+    "LEFT": "UP"
+}
+
 # Clase que relaciona el tipo con su path correspondiente, no esta en la base de datos
 class FigurePath:
     def __init__(self, type: typeEnum, path: List[DirectionEnum]):
