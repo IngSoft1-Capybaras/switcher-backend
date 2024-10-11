@@ -120,27 +120,6 @@ class MovementCardLogic:
         #Chequeamos que la diferencia sea de exactamente 2 (para hacer la diagonal con un espacio)
         return x_diff == 2 and y_diff == 2
 
-    def validate_en_l_der(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
-        # Lógica de validación para EN_L_DER
-        x1, y1 = pos_from.pos[0], pos_from.pos[1]
-        x2, y2 = pos_to.pos[0], pos_to.pos[1]
-        
-        x_diff, y_diff = self.utils.calculate_differences(pos_from, pos_to)
-        
-        #Dos movimientos en x, uno en y 
-        if x_diff == 2 and y_diff == 1:
-            # Verifico L hacia la derecha
-            if ( x2 > x1 and y2 > y1) or (x2 < x1 and y2 < y1):
-                return True
-
-        # Dos movimientos en y, uno en x
-        if y_diff == 2 and x_diff == 1:
-            # Verifico L hacia la derecha
-            if (y2 > y1 and x2 < x1) or (y2 < y1 and x2 > x1):
-                return True
-
-        return False
-
     def validate_en_l_izq(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
         # Lógica de validación para EN_L_IZQ
         x1, y1 = pos_from.pos[0], pos_from.pos[1]
@@ -151,12 +130,33 @@ class MovementCardLogic:
         #Dos movimientos en x, uno en y 
         if x_diff == 2 and y_diff == 1:
             # Verifico L hacia la izquierda
-            if ( x2 > x1 and y2 < y1) or (x2 < x1 and y2 > y1):
+            if ( x2 > x1 and y2 > y1) or (x2 < x1 and y2 < y1):
                 return True
 
         # Dos movimientos en y, uno en x
         if y_diff == 2 and x_diff == 1:
             # Verifico L hacia la izquierda
+            if (y2 > y1 and x2 < x1) or (y2 < y1 and x2 > x1):
+                return True
+
+        return False
+
+    def validate_en_l_der(self, pos_from: BoardPosition, pos_to: BoardPosition) -> bool:
+        # Lógica de validación para EN_L_DER
+        x1, y1 = pos_from.pos[0], pos_from.pos[1]
+        x2, y2 = pos_to.pos[0], pos_to.pos[1]
+        
+        x_diff, y_diff = self.utils.calculate_differences(pos_from, pos_to)
+        
+        #Dos movimientos en x, uno en y 
+        if x_diff == 2 and y_diff == 1:
+            # Verifico L hacia la derecha
+            if ( x2 > x1 and y2 < y1) or (x2 < x1 and y2 > y1):
+                return True
+
+        # Dos movimientos en y, uno en x
+        if y_diff == 2 and x_diff == 1:
+            # Verifico L hacia la derecha
             if (y2 < y1 and x2 < x1) or (y2 > y1 and x2 > x1):
                 return True
 
