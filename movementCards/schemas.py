@@ -1,6 +1,7 @@
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
 from typing import Optional
+from board.schemas import BoardPosition
 
 #class type
 class typeEnum(str, Enum):
@@ -30,3 +31,10 @@ class MovementCardOut(BaseModel):
     player_id: Optional[int]  # Allowing player_id to be None
     
     model_config = ConfigDict(from_attributes = True)
+
+class PlayMovementCardRequest(BaseModel):
+    game_id: int
+    player_id: int
+    card_id: int
+    pos_from: BoardPosition
+    pos_to: BoardPosition
