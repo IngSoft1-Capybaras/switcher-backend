@@ -34,4 +34,4 @@ async def get_figure_card_by_id(game_id: int, player_id: int,
 @figure_cards_router.post("/play_card")
 async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLogic = Depends(get_fig_cards_logic), db: Session = Depends(get_db)):
 
-    return logic.play_figure_card(figureInfo, db)
+    return await logic.play_figure_card(figureInfo, db)
