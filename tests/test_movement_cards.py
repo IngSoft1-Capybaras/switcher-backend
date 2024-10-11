@@ -122,7 +122,7 @@ def test_play_movement_card(mock_repo,mock_mov_card_logic, mock_partial_mov_repo
     pos_from = BoardPosition(pos=(0, 5)) 
     pos_to = BoardPosition(pos=(0, 3))
     
-    mock_mov_card_logic.validate_movement.return_value = None
+    mock_mov_card_logic.validate_movement.return_value = True
     
     mock_partial_mov_repo.create_partial_movement.return_value = None
     
