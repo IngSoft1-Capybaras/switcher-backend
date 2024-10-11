@@ -45,6 +45,14 @@ class FigureCardsRepository:
         db.add(new_card)
         db.commit()
 
+    def delete_figure_card(self, game_id: int, player_id: int, card_id: int, db: Session):
+        figure_card = db.query(FigureCard).filter(FigureCard.id == card_id, 
+                                                    FigureCard.player_id == player_id,
+                                                    FigureCard.player.has(game_id=game_id)).one()
+
+        db.delete(figure_card)
+        db.commit()
+
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
     return figure_cards_repo
