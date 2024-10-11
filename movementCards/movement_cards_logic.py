@@ -20,7 +20,7 @@ class MovementCardLogic:
         self.player_repo = player_repo
         self.utils = utils
         
-    def create_mov_deck(self, game_id: int, db: Session = Depends(get_db)):
+    def create_mov_deck(self, game_id: int, db: Session):
         
         #Creamos una lista con los tipos de cartas de movimiento
         types_list = ([typeEnum.DIAGONAL_CONT] * 7 +
@@ -58,7 +58,7 @@ class MovementCardLogic:
 
         return {"message": "Movement deck created and assigned to players"}
     
-    def validate_movement(self, card_id: int , pos_from: BoardPosition , pos_to: BoardPosition, db: Session = Depends(get_db)):
+    def validate_movement(self, card_id: int , pos_from: BoardPosition , pos_to: BoardPosition, db: Session):
         
         if not isinstance(pos_from, BoardPosition) or not isinstance(pos_to, BoardPosition):
             raise TypeError("pos_from and pos_to must be instances of BoardPosition")

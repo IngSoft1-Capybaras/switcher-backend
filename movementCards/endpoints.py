@@ -43,7 +43,7 @@ async def play_movement_card(
                                 db: Session = Depends(get_db)
                             ):
     #validar movimiento
-    movement_validate = mov_cards_logic.validate_movement(request.card_id, request.pos_from, request.pos_to)
+    movement_validate = mov_cards_logic.validate_movement(request.card_id, request.pos_from, request.pos_to, db)
     #si el movimiento no es valido se le debe avisar el problema al jugador (?) 
     if not movement_validate:
         return {"message": "Invalid movement"}

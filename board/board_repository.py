@@ -97,16 +97,16 @@ class BoardRepository:
         
         try:
             box_from = db.query(Box).filter(Box.game_id == game_id,
-                                            Box.pos_x == pos_from[0],
-                                            Box.pos_y == pos_from[1]
+                                            Box.pos_x == pos_from.pos[0],
+                                            Box.pos_y == pos_from.pos[1]
                                            ).one()
         except NoResultFound:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
         
         try:
             box_to = db.query(Box).filter(Box.game_id == game_id,
-                                            Box.pos_x == pos_to[0],
-                                            Box.pos_y == pos_to[1]
+                                            Box.pos_x == pos_to.pos[0],
+                                            Box.pos_y == pos_to.pos[1]
                                            ).one()
         except NoResultFound:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
