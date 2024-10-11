@@ -20,6 +20,7 @@ def get_game_logic(game_repo: GameRepository = Depends(get_game_repository),
 class GameLogic:
     def __init__(self, game_repository: GameRepository, game_state_repository: GameStateRepository, 
                  player_repository: PlayerRepository, figure_cards_repo: FigureCardsRepository):
+
         self.game_repository = game_repository
         self.game_state_repo = game_state_repository
         self.player_repo = player_repository
