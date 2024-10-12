@@ -4,8 +4,6 @@ from database.db import get_db
 from .player_repository import PlayerRepository
 from .schemas import PlayerJoinRequest
 from game.game_repository import GameRepository
-from gameState.game_state_repository import GameStateRepository
-from movementCards.movement_cards_repository import MovementCardsRepository
 from connection_manager import manager
 from game.game_logic import get_game_logic, GameLogic
 
@@ -26,11 +24,9 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 # Abandonar juego
 @player_router.post("/players/{player_id}/leave")
 async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), 
-                     repo: PlayerRepository = Depends(), game_logic: GameLogic = Depends(get_game_logic),
-                     game_repo: GameRepository = Depends(), game_state_repo: GameStateRepository = Depends(),
-                     mov_card_repo: MovementCardsRepository = Depends()):
+                     repo: PlayerRepository = Depends(), game_logic: GameLogic = Depends(get_game_logic)):
     
-    response = await repo.leave_game(game_id, player_id, game_logic, game_repo, game_state_repo, mov_card_repo, db)
+    response = await repo.leave_game(game_id, player_id, game_logic, db)
 
     #Si se cambia el turno del jugador actual porque este decidio abandonar la partida
     if response.get("changed_turn"):

@@ -1,14 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound
 from typing import List
 
 from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
-
-from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut
-
+from .schemas import BoardOut, BoardAndBoxesOut, BoxOut
+import random
 
 class BoardRepository:
     
@@ -90,36 +88,22 @@ class BoardRepository:
         
         return BoardAndBoxesOut.model_validate(result)
 
-    def switch_boxes(self, game_id: int, pos_from: BoardPosition, pos_to: BoardPosition, db: Session):
-        
-        try:
-            db.query(Game).filter(Game.id == game_id).one()
-        except NoResultFound:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
-        
-        try:
-            box_from = db.query(Box).filter(Box.game_id == game_id,
-                                            Box.pos_x == pos_from.pos[0],
-                                            Box.pos_y == pos_from.pos[1]
-                                           ).one()
-        except NoResultFound:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
-        
-        try:
-            box_to = db.query(Box).filter(Box.game_id == game_id,
-                                            Box.pos_x == pos_to.pos[0],
-                                            Box.pos_y == pos_to.pos[1]
-                                           ).one()
-        except NoResultFound:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
-        
-        # Intercambio colores
-        box_to_new_color = box_from.color
-        
-        box_from.color = box_to.color
-        box_to.color = box_to_new_color
-        
-        #Guardo los cambios
-        db.commit()
+    def get_box_by_position(self, board_id: int, pos_x: int, pos_y: int, db: Session):
+        # print box positions
+        print(f"\n\nget_box_by_position: {pos_x}, {pos_y}\n\n")
+        box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
+        if not box:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box not found {pos_x}, {pos_y}")
+        return BoxOut.model_validate(box) if box else None
 
-        return {"message": "The board was succesfully updated"}
+    def upd_box_color(self, board_id: int, pos_x: int, pos_y: int, color: ColorEnum, db: Session):
+        box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
+        
+        if not box:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
+        
+        box.color = color
+        db.commit()
+        db.refresh(box)
+        
+        return BoxOut.model_validate(box) if box else None
