@@ -1,10 +1,11 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException, status
-from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException, status
+from sqlalchemy.exc import NoResultFound
 
 from .models import PartialMovements
 
 from board.schemas import BoardPosition
+from board.board_repository import BoardRepository
 from game.models import Game
 from player.models import Player
 from movementCards.models import MovementCard
