@@ -1,5 +1,3 @@
-import os
-
 import pytest
 import logging
 from fastapi import HTTPException
@@ -8,7 +6,9 @@ from sqlalchemy.orm import sessionmaker
 from board.board_repository import BoardRepository
 from board.models import Board, Box, ColorEnum
 from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
+
 from database.db import Base, engine
+
 from game.game_repository import GameRepository
 from game.models import Game
 from game.schemas import GameCreate

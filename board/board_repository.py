@@ -6,7 +6,9 @@ from typing import List
 from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
-from .schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
+
+from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut
+
 
 class BoardRepository:
     
@@ -87,8 +89,7 @@ class BoardRepository:
         result = BoardAndBoxesOut(game_id=board.game_id, board_id=board.id, boxes=rows_in_board)
         
         return BoardAndBoxesOut.model_validate(result)
-    
-    
+
     def switch_boxes(self, game_id: int, pos_from: BoardPosition, pos_to: BoardPosition, db: Session):
         
         try:

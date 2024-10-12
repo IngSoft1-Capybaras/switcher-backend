@@ -1,10 +1,11 @@
 import random
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import func
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
+
 from .models import MovementCard
 from .schemas import MovementCardSchema, typeEnum
+
 from player.models import Player
 from game.models import Game
 
@@ -185,6 +186,24 @@ class MovementCardsRepository:
         
         movement_card.used = False
         db.commit()
+        
+    def get_movement_card_type(self, card_id: int, db: Session) -> typeEnum:
+        try:
+            movement_card = db.query(MovementCard).filter(MovementCard.id == card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "No movement card found")
+        
+        return typeEnum(movement_card.type)
+    
+    def mark_card_partially_used(self, card_id: int, db: Session):
+        try:
+            movement_card = db.query(MovementCard).filter(MovementCard.id == card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "No movement card found")
+        
+        movement_card.used = True
+        db.commit()
+        
         
         
         
