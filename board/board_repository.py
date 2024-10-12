@@ -122,4 +122,4 @@ class BoardRepository:
         #Guardo los cambios
         db.commit()
 
-        return {"message": "The board was succesfully updated"
+        return {"message": "The board was succesfully updated"}
