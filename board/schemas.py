@@ -20,6 +20,7 @@ class BoxOut(BaseModel):
     color: ColorEnum
     pos_x: int
     pos_y: int
+    highlighted: bool = False
 
     model_config = ConfigDict(from_attributes = True)
     
@@ -33,6 +34,7 @@ class BoardAndBoxesOut(BaseModel):
     game_id: int
     board_id: int
     boxes: List[List[BoxOut]]
+    formed_figures: List[List[BoxOut]] = []
 
     model_config = ConfigDict(from_attributes = True)
 
