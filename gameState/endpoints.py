@@ -1,14 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends,status
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import NoResultFound
 from database.db import get_db
 
 from gameState.models import  StateEnum
 
-from player.models import Player, turnEnum
-from game.models import Game
-from gameState.models import GameState, StateEnum
-from gameState.schemas import GameStateInDB
+from gameState.models import  StateEnum
 
 from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -37,11 +33,24 @@ async def get_current_player(game_id: int, db: Session = Depends(get_db)):
     return game_state_repo.get_current_player(game_id, db)
 
 @game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
-async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depends(), db: Session = Depends(get_db)):
+async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depends(), 
+                        figure_card_repo:  FigureCardsRepository = Depends(), 
+                        movement_card_repo: MovementCardsRepository = Depends(), 
+                        db: Session = Depends(get_db)
+                    ):
     
+    player_id = game_state_repo.get_current_player(game_id, db)
     next_player_id = game_state_repo.get_next_player_id(game_id, db)
     
     game_state_repo.update_current_player(game_id, next_player_id, db)
+    
+    
+    #repartir cartas de movimiento y figuras si es necesario
+    #necesito el id_del player
+    figure_card_repo.grab_figure_cards(player_id["current_player_id"], game_id, db)
+    
+    movement_card_repo.grab_mov_cards(player_id["current_player_id"], game_id, db)
+    
     
     #notificar a los jugadores
     message = {

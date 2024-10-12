@@ -1,12 +1,14 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import NoResultFound
 from typing import List
 
 from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
-from .schemas import BoardOut, BoardAndBoxesOut, BoxOut
-import random
+
+from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut
+
 
 class BoardRepository:
     
@@ -87,6 +89,41 @@ class BoardRepository:
         result = BoardAndBoxesOut(game_id=board.game_id, board_id=board.id, boxes=rows_in_board)
         
         return BoardAndBoxesOut.model_validate(result)
+
+    def switch_boxes(self, game_id: int, pos_from: BoardPosition, pos_to: BoardPosition, db: Session):
+        
+        try:
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found")
+        
+        try:
+            box_from = db.query(Box).filter(Box.game_id == game_id,
+                                            Box.pos_x == pos_from.pos[0],
+                                            Box.pos_y == pos_from.pos[1]
+                                           ).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
+        
+        try:
+            box_to = db.query(Box).filter(Box.game_id == game_id,
+                                            Box.pos_x == pos_to.pos[0],
+                                            Box.pos_y == pos_to.pos[1]
+                                           ).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
+        
+        # Intercambio colores
+        box_to_new_color = box_from.color
+        
+        box_from.color = box_to.color
+        box_to.color = box_to_new_color
+        
+        #Guardo los cambios
+        db.commit()
+
+        return {"message": "The board was succesfully updated"}
+
 
     def get_box_by_position(self, board_id: int, pos_x: int, pos_y: int, db: Session):
         # print box positions

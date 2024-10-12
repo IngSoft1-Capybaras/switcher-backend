@@ -11,15 +11,16 @@ class Game(Base):
     name = Column(String, nullable=False)
     max_players = Column(Integer, nullable=False)
     min_players = Column(Integer, nullable=False)
-    is_private = Column(Boolean, default=False)  # New attribute
+    is_private = Column(Boolean, default=False) 
     password = Column(String, nullable=True)
 
-    game_state = relationship("GameState", back_populates="game", uselist=False)
-    players = relationship("Player", back_populates="game")
-    boxes = relationship("Box", back_populates="game")
-    board = relationship("Board", back_populates="game")
-    movement_cards = relationship("MovementCard", back_populates="game")
-    figure_cards = relationship("FigureCard", back_populates="game")
+    game_state = relationship("GameState", back_populates="game", uselist=False, passive_deletes=True)
+    players = relationship("Player", back_populates="game", passive_deletes=True, cascade='all, delete')
+    boxes = relationship("Box", back_populates="game", passive_deletes=True)
+    board = relationship("Board", back_populates="game", passive_deletes=True)
+    movement_cards = relationship("MovementCard", back_populates="game", passive_deletes=True)
+    figure_cards = relationship("FigureCard", back_populates="game", passive_deletes=True)
+    partial_movements = relationship("PartialMovements", back_populates="game", passive_deletes=True)
 
     def players_count(self):
         return len(self.players)

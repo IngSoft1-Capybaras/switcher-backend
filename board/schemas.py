@@ -1,6 +1,6 @@
 from enum import Enum
-from pydantic import BaseModel, ConfigDict
-from typing import List
+from pydantic import BaseModel, ConfigDict, Field
+from typing import List, Tuple, Annotated
 
 class ColorEnum(str, Enum):
     RED = "RED"
@@ -42,3 +42,9 @@ class BoardAndBoxesOut(BaseModel):
     boxes: List[List[BoxOut]]
 
     model_config = ConfigDict(from_attributes = True)
+
+class BoardPosition(BaseModel):
+    pos: Tuple[Annotated[int, Field(ge=0, le=5)], Annotated[int, Field(ge=0, le=5)]]
+    class ConfigDict:
+        # Allows validation at the time of initialization
+        validate_assignment = True
