@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 from board.board_repository import BoardRepository
 from board.models import Board, Box, ColorEnum
-from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut
+from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
 from database.db import engine
 from game.game_repository import GameRepository
 from game.models import Game
@@ -210,14 +210,14 @@ def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRe
     board = board_repository.create_new_board(game.id, session)
 
     # Creo dos casillas
-    pos_from = (0, 0)
-    pos_to = (1, 1)
-    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from[0], pos_from[1], session)
-    board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to[0], pos_to[1], session)
+    pos_from = BoardPosition(pos=(0, 0))
+    pos_to = BoardPosition(pos=(1, 1))
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from.pos[0], pos_from.pos[1], session)
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to.pos[0], pos_to.pos[1], session)
 
     # Verifico colores iniciales
-    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from[0], Box.pos_y == pos_from[1]).one()
-    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to[0], Box.pos_y == pos_to[1]).one()
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from.pos[0], Box.pos_y == pos_from.pos[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to.pos[0], Box.pos_y == pos_to.pos[1]).one()
     assert box_from.color == ColorEnum.BLUE
     assert box_to.color == ColorEnum.RED
 
@@ -225,10 +225,8 @@ def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRe
     board_repository.switch_boxes(game.id, pos_from, pos_to, session)
 
     # Verificamos el intercambio
-    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from[0], Box.pos_y == pos_from[1]).one()
-    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to[0], Box.pos_y == pos_to[1]).one()
+    box_from = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_from.pos[0], Box.pos_y == pos_from.pos[1]).one()
+    box_to = session.query(Box).filter(Box.board_id == board.id, Box.pos_x == pos_to.pos[0], Box.pos_y == pos_to.pos[1]).one()
     assert box_from.color == ColorEnum.RED
     assert box_to.color == ColorEnum.BLUE
-    
-#Agregar negativo
     

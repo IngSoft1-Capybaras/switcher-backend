@@ -243,10 +243,10 @@ def test_validate_diagonal_esp_invalid(mov_cards_logic):
     
 def test_validate_en_l_der_valid_case1(mov_cards_logic):
     pos_from = BoardPosition(pos=(0, 0))
-    #Movimiento en L hacia la derecha valido (dos lugares en x, un lugar en y)
-    pos_to = BoardPosition(pos=(2, 1))  
+    #Movimiento en L hacia la derecha valido (un lugar en x, dos en y)
+    pos_to = BoardPosition(pos=(1, 2))  
     
-    mov_cards_logic.utils.calculate_differences.return_value = (2,1)
+    mov_cards_logic.utils.calculate_differences.return_value = (1,2)
     result = mov_cards_logic.validate_en_l_der(pos_from, pos_to)
     
     assert result == True
@@ -254,7 +254,7 @@ def test_validate_en_l_der_valid_case1(mov_cards_logic):
 def test_validate_en_l_der_valid_case2(mov_cards_logic):
     pos_from = BoardPosition(pos=(0, 2))
     #Movimiento en L hacia la derecha valido (dos lugares en y, un lugar en x)
-    pos_to = BoardPosition(pos=(1, 0))
+    pos_to = BoardPosition(pos=(1, 4))
     
     mov_cards_logic.utils.calculate_differences.return_value = (1,2)
     result = mov_cards_logic.validate_en_l_der(pos_from, pos_to)
@@ -274,27 +274,27 @@ def test_validate_en_l_der_invalid_case1(mov_cards_logic):
 def test_validate_en_l_der_invalid_case2(mov_cards_logic):
     pos_from = BoardPosition(pos=(2, 2))
     #Movimiento invalido, en L hacia la izquierda
-    pos_to = BoardPosition(pos=(1, 0))  
+    pos_to = BoardPosition(pos=(0, 1))  
     
-    mov_cards_logic.utils.calculate_differences.return_value = (1,2)
+    mov_cards_logic.utils.calculate_differences.return_value = (2,1)
     result = mov_cards_logic.validate_en_l_der(pos_from, pos_to)
     
     assert result == False
 
 def test_validate_en_l_izq_valid_case1(mov_cards_logic):
     pos_from = BoardPosition(pos=(2, 2))
-    #Movimiento valido, un lugar en x, dos en y 
-    pos_to = BoardPosition(pos=(1, 0))  
+    #Movimiento valido, un lugar en y, dos en x 
+    pos_to = BoardPosition(pos=(0, 1))  
     
-    mov_cards_logic.utils.calculate_differences.return_value = (1,2)
+    mov_cards_logic.utils.calculate_differences.return_value = (2,1)
     result = mov_cards_logic.validate_en_l_izq(pos_from, pos_to)
     
     assert result == True
 
 def test_validate_en_l_izq_valid_case2(mov_cards_logic):
-    pos_from = BoardPosition(pos=(0, 0))
+    pos_from = BoardPosition(pos=(3, 3))
     #dos lugares en y , uno en x
-    pos_to = BoardPosition(pos=(1, 2))
+    pos_to = BoardPosition(pos=(4, 1))
     
     mov_cards_logic.utils.calculate_differences.return_value = (1,2)
     result = mov_cards_logic.validate_en_l_izq(pos_from, pos_to)
@@ -312,11 +312,11 @@ def test_validate_en_l_izq_invalid_case1(mov_cards_logic):
     assert result == False
 
 def test_validate_en_l_izq_invalid_case2(mov_cards_logic):
-    pos_from = BoardPosition(pos=(0, 0))
+    pos_from = BoardPosition(pos=(3, 3))
     # Invalido, es en L pero hacia la derecha
-    pos_to = BoardPosition(pos=(2, 1))
+    pos_to = BoardPosition(pos=(4, 5))
     
-    mov_cards_logic.utils.calculate_differences.return_value = (2,1)
+    mov_cards_logic.utils.calculate_differences.return_value = (1,2)
     result = mov_cards_logic.validate_en_l_izq(pos_from, pos_to)
     
     assert result == False

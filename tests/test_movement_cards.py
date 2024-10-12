@@ -133,8 +133,11 @@ def test_play_movement_card(mock_repo,mock_mov_card_logic, mock_partial_mov_repo
     with client.websocket_connect("/ws") as websocket:
 
         response = client.post(
-            f"/deck/movement/play_card?game_id={game_id}&card_id={card_id}&player_id={player_id}",
+            f"/deck/movement/play_card",
             json={
+                "game_id": game_id,
+                "card_id": card_id,
+                "player_id": player_id,
                 "pos_from": {"pos": [0, 5]},
                 "pos_to": {"pos": [0, 3]}
             }
@@ -147,7 +150,7 @@ def test_play_movement_card(mock_repo,mock_mov_card_logic, mock_partial_mov_repo
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}: MOVEMENT_UPDATE"
         
-        mock_mov_card_logic.validate_movement.assert_called_once_with(card_id,pos_from, pos_to)
+        mock_mov_card_logic.validate_movement.assert_called_once_with(card_id,pos_from, pos_to, mock_db)
         mock_partial_mov_repo.create_partial_movement.assert_called_once_with(game_id, player_id, card_id, pos_from, pos_to, mock_db)
         mock_repo.mark_card_partially_used.assert_called_once_with(card_id, mock_db)
         mock_board_repo.switch_boxes.assert_called_once_with(game_id, pos_from, pos_to, mock_db)
@@ -158,8 +161,11 @@ def test_play_movement_card_invalid_position():
     player_id = 4
     
     response = client.post(
-        f"/deck/movement/play_card?game_id={game_id}&card_id={card_id}&player_id={player_id}",
+        f"/deck/movement/play_card",
         json={
+            "game_id": game_id,
+            "card_id": card_id,
+            "player_id": player_id,
             "pos_from": {"pos": [0, 5]},
             "pos_to": {"pos": [2, 7]}
         }
