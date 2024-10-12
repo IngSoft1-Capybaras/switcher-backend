@@ -1,4 +1,3 @@
-from turtle import position
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
@@ -408,6 +407,7 @@ def test_mark_card_partially_used(movement_cards_repository, session):
     # Verifico
     updated_card = session.query(MovementCard).filter_by(id=card.id).one()
     assert updated_card.used is True
+
     
 @pytest.mark.integration_test
 def test_mark_card_partially_used_not_found(movement_cards_repository, session):
@@ -419,3 +419,4 @@ def test_mark_card_partially_used_not_found(movement_cards_repository, session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No movement card found"
+

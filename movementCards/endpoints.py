@@ -7,8 +7,9 @@ from .movement_cards_repository import MovementCardsRepository, get_movement_car
 from .movement_cards_logic import MovementCardLogic, get_mov_cards_logic
 from .schemas import PlayMovementCardRequest
 
+from board.schemas import BoardPosition
 from board.board_repository import BoardRepository
-from partial_movement.partial_movement_repository import PartialMovementRepository
+from partial_movement.partial_movement_repository import PartialMovementRepository, get_partial_movement_repository
 
 from connection_manager import manager
 
@@ -66,3 +67,28 @@ async def play_movement_card(
     
     #Cambiar mensaje
     return {"message": "Great move..."}
+
+
+@movement_cards_router.post("/undo_move")
+async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_db), 
+                        partial_mov_repo:  PartialMovementRepository = Depends(get_partial_movement_repository),
+                        board_repo: BoardRepository = Depends(),
+                        mov_cards_repo: MovementCardsRepository = Depends(get_movement_cards_repository)
+                        ):
+
+    last_movement = partial_mov_repo.undo_movement(db)
+    pos_from = BoardPosition(pos=(last_movement.pos_from_x, last_movement.pos_from_y))
+    pos_to = BoardPosition(pos=(last_movement.pos_to_x, last_movement.pos_to_y))
+
+    board_repo.switch_boxes(game_id, pos_from, pos_to, db)
+    
+    mov_cards_repo.mark_card_in_player_hand(last_movement.mov_card_id, db)
+    
+    movement_update = {
+            "type": "MOVEMENT_UPDATE"
+    }
+    
+    await manager.broadcast(movement_update)
+
+    return {"message": "The movement was undone successfully"}
+    

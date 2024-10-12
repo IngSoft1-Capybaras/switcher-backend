@@ -1,6 +1,8 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from sqlalchemy.exc import NoResultFound
+import random
+from sqlalchemy import select
 
 from .models import PartialMovements
 
@@ -11,9 +13,8 @@ from player.models import Player
 from movementCards.models import MovementCard
 
 
-
 class PartialMovementRepository:
-    
+  
     def create_partial_movement(self, game_id: int, player_id: int, card_id: int, pos_from: BoardPosition , pos_to: BoardPosition, db: Session):
         # Verificamos exist el juego
         game = db.query(Game).filter(Game.id == game_id).first()
@@ -45,5 +46,25 @@ class PartialMovementRepository:
         
         db.add(partial_movement)
         db.commit()
+
+    # se comporta como un pop de un stack    
+    def undo_movement(self, db: Session) -> PartialMovements:
+        # busco la ultima fila de la tabla partial movements
+        last_parcial_movement = db.execute(
+            select(PartialMovements).order_by(PartialMovements.id.desc())
+            ).scalar()
         
-        
+        if last_parcial_movement is None:
+            raise HTTPException(status_code=404, detail="There is no partial movement to undo")
+
+        # elimino la fila
+        db.delete(last_parcial_movement)
+
+        db.commit()
+
+        # devuelvo el movimiento eliminado
+        return last_parcial_movement
+
+
+def get_partial_movement_repository(partial_movement_repo: PartialMovementRepository = Depends()) -> PartialMovementRepository:
+    return partial_movement_repo

@@ -177,6 +177,15 @@ class MovementCardsRepository:
             card.position = index
         
         db.commit()
+    
+    def mark_card_in_player_hand(self, card_id: int, db: Session):
+        try:
+            movement_card = db.query(MovementCard).filter(MovementCard.id == card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail = "No movement card found")
+        
+        movement_card.used = False
+        db.commit()
         
     def get_movement_card_type(self, card_id: int, db: Session) -> typeEnum:
         try:
