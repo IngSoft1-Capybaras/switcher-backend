@@ -14,7 +14,7 @@ TEST_DATABASE_URL = f"sqlite:///./{DATABASE_FILENAME}"
 @pytest.fixture(scope="session")
 def engine():
     # Create a new engine for testing
-    test_engine = create_engine(TEST_DATABASE_URL, echo=True)
+    test_engine = create_engine(TEST_DATABASE_URL, echo=False)
     
     # Create the database if it doesn't exist
     if not database_exists(test_engine.url):

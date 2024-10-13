@@ -28,6 +28,6 @@ class Player(Base):
 
     game_state = relationship("GameState", back_populates="players", foreign_keys="[Player.game_state_id]")
     game = relationship("Game", back_populates="players")
-    figure_cards = relationship("FigureCard", back_populates="player")
-    movement_cards = relationship("MovementCard", back_populates="player")
-    partial_movements = relationship("PartialMovements", back_populates="player")
+    figure_cards = relationship("FigureCard", back_populates="player", cascade="all")
+    movement_cards = relationship("MovementCard", back_populates="player", cascade="all")
+    partial_movements = relationship("PartialMovements", back_populates="player", cascade="all")

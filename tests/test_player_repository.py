@@ -2,20 +2,28 @@ import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 
-from fastapi import HTTPException
+from game.game_repository import GameRepository
+from game.schemas import GameCreate
+from game.models import Game
+from game.game_logic import get_game_logic
+
+from gameState.models import StateEnum, GameState
+from gameState.game_state_repository import GameStateRepository
 
 from player.player_repository import PlayerRepository
-from game.game_repository import GameRepository
-
-from game.models import Game
-from game.schemas import GameCreate
-from gameState.models import GameState, StateEnum
-
 from player.models import Player, turnEnum
 from player.schemas import PlayerCreateMatch
 
+from movementCards.models import MovementCard, typeEnum
+from movementCards.movement_cards_repository import MovementCardsRepository
+
+from figureCards.figure_cards_repository import FigureCardsRepository
+
+from partial_movement.models import PartialMovements
+
 from database.db import engine
 
+import pdb
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
 
@@ -25,10 +33,59 @@ def player_repo():
     return PlayerRepository()
 
 @pytest.fixture
-def game_repository():
+def game_repo():
     return GameRepository()
 
+@pytest.fixture
+def game_state_repo():
+    return GameStateRepository()
 
+@pytest.fixture
+def mov_card_repo():
+    return MovementCardsRepository()
+
+@pytest.fixture
+def fig_card_repo():
+    return FigureCardsRepository()
+
+@pytest.fixture
+def game_logic(game_repo, game_state_repo, player_repo, fig_card_repo):
+    return get_game_logic(game_repo, game_state_repo, player_repo, fig_card_repo)
+
+@pytest.fixture
+def setup_game_player(session):
+    game = Game(name='name', min_players=2, max_players=3)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    players = [
+        Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, turn=turnEnum.SEGUNDO ,winner=False),
+        Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, turn=turnEnum.PRIMERO , winner=False)
+        ]
+    session.add_all(players)
+    session.commit()
+
+    # Crear cartas de movimiento
+    movement_cards = [
+        MovementCard(type="LINEAL_CONT", description="Test Card 1", player_id=players[0].id, used = True, game_id=game.id),
+        MovementCard(type="DIAGONAL_CONT", description="Test Card 2", player_id=players[0].id, used = True, game_id=game.id),
+        MovementCard(type="EN_L_DER", description="Test Card 3", player_id=players[0].id, used = False , game_id=game.id),
+        MovementCard(type="LINEAL_CONT", description="Test Card 4", player_id=players[1].id , used = True , game_id=game.id),
+        MovementCard(type="DIAGONAL_CONT", description="Test Card 5", player_id=players[1].id, used = False , game_id=game.id),
+        MovementCard(type="EN_L_DER", description="Test Card 6", player_id=players[1].id, used = False, game_id=game.id),
+        MovementCard(type="LINEAL_CONT", description="Test Card 7", used = False, game_id=game.id),
+        MovementCard(type="DIAGONAL_CONT", description="Test Card 8", used = False, game_id=game.id),
+        MovementCard(type="EN_L_DER", description="Test Card 9", used = False, game_id=game.id),
+    ]
+    session.add_all(movement_cards)
+    session.commit()
+
+    
+    return game, game_state, players, movement_cards
 
 @pytest.mark.integration_test
 def test_get_player_by_id(player_repo: PlayerRepository, session):
@@ -60,10 +117,10 @@ def test_get_players_in_game(player_repo: PlayerRepository, session):
     #     session.close()
 
 @pytest.mark.integration_test     
-def test_assign_turn_player(game_repository: GameRepository, player_repo: PlayerRepository, session):
+def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerRepository, session):
     # session = Session()
     
-    res = game_repository.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
+    res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
     
@@ -78,8 +135,8 @@ def test_assign_turn_player(game_repository: GameRepository, player_repo: Player
 
 
 @pytest.mark.integration_test
-def test_create_player_success(player_repo: PlayerRepository,game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+def test_create_player_success(player_repo: PlayerRepository,game_repo: GameRepository, session):
+    res = game_repo.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
     
@@ -93,4 +150,44 @@ def test_create_player_success(player_repo: PlayerRepository,game_repository: Ga
     assert new_player.name == "Test Player"
     assert new_player.host is False
     assert new_player.winner is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration_test
+async def test_leave_game_player_turn(session, player_repo, game_repo, game_state_repo, mov_card_repo, game_logic, setup_game_player):
+    game, game_state, players, mov_cards = setup_game_player
     
+    # El jugador de turno es quien quiere salir
+    game_state_repo.update_current_player(game.id, players[0].id, session)
+
+    pdb.set_trace()
+    # Llamamos a leave game
+    result = await player_repo.leave_game(game_id=game.id, player_id=players[0].id, game_logic=game_logic, game_repo=game_repo, game_state_repo=game_state_repo, mov_card_repo=mov_card_repo, db=session)
+
+    # Verificamos el jugador ha abandonado la partida exitosamente
+    assert result == {"message": "Player has successfully left the game", "changed_turn": True}
+    
+    
+    ## Verificamos se eliminó al jugador
+    #deleted_player = session.query(Player).filter(Player.id == players[0].id).first()
+    #assert deleted_player is None
+
+    # Verificamos hay 6 cartas de mov en el mazo
+    discarded_cards = session.query(MovementCard).filter(MovementCard.player_id == None).all()
+    assert len(discarded_cards) == 6
+    
+    #Verificamos solo 3 de ellas son marcadas como usadas
+    discarded_cards = session.query(MovementCard).filter(MovementCard.player_id == None, MovementCard.used == True).all()
+    assert len(discarded_cards) == 3
+    
+
+    # Verifico los movimientos parciales han sido eliminados
+    deleted_partial_movements = session.query(PartialMovements).filter(PartialMovements.player_id == players[0].id).all()
+    assert len(deleted_partial_movements) == 0
+
+    # Verifico el turno le pertenece al otro jugador
+    updated_game_state = game_state_repo.get_game_state_by_id(game.id, session)
+    assert updated_game_state.current_player == players[1].id
+
+    # Verify the win condition check is called
+    game_logic.check_win_condition.assert_called_once_with(game.id, players[0].id, session)  
