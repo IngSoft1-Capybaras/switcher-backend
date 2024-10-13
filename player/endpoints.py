@@ -50,7 +50,7 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
     
     #Notificamos nuevo tablero
     message = {
-            "type": f"{game_id}: BOARD_UPDATE"
+            "type": f"{game_id}:MOVEMENT_UPDATE"
         }
     await manager.broadcast(message)
     
