@@ -69,7 +69,7 @@ async def play_movement_card(
     return {"message": "Great move..."}
 
 
-@movement_cards_router.post("/undo_move")
+@movement_cards_router.post("/{game_id}/{player_id}/undo_move")
 async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_db), 
                         partial_mov_repo:  PartialMovementRepository = Depends(get_partial_movement_repository),
                         board_repo: BoardRepository = Depends(),
