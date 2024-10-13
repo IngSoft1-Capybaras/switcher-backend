@@ -93,9 +93,12 @@ class FigureCardsLogic:
         # print full path
         logging.debug(f"\n(89) Path: {path}\n")
         logging.debug(f"\n(95) BaseColor: {color}\n")
+        # Agregamos la casilla inicial a la figura formada
+        first_box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
+        first_box.highlighted = True
+        figure.append(first_box)
         for direction in path:
             logging.debug(f"\n(91) PathDir: {direction}\n")
-            figure.append(boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db))
             pointerBefore = pointer
             logging.debug(f"\n(93) PointerBefore: {pointer}\n")
             pointer = self.move_pointer(pointer, direction)
@@ -113,6 +116,10 @@ class FigureCardsLogic:
                 logging.debug(f"\n(102) Result: False (invalid color)\n")
                 break
             logging.debug(f"\n(104) Result: True\n")
+            # Agregar la casilla a la figura formada
+            new_box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
+            new_box.highlighted = True
+            figure.append(new_box)
 
         # si obtuvimos una figura valida, chequear que no sea contigua a ningun otro color de su mismo tipo
         if result:
@@ -330,17 +337,29 @@ class FigureCardsLogic:
             return {"message": "Invalid figure"}
 
     # Logica de resaltar figuras formadas
+
+    def is_pointer_different_from_formed_figures(self, pointer, figures):
+        for figure in figures:
+            for fig_box in figure:
+                if fig_box.pos_x == pointer[0] and fig_box.pos_y == pointer[1]:
+                    return False
+        return pointer
     
-    def get_formed_figures (self, game_id, db):
+    def get_formed_figures(self, game_id, db):
         board_repo = BoardRepository()
         board_logic = BoardLogic(board_repo)
         # TODO: chequear que el juego exista y este iniciado
         board_id = board_repo.get_existing_board(game_id, db).id
+        if board_id == None:
+            raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
         figures = []
         figure_or_bool = False
         for k in range(6): # y axis 
             for l in range(6): # x axis 
-                pointer = (l,k)
+                # asignar pointer siempre y cuando sea distinto de las posiciones de las figuras ya formadas
+                pointer = self.is_pointer_different_from_formed_figures((l,k), figures)
+                if pointer == False:
+                    continue
                 color = board_logic.get_box_color(board_id, pointer[0], pointer[1], db)
                 for path in FigurePaths:
                     for i in range(4): # 4 rotaciones del path
