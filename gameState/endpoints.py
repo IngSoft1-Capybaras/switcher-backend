@@ -50,7 +50,7 @@ async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depe
     
     #Notificamos nuevo tablero
     message = {
-            "type": f"{game_id}: MOVEMENT_UPDATE"
+            "type": f"{game_id}:MOVEMENT_UPDATE"
         }
     await manager.broadcast(message)
     

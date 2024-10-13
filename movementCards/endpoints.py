@@ -61,7 +61,7 @@ async def play_movement_card(
     
     #se avisa a los jugadores del nuevo tablero
     message = {
-            "type": f"{request.game_id}: MOVEMENT_UPDATE"
+            "type": f"{request.game_id}:MOVEMENT_UPDATE"
         }
     await manager.broadcast(message)
     
@@ -85,7 +85,7 @@ async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_
     mov_cards_repo.mark_card_in_player_hand(last_movement.mov_card_id, db)
     
     movement_update = {
-            "type": f"{game_id}: MOVEMENT_UPDATE"
+            "type": f"{game_id}:MOVEMENT_UPDATE"
     }
     
     await manager.broadcast(movement_update)
