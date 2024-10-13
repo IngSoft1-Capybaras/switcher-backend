@@ -125,8 +125,7 @@ class FigureCardsLogic:
         if result:
             for fig_box in figure:
                 if not self.check_surroundings(path, figure, (fig_box.pos_x, fig_box.pos_y), board_id, color, db):
-                    result = False
-                    break
+                    return False
             return figure # return the figure if it is valid
 
         return result
@@ -348,10 +347,18 @@ class FigureCardsLogic:
     def get_formed_figures(self, game_id, db):
         board_repo = BoardRepository()
         board_logic = BoardLogic(board_repo)
-        # TODO: chequear que el juego exista y este iniciado
+        # chequear que el juego exista y este iniciado
+        gameStateRepo = GameStateRepository()
+        game = gameStateRepo.get_game_state_by_id(game_id, db)
+        if game == None:
+            raise HTTPException(status_code=404, detail="Game not found when getting formed figures")
+        if game.state != "PLAYING":
+            raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
+        
         board_id = board_repo.get_existing_board(game_id, db).id
         if board_id == None:
             raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
+            
         figures = []
         figure_or_bool = False
         for k in range(6): # y axis 
