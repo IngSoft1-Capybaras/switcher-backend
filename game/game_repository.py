@@ -7,7 +7,6 @@ from player.models import Player
 from player.schemas import PlayerCreateMatch, PlayerInDB, turnEnum
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
-from gameState.game_state_repository import GameStateRepository
 
 from math import ceil
 class GameRepository:

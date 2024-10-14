@@ -11,7 +11,7 @@ class PartialMovements(Base):
     pos_to_x = Column(Integer, nullable=False)
     pos_to_y = Column(Integer, nullable=False)
     game_id = Column(Integer, ForeignKey('games.id'), nullable=False)
-    player_id = Column(Integer, ForeignKey('players.id'), nullable=False)
+    player_id = Column(Integer, ForeignKey('players.id', use_alter=True, ondelete='CASCADE'), nullable=True)
     mov_card_id = Column(Integer, ForeignKey('movement_cards.id'), nullable=False)
 
     game = relationship("Game", back_populates="partial_movements")

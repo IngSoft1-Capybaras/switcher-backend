@@ -18,6 +18,8 @@ from movementCards.movement_cards_logic import MovementCardLogic, get_mov_cards_
 from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 
 from board.board_logic import BoardLogic, get_board_logic
+from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
+
 from connection_manager import manager
 
 
@@ -36,26 +38,34 @@ async def get_current_player(game_id: int, db: Session = Depends(get_db)):
 async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depends(), 
                         figure_card_repo:  FigureCardsRepository = Depends(), 
                         movement_card_repo: MovementCardsRepository = Depends(), 
+                        partial_movement_logic: PartialMovementLogic = Depends(get_partial_movement_logic),
                         db: Session = Depends(get_db)
                     ):
     
+    #Obtenemos el id del jugador que desea terminar su turno
     player_id = game_state_repo.get_current_player(game_id, db)
+    
+    #Nos deshacemos de los mov parciales
+    partial_movement_logic.revert_partial_movements(game_id, player_id["current_player_id"],db)
+    
+    #Notificamos nuevo tablero
+    message = {
+            "type": f"{game_id}:MOVEMENT_UPDATE"
+        }
+    await manager.broadcast(message)
+    
+    #Cambiamos el turno actual
     next_player_id = game_state_repo.get_next_player_id(game_id, db)
     
     game_state_repo.update_current_player(game_id, next_player_id, db)
     
-    
     #repartir cartas de movimiento y figuras si es necesario
-    #necesito el id_del player
     figure_card_repo.grab_figure_cards(player_id["current_player_id"], game_id, db)
     
     movement_card_repo.grab_mov_cards(player_id["current_player_id"], game_id, db)
     
-    
-    #notificar a los jugadores
-    message = {
-            "type":f"{game_id}:NEXT_TURN"
-        }
+    #notificar a los jugadores del nuevo turno
+    message = {"type":f"{game_id}:NEXT_TURN"}
     await manager.broadcast(message)
     
     return {"message": "Current player successfully updated"}

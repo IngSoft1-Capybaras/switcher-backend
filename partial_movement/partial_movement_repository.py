@@ -1,13 +1,10 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Depends
-from sqlalchemy.exc import NoResultFound
-import random
 from sqlalchemy import select
 
 from .models import PartialMovements
 
 from board.schemas import BoardPosition
-from board.board_repository import BoardRepository
 from game.models import Game
 from player.models import Player
 from movementCards.models import MovementCard
@@ -48,11 +45,13 @@ class PartialMovementRepository:
         db.commit()
 
     # se comporta como un pop de un stack    
-    def undo_movement(self, db: Session) -> PartialMovements:
-        # busco la ultima fila de la tabla partial movements
+    def undo_movement(self, game_id: int, player_id: int, db: Session) -> PartialMovements:
+        # busco la ultima fila de la tabla partial movements para el juego y jugador especificados
         last_parcial_movement = db.execute(
-            select(PartialMovements).order_by(PartialMovements.id.desc())
-            ).scalar()
+            select(PartialMovements)
+            .filter_by(game_id=game_id, player_id=player_id)
+            .order_by(PartialMovements.id.desc())
+        ).scalar()
         
         if last_parcial_movement is None:
             raise HTTPException(status_code=404, detail="There is no partial movement to undo")
@@ -64,6 +63,27 @@ class PartialMovementRepository:
 
         # devuelvo el movimiento eliminado
         return last_parcial_movement
+    
+    def return_partial_movements_by_player(self, game_id: int, player_id: int, db: Session):
+        # Obtener todos los movimientos parciales asociados con el jugador
+        partial_movements = db.query(PartialMovements).filter(
+            PartialMovements.game_id == game_id,
+            PartialMovements.player_id == player_id
+        ).all()
+
+        if not partial_movements:
+            return []
+        
+        return partial_movements
+    
+    def undo_movement_by_id(self, movement_id, db: Session):
+        partial_movement = db.query(PartialMovements).filter(PartialMovements.id == movement_id).first()
+        
+        if not partial_movement:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Partial movement not found")
+        
+        db.delete(partial_movement)
+        db.commit()
 
 
 def get_partial_movement_repository(partial_movement_repo: PartialMovementRepository = Depends()) -> PartialMovementRepository:

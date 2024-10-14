@@ -3,9 +3,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import GameState, StateEnum
 from .schemas import GameStateInDB
-from database.db import get_db
 from player.models import Player, turnEnum
-import logging
 
 
 class GameStateRepository:

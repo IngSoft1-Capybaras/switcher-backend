@@ -155,7 +155,7 @@ def test_play_movement_card(mock_repo,mock_mov_card_logic, mock_partial_movement
         assert response.json() == {"message": "Great move..."}
         
         game_state_update = websocket.receive_json()
-        assert game_state_update["type"] == f"{game_id}: MOVEMENT_UPDATE"
+        assert game_state_update["type"] == f"{game_id}:MOVEMENT_UPDATE"
         
         mock_mov_card_logic.validate_movement.assert_called_once_with(card_id,pos_from, pos_to, mock_db)
         mock_partial_movement_repo.create_partial_movement.assert_called_once_with(game_id, player_id, card_id, pos_from, pos_to, mock_db)
@@ -200,13 +200,13 @@ def test_undo_movement_success(mock_partial_movement_repo, mock_board_repo, mock
     
     mock_partial_movement_repo.undo_movement.return_value = mock_last_movement
     with client.websocket_connect("/ws") as websocket:
-        response = client.post(f"/deck/movement/undo_move?game_id={game_id}&player_id={player_id}")
+        response = client.post(f"/deck/movement/{game_id}/{player_id}/undo_move")
 
         assert response.status_code == 200
         assert response.json() == {"message": "The movement was undone successfully"}
         
         # Verifico que los metodos usados se llamen
-        mock_partial_movement_repo.undo_movement.assert_called_once_with(mock_db)
+        mock_partial_movement_repo.undo_movement.assert_called_once_with(game_id, player_id, mock_db)
         mock_board_repo.switch_boxes.assert_called_once_with(
             game_id, pos_from,pos_to, mock_db
         )
@@ -214,7 +214,7 @@ def test_undo_movement_success(mock_partial_movement_repo, mock_board_repo, mock
         
         # Verifico que se haya mandado el mensaje po ws
         movement_update = websocket.receive_json()
-        assert movement_update["type"] == f"MOVEMENT_UPDATE"
+        assert movement_update["type"] == f"{game_id}:MOVEMENT_UPDATE"
 
 
 def test_undo_movement_no_last_move(mock_partial_movement_repo, mock_board_repo, mock_db):
@@ -222,10 +222,13 @@ def test_undo_movement_no_last_move(mock_partial_movement_repo, mock_board_repo,
         status_code=404,
         detail="There is no partial movement to undo"
     )
+    
+    game_id = 1
+    player_id = 1
 
-    response = client.post("/deck/movement/undo_move?game_id=1&player_id=1")
+    response = client.post(f"/deck/movement/{game_id}/{player_id}/undo_move")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "There is no partial movement to undo"}
-    mock_partial_movement_repo.undo_movement.assert_called_once_with(mock_db)
+    mock_partial_movement_repo.undo_movement.assert_called_once_with(game_id, player_id, mock_db)
     

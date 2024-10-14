@@ -5,7 +5,7 @@ from sqlite3 import Connection as SQLite3Connection
 from settings import DATABASE_FILENAME
 
 # Crear una engine sqlalchemy
-engine = create_engine(f'sqlite:///./{DATABASE_FILENAME}', echo=True)
+engine = create_engine(f'sqlite:///./{DATABASE_FILENAME}', echo=False)
 
 
 # habilito la constraint de foreign keys

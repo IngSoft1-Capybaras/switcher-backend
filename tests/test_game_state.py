@@ -17,6 +17,8 @@ from movementCards.movement_cards_logic import MovementCardLogic, get_mov_cards_
 
 from board.board_logic import BoardLogic, get_board_logic
 
+from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
+
 from gameState.models import StateEnum
 from player.schemas import turnEnum, PlayerInDB
 from movementCards.schemas import MovementCardSchema, typeEnum
@@ -74,10 +76,14 @@ def mock_fig_card_repo():
 def mock_mov_card_repo():
     return MagicMock(spec=MovementCardsRepository)
 
+@pytest.fixture
+def mock_partial_movement_logic():
+    return MagicMock(spec=PartialMovementLogic)
+
 
 # Apply the override before running the tests
 @pytest.fixture(autouse=True)
-def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_logic, mock_game_state_repo, mock_movement_cards_logic, mock_player_logic,mock_board_logic, mock_db):
+def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_logic, mock_game_state_repo, mock_movement_cards_logic, mock_player_logic,mock_board_logic, mock_partial_movement_logic, mock_db):
     def override_get_db():
         return mock_db
     
@@ -93,6 +99,9 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     def override_get_board_logic():
         return mock_board_logic
     
+    def override_get_partial_movement_logic():
+        return mock_partial_movement_logic
+    
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[GameStateRepository] = lambda: mock_game_state_repo
     app.dependency_overrides[GameRepository] = lambda: mock_game_repo
@@ -101,11 +110,14 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     app.dependency_overrides[FigureCardsRepository] = lambda: mock_fig_card_repo
     app.dependency_overrides[MovementCardsRepository] = lambda: mock_mov_card_repo
     app.dependency_overrides[BoardLogic] = lambda: mock_board_logic
+    app.dependency_overrides[PartialMovementLogic] = lambda: mock_partial_movement_logic
+
     
     app.dependency_overrides[get_fig_cards_logic] = override_get_fig_cards_logic
     app.dependency_overrides[get_mov_cards_logic] = override_get_mov_cards_logic
     app.dependency_overrides[get_player_logic] = override_get_players_logic
     app.dependency_overrides[get_board_logic] = override_get_board_logic
+    app.dependency_overrides[get_partial_movement_logic] = override_get_partial_movement_logic
 
     
     yield
@@ -178,7 +190,7 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         mock_game_state_repo.update_current_player.assert_called_once_with(game_id, players[0].id, mock_db)
         
         
-def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_repo, mock_db):
+def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_repo, mock_partial_movement_logic, mock_db):
     game_id = 2
     next_player_id = 3
     current_player_id = 7
@@ -190,7 +202,8 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
     
     mock_fig_card_repo.grab_figure_cards.return_value = None
     mock_mov_card_repo.grab_mov_cards.return_value = None
-    
+    mock_partial_movement_logic.revert_partial_movements.return_value = None
+
     with client.websocket_connect("/ws") as websocket:
 
         response = client.patch(
@@ -200,6 +213,9 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == {"message": "Current player successfully updated"}
         
+        movement_update = websocket.receive_json()
+        assert movement_update["type"] == f"{game_id}:MOVEMENT_UPDATE"
+        
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}:NEXT_TURN"
         
@@ -208,3 +224,4 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
         mock_game_state_repo.update_current_player.called_once_with(game_id, next_player_id, mock_db)
         mock_fig_card_repo.grab_figure_cards.called_once_with(current_player_id, game_id, mock_db)
         mock_mov_card_repo.grab_mov_cards.called_once_with(current_player_id, game_id, mock_db)
+        mock_partial_movement_logic.revert_partial_movements.assert_called_once_with(game_id, current_player_id, mock_db)

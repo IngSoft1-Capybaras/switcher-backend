@@ -6,8 +6,11 @@ from .schemas import PlayerJoinRequest
 from game.game_repository import GameRepository
 from gameState.game_state_repository import GameStateRepository
 from movementCards.movement_cards_repository import MovementCardsRepository
+
 from connection_manager import manager
+
 from game.game_logic import get_game_logic, GameLogic
+from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
 
 player_router = APIRouter()
 
@@ -28,7 +31,12 @@ def get_player_by_id(game_id: int, player_id: int, db: Session = Depends(get_db)
 async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db), 
                      repo: PlayerRepository = Depends(), game_logic: GameLogic = Depends(get_game_logic),
                      game_repo: GameRepository = Depends(), game_state_repo: GameStateRepository = Depends(),
+                     partial_movement_logic: PartialMovementLogic = Depends(get_partial_movement_logic),
                      mov_card_repo: MovementCardsRepository = Depends()):
+    
+    #Revertir movimientos parciales si es necesario
+    partial_movement_logic.revert_partial_movements(game_id, player_id,db)
+
     
     response = await repo.leave_game(game_id, player_id, game_logic, game_repo, game_state_repo, mov_card_repo, db)
 
@@ -38,6 +46,13 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
             "type":f"{game_id}:NEXT_TURN"
         }
         await manager.broadcast(message)
+    
+    
+    #Notificamos nuevo tablero
+    message = {
+            "type": f"{game_id}:MOVEMENT_UPDATE"
+        }
+    await manager.broadcast(message)
     
     message = {
             "type":f"{game_id}:GAME_INFO_UPDATE"

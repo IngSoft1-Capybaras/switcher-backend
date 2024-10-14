@@ -61,7 +61,7 @@ async def play_movement_card(
     
     #se avisa a los jugadores del nuevo tablero
     message = {
-            "type": f"{request.game_id}: MOVEMENT_UPDATE"
+            "type": f"{request.game_id}:MOVEMENT_UPDATE"
         }
     await manager.broadcast(message)
     
@@ -69,14 +69,14 @@ async def play_movement_card(
     return {"message": "Great move..."}
 
 
-@movement_cards_router.post("/undo_move")
+@movement_cards_router.post("/{game_id}/{player_id}/undo_move")
 async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_db), 
                         partial_mov_repo:  PartialMovementRepository = Depends(get_partial_movement_repository),
                         board_repo: BoardRepository = Depends(),
                         mov_cards_repo: MovementCardsRepository = Depends(get_movement_cards_repository)
                         ):
 
-    last_movement = partial_mov_repo.undo_movement(db)
+    last_movement = partial_mov_repo.undo_movement(game_id,player_id,db)
     pos_from = BoardPosition(pos=(last_movement.pos_from_x, last_movement.pos_from_y))
     pos_to = BoardPosition(pos=(last_movement.pos_to_x, last_movement.pos_to_y))
 
@@ -85,7 +85,7 @@ async def undo_movement(game_id: int, player_id: int, db: Session = Depends(get_
     mov_cards_repo.mark_card_in_player_hand(last_movement.mov_card_id, db)
     
     movement_update = {
-            "type": "MOVEMENT_UPDATE"
+            "type": f"{game_id}:MOVEMENT_UPDATE"
     }
     
     await manager.broadcast(movement_update)

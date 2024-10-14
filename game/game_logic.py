@@ -10,6 +10,7 @@ from player.player_repository import PlayerRepository
 from figureCards.figure_cards_repository import FigureCardsRepository, get_figure_cards_repository
 from connection_manager import manager
 
+import logging
 
 def get_game_logic(game_repo: GameRepository = Depends(get_game_repository), 
                    game_state_repo : GameStateRepository = Depends(), player_repo : PlayerRepository = Depends(), 
@@ -27,18 +28,22 @@ class GameLogic:
         self.figure_cards_repo = figure_cards_repo
 
 
-    async def check_win_condition(self, game_id: int, player_id: int, db: Session):
+    async def check_win_condition_one_player_left(self, game_id: int, db: Session):
 
         # chequeo si queda solo uno
         players_left = self.player_repo.get_players_in_game(game_id, db)
-        
+
         if len(players_left) == 1:
             await self.handle_win(game_id, players_left[0].id, db)
             return True
-        else:
-            if len(self.figure_cards_repo.get_figure_cards(game_id, player_id, db)) == 0:
-                await self.handle_win(game_id, player_id, db)
-                return True
+            
+        return False
+    
+    async def check_win_condition_no_figure_cards(self, game_id: int, player_id: int, db: Session):
+
+        if len(self.figure_cards_repo.get_figure_cards(game_id, player_id, db)) == 0:
+            await self.handle_win(game_id, player_id, db)
+            return True
             
         return False
     

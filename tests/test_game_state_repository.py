@@ -2,18 +2,10 @@ import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 from gameState.game_state_repository import GameStateRepository
-from board.models import Board, Box
 
-from figureCards.models import FigureCard
-from game.models import Game
 from gameState.models import GameState, StateEnum
-from movementCards.models import MovementCard
 
-from player.models import Player, turnEnum
-
-
-from database.db import engine, Base
-import os
+from database.db import engine
 
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
