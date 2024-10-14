@@ -322,7 +322,7 @@ class FigureCardsLogic:
 
         if valid:
             # Eliminar carta de figura
-            # self.fig_card_repo.discard_figure_card(figureInfo.card_id, db)
+            self.fig_card_repo.discard_figure_card(figureInfo.card_id, db)
 
             # TODO : Pasar movimientos de movimiento parcial a movimiento completo
 
