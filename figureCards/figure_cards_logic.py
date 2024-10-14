@@ -88,15 +88,18 @@ class FigureCardsLogic:
     def check_path_blind(self, path, pointer, board_id, color, db):
         boardRepo = BoardRepository()
         boardLogic = BoardLogic(boardRepo)
+
         result = True
         figure = [] # list of boxes that form the figure
+
         # print full path
         logging.debug(f"\n(89) Path: {path}\n")
         logging.debug(f"\n(95) BaseColor: {color}\n")
+
         # Agregamos la casilla inicial a la figura formada
         first_box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
-        first_box.highlighted = True
         figure.append(first_box)
+        
         for direction in path:
             logging.debug(f"\n(91) PathDir: {direction}\n")
             pointerBefore = pointer
@@ -118,14 +121,16 @@ class FigureCardsLogic:
             logging.debug(f"\n(104) Result: True\n")
             # Agregar la casilla a la figura formada
             new_box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
-            new_box.highlighted = True
             figure.append(new_box)
 
         # si obtuvimos una figura valida, chequear que no sea contigua a ningun otro color de su mismo tipo
         if result:
             for fig_box in figure:
+                # highlight the box in the board
+                fig_box.highlighted = True
                 if not self.check_surroundings(path, figure, (fig_box.pos_x, fig_box.pos_y), board_id, color, db):
                     return False
+                
             return figure # return the figure if it is valid
 
         return result
@@ -345,6 +350,8 @@ class FigureCardsLogic:
         return pointer
     
     def get_formed_figures(self, game_id, db):
+        # clear output.log 
+        open('output.log', 'w').close()
         board_repo = BoardRepository()
         board_logic = BoardLogic(board_repo)
         # chequear que el juego exista y este iniciado

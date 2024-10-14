@@ -23,11 +23,23 @@ board_router = APIRouter(
 @board_router.get("/{game_id}")
 async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepository = Depends()):
     # obtener figuras formadas
+
     figRepo = FigureCardsRepository()
     playerRepo = PlayerRepository()
     figLogic = FigureCardsLogic(figRepo, playerRepo)
+
     formed_figures = figLogic.get_formed_figures(game_id, db)
+
     result = repo.get_configured_board(game_id, db)
     result_dict = result.dict()
     result_dict["formed_figures"] = formed_figures
+
+    # highlight formed figures
+    for figure in formed_figures:
+        for box in figure:
+            for box_board in result_dict["boxes"]:
+                for box_in_board in box_board:
+                    if box.pos_x == box_in_board["pos_x"] and box.pos_y == box_in_board["pos_y"]:
+                        box_in_board["highlighted"] = True
+
     return BoardAndBoxesOut(**result_dict)
