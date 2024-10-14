@@ -45,25 +45,53 @@ class FigureCardsRepository:
         db.add(new_card)
         db.commit()
 
-    def delete_figure_card(self, game_id: int, player_id: int, card_id: int, db: Session):
-        figure_card = db.query(FigureCard).filter(FigureCard.id == card_id, 
-                                                    FigureCard.player_id == player_id,
-                                                    FigureCard.player.has(game_id=game_id)).one()
+    def grab_figure_cards(self, player_id: int, game_id: int,db: Session):
+        
+        try: 
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No game found")
 
+        try: 
+            db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player not found in the game")
+        
+        figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                    FigureCard.game_id == game_id,
+                                                    FigureCard.show == True
+                                                    ).all()
+        
+        cards_needed = 3 - len(figure_cards)
+        #pdb.set_trace()
+        
+        if cards_needed > 0:
+            hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
+                                                        FigureCard.game_id == game_id,
+                                                        FigureCard.show == False
+                                                        ).limit(cards_needed).all()
+            if hidden_cards:
+                # Actualizar el atributo show a True para las cartas necesarias
+                for card in hidden_cards:
+                    card.show = True
+                            
+                db.commit()
+    
+
+    def discard_figure_card(self, figure_card_id: int, db: Session):
+        # Fetch figure card by id
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail= f"There no figure card associated with this id {figure_card_id}")
+
+        
+        # la elimino de la base de datos
         db.delete(figure_card)
+
         db.commit()
 
         return {"message": "The figure cards was successfully discarded"}
-
-
-
-    def delete_figure_card(self, game_id: int, player_id: int, card_id: int, db: Session):
-        figure_card = db.query(FigureCard).filter(FigureCard.id == card_id, 
-                                                    FigureCard.player_id == player_id,
-                                                    FigureCard.player.has(game_id=game_id)).one()
-
-        db.delete(figure_card)
-        db.commit()
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
