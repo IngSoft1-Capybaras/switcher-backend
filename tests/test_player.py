@@ -153,12 +153,13 @@ def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo
 
         # Recibimos tres mensajes por broadcast
         messages = []
-        for _ in range(3):
+        for _ in range(4):
             message = websocket.receive_json()
             messages.append(message)
         
         expected_messages = [
-            {"type": f"{game_id}:GAME_INFO_UPDATE"},
+            {"type": f"{game_id}:NEXT_TURN"},
+            {"type": f"{game_id}:MOVEMENT_UPDATE"},
             {"type": "GAMES_LIST_UPDATE"},
             {"type": f"{game_id}:GAME_INFO_UPDATE"}
         ]

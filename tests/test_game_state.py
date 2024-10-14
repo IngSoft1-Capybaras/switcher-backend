@@ -214,7 +214,7 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
         assert response.json() == {"message": "Current player successfully updated"}
         
         movement_update = websocket.receive_json()
-        assert movement_update["type"] == f"{game_id}: MOVEMENT_UPDATE"
+        assert movement_update["type"] == f"{game_id}:MOVEMENT_UPDATE"
         
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}:NEXT_TURN"
