@@ -10,7 +10,6 @@ from gameState.game_state_repository import GameStateRepository
 from connection_manager import manager
 from figureCards.models import FigureCard
 from movementCards.models import MovementCard
-from movementCards.movement_cards_repository import MovementCardsRepository
 
 class PlayerRepository:
     
@@ -52,24 +51,38 @@ class PlayerRepository:
         
         
     
-    async def leave_game(self, game_id: int, player_id: int, 
-                         game_logic, game_repo: GameRepository, game_state_repo: GameStateRepository,
-                         mov_card_repo: MovementCardsRepository, db: Session):
-
-        game = game_repo.get_game_by_id(game_id, db)
-
-        game_state = game_state_repo.get_game_state_by_id(game_id, db)
-
+    async def leave_game(self, game_id: int, player_id: int, game_logic, db: Session):
+        try:
+            game = db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound :
+            raise HTTPException(status_code=404, detail="Game not found")
+        
+        try:
+            game_state = db.query(GameState).filter(GameState.game_id == game_id).one()
+        except NoResultFound :
+            raise HTTPException(status_code=404, detail="Game state not found")
+        
         changed_turn = False
         
         if game_state.state == StateEnum.PLAYING:
             #me aseguro que no sea el turno del jugador
             if game_state.current_player == player_id:
+                game_state_repo = GameStateRepository()
                 #si lo es, le pasamos el turno al siguiente jugador
                 next_player_id = game_state_repo.get_next_player_id(game_id, db)
                 game_state_repo.update_current_player(game_id, next_player_id,db)
                 changed_turn = True
                 
+            
+            # descarto sus cartas de figura
+            player_figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id).all()
+            
+            if not player_figure_cards:
+                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any figure cards")
+            
+
+            for figure_card in player_figure_cards:
+                db.delete(figure_card)
 
             # mando sus cartas de movimiento al mazo
             player_movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id).all()
@@ -78,9 +91,9 @@ class PlayerRepository:
                 raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any movement cards")
             
             for movement_card in player_movement_cards:
-                mov_card_repo.discard_mov_card(movement_card.id, db)
+                movement_card.player_id = None
         
-        db.commit()
+
         # delete() devuelve la cantidad de filas afectadas por la operacion
         rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete()
 
@@ -90,13 +103,13 @@ class PlayerRepository:
 
         db.commit()
 
+        # game_logic = GameLogic(GameRepository())
 
         if game_state.state == StateEnum.PLAYING:
             # chequeo la condicion de ganar por abandono
-            await game_logic.check_win_condition(game_id, player_id, db)
+            await game_logic.check_win_condition(game, db)
         
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
-    
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
@@ -126,11 +139,7 @@ class PlayerRepository:
             
         return {"player_id": player_id}
     
-    def assign_winner_of_game(self, game_id: int, player_id: int, db: Session):
-        try:
-            player = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
-        except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "The is no such player")
-        
+    def assign_winner_of_game(self, player: Player, db: Session):
         player.winner = True
+        db.add(player)
         db.commit()

@@ -1,13 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-
 from database.db import get_db
 
 from .figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 from .figure_cards_repository import (FigureCardsRepository,
                                       get_figure_cards_repository)
 from .schemas import PlayFigureCardInput
-from game.game_logic import GameLogic, get_game_logic
 
 figure_cards_router = APIRouter(
     prefix="/deck/figure",
