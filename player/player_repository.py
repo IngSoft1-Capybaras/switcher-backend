@@ -85,7 +85,7 @@ class PlayerRepository:
                 mov_card_repo.discard_mov_card(movement_card.id, db)
                 
         # Delete() devuelve la cantidad de filas afectadas por la operacion
-        rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete(synchronize_session=False)
+        rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete()
         
         # Si son cero las filas es porque no encontro el jugador
         if rows_deleted == 0:
@@ -102,7 +102,7 @@ class PlayerRepository:
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
-            game_status = db.query(GameState).filter(GameState.game_id == game_id).first()  
+            game_status = db.query(GameState).filter(GameState.game_id == game_id).one()  
             game_status_id = game_status.id
         except NoResultFound:
             raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail="No game status for game")
@@ -132,7 +132,7 @@ class PlayerRepository:
         try:
             player = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
         except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "The is no such player")
+            raise HTTPException(status_code = 404, detail = "There is no such player")
         
         player.winner = True
         db.commit()
