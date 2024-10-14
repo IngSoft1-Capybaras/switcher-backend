@@ -59,18 +59,26 @@ class FigureCardsLogic:
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
 
     def check_surroundings(self, path, figure, pointer, board_id, color, db):
-        print(f"\n(47) Checking surroundings for pointer: {pointer}\n")
+        print(f"\n(62) Checking surroundings for pointer: {pointer}\n")
         boardLogic = BoardLogic(BoardRepository())
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
         for direction in DirectionEnum:
+            print(f"\n(66) Check surr Direction: {direction}\n")
             # chequear que la casilla de alrededor de la figura sea del color de la figura
             pointerBefore = pointer
             pointer = self.move_pointer(pointer, direction)
             if self.is_valid_pointer(pointer):
-                if (boardLogic.get_box_color(board_id, pointer[0], pointer[1], db) == color) and not self.belongs_to_figure(pointer, figure):
+                print(f"\n(71) Pointer: {pointer}\n")
+                box_color = boardLogic.get_box_color(board_id, pointer[0], pointer[1], db)
+                print(f"\n(73) BoxColor: {box_color}\n")
+                bel_to_fig = self.belongs_to_figure(pointer, figure)
+                print(f"\n(75) BelongsToFigure: {bel_to_fig}\n")
+                if (box_color == color) and not bel_to_fig:
                     return False
-                else: # retrotraer el pointer
-                    pointer = pointerBefore
+                
+
+            # retrotraer el pointer    
+            pointer = pointerBefore
                 
         return True
 
@@ -145,9 +153,30 @@ class FigureCardsLogic:
     def check_path(self, path, figure, pointer, board, color, db):
         boardLogic = BoardLogic(BoardRepository())
         result = True
-        for i, box in enumerate(figure):
-            # if not BoardLogic.is_box_in(pointer):
-            #     result = False
+        print(f"\n(89) Path: {path}\n")
+        # Hacer todos los chequeos para la 1er casilla de la figura
+        # chequear que la casilla de la figura sea del color de la figura
+        if not self.belongs_to_figure(pointer, figure):
+            result = False
+        # chequear que la casilla de la figura sea del color de la figura
+        if boardLogic.get_box_color(board.board_id, pointer[0], pointer[1], db) != color:
+            result = False
+        # chequear que las casillas de alrededor del pointer dado sean de distinto color
+        check_surroundings = self.check_surroundings(path, figure, pointer, board.board_id, color, db)
+        result = result and check_surroundings
+        print(f"\n(167) Result for first box: {result}\n")
+
+        for direction in path:
+            # mover el pointer 
+            # bug: si la figura es de mas longitud que el path - 1 
+            # (esto no deberia pasar de todas maneras a no ser que se pase una figura de tipo X y longitud X con longitud Y != X)
+            print(f"\n(173) Path: {direction}\n")
+            print(f"\n(174) PointerBefore: {pointer}\n")
+            pointer = self.move_pointer(pointer, direction)
+            # Antes de seguir fijarse de que no se salga de los limites del tablero
+            if not self.is_valid_pointer(pointer):
+                result = False
+                break
             check_surroundings = self.check_surroundings(path, figure, pointer, board.board_id, color, db)
             # check if the current pointer points to a box from our figure
             inBounds = self.belongs_to_figure(pointer, figure)
@@ -155,21 +184,12 @@ class FigureCardsLogic:
                 # raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
                 # result = {'message': "Boxes given out of type figure bounds"}
             result = result and (boardLogic.get_box_color(board.board_id , pointer[0] , pointer[1], db) == color) and inBounds and check_surroundings
-            print(f"\n(72) Result: {result}\n")
-            print(f"\n(73) PointerBefore: {pointer}\n")
+            print(f"\n(187) Result: {result}\n")
+
             if not result:
                 break
-            # si no es la ultima casilla de la figura, mover el pointer 
-            # bug: si la figura es de mas longitud que el path - 1 
-            # (esto no deberia pasar de todas maneras a no ser que se pase una figura de tipo X y longitud X con longitud Y != X)
-            if i < len(path):
-                print(f"\n(77) Path: {path[i]}\n")
-                pointer = self.move_pointer(pointer, path[i])
-                # Antes de seguir fijarse de que no se salga de los limites del tablero
-                if not self.is_valid_pointer(pointer):
-                    result = False
-                    break
-                print(f"\n(79) PointerAfter: {pointer}\n")
+            
+            print(f"\n(79) PointerAfter: {pointer}\n")
 
         return result
 
@@ -302,7 +322,7 @@ class FigureCardsLogic:
 
         if valid:
             # Eliminar carta de figura
-            self.fig_card_repo.delete_figure_card(figureInfo.player_id, figureInfo.game_id, figureInfo.card_id, db)
+            # self.fig_card_repo.discard_figure_card(figureInfo.card_id, db)
 
             # TODO : Pasar movimientos de movimiento parcial a movimiento completo
 
