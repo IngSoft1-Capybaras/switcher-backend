@@ -14,6 +14,10 @@ from game.game_repository import GameRepository, get_game_repository
 from game.schemas import GameInDB
 from game.game_logic import get_game_logic, GameLogic
 
+from gameState.game_state_repository import GameStateRepository
+
+from movementCards.movement_cards_repository import MovementCardsRepository, get_movement_cards_repository
+
 from main import app 
 
 app.include_router(player_router)
@@ -39,8 +43,19 @@ def player_repo():
 def game_repo():
     return MagicMock(spec=GameRepository)
 
+# Mock repository
+@pytest.fixture
+def game_state_repo():
+    return MagicMock(spec=GameStateRepository)
+
+# Mock repository
+@pytest.fixture
+def movement_cards_repo():
+    return MagicMock(spec=MovementCardsRepository)
+
+
 @pytest.fixture(autouse=True)
-def setup_dependency_override(game_repo, player_repo, mock_game_logic, mock_db):
+def setup_dependency_override(game_repo, player_repo, mock_game_logic, movement_cards_repo, game_state_repo, mock_db):
     def override_get_db():
         return mock_db
     
@@ -50,12 +65,18 @@ def setup_dependency_override(game_repo, player_repo, mock_game_logic, mock_db):
     def override_get_game_repository():
         return game_repo
     
+    def override_get_movement_cards_repository():
+        return movement_cards_repo
+    
     
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_game_logic] = override_get_game_logic
     app.dependency_overrides[PlayerRepository] = lambda: player_repo
     app.dependency_overrides[GameRepository] = lambda: game_repo
     app.dependency_overrides[get_game_repository] = override_get_game_repository
+    app.dependency_overrides[get_movement_cards_repository] = override_get_movement_cards_repository
+    app.dependency_overrides[GameStateRepository] = lambda: game_state_repo
+    app.dependency_overrides[MovementCardsRepository] = lambda: movement_cards_repo
 
     yield
     app.dependency_overrides = {}  # Clean up overrides after test
@@ -113,7 +134,7 @@ def test_get_player_by_id(player_repo, mock_db):
     
     player_repo.get_player_by_id.assert_called_once_with(game_id, player_id, mock_db)
 
-def test_leave_game(player_repo, mock_game_logic, mock_db):
+def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo, mock_game_logic, mock_db):
     
     game_id = 1
     player_id = 1
@@ -121,37 +142,37 @@ def test_leave_game(player_repo, mock_game_logic, mock_db):
     player_repo.leave_game.return_value = {
         "message": "Player has successfully left the game",
         "changed_turn": True
-    } 
+    }
     
     with client.websocket_connect("/ws") as websocket:
         response = client.post(
             f"/players/{player_id}/leave?game_id={game_id}"
         )
-        print(player_repo.leave_game.return_value)
-        print("Response status code:", response.status_code)
-        print("Response JSON:", response.json())
-
         assert response.status_code == 200
         assert response.json() == {"type": "GAMES_LIST_UPDATE"}
-        
-        #Recibimos tres mensajes por broadcast
-        #Guardamos en messages
+
+        # Recibimos tres mensajes por broadcast
         messages = []
-        for _ in range(3):
+        for _ in range(4):
             message = websocket.receive_json()
             messages.append(message)
         
         expected_messages = [
-            {"type":f"{game_id}:GAME_INFO_UPDATE"},
+            {"type": f"{game_id}:NEXT_TURN"},
+            {"type": f"{game_id}:MOVEMENT_UPDATE"},
             {"type": "GAMES_LIST_UPDATE"},
             {"type": f"{game_id}:GAME_INFO_UPDATE"}
         ]
         
-        #Nos aseguramos que cada mensaje fue recibido
+        # Nos aseguramos que cada mensaje fue recibido
         for expected_message in expected_messages:
             assert expected_message in messages
         
-        player_repo.leave_game.assert_called_once_with(game_id, player_id, mock_game_logic, mock_db)
+        player_repo.leave_game.assert_called_once_with(
+            game_id, player_id, mock_game_logic, game_repo, 
+            game_state_repo, movement_cards_repo, mock_db
+        )
+
 
 
 def test_join_game(mock_game_logic, player_repo, game_repo ,mock_db):

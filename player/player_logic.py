@@ -12,7 +12,7 @@ class PlayerLogic:
     def __init__(self, player_repo: PlayerRepository):
         self.player_repo = player_repo
 
-    def assign_random_turns(self, players, db: Session = Depends(get_db)):
+    def assign_random_turns(self, players, db: Session):
         randomTurns = random.sample(range(1, len(players) + 1), len(players))
         turnMapping = {1: turnEnum.PRIMERO, 2: turnEnum.SEGUNDO, 3: turnEnum.TERCERO, 4: turnEnum.CUARTO}
         

@@ -7,7 +7,6 @@ from player.models import Player
 from player.schemas import PlayerCreateMatch, PlayerInDB, turnEnum
 from gameState.models import GameState, StateEnum
 from gameState.schemas import GameStateInDB
-from gameState.game_state_repository import GameStateRepository
 
 from math import ceil
 class GameRepository:
@@ -84,6 +83,31 @@ class GameRepository:
             "player": PlayerInDB.model_validate(player_instance),
             "gameState": GameStateInDB.model_validate(game_status_instance)
         }
+    
+
+    def delete_game(self, game_id: int, db: Session):
+        # fetch game
+        try:
+            game = db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code = 404, detail = f"Game {game_id} not found")
+        
+        # fetch game state
+        try:
+            game_state = db.query(GameState).filter(GameState.game_id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code = 404, detail = f"GameState not found")
+        
+
+        if game_state.state == StateEnum.FINISHED:
+            # elimino solo el game porque esta la constraint on delete cascade
+            db.delete(game)
+            db.commit()
+
+            return {"message": f"The game {game_id} was succesfully deleted."}
+        
+        else:
+            return {"message": "Only FINISHED games can be deleted."}
 
 
     def get_game_winner(self, game_id: int, db: Session) -> PlayerInDB:
@@ -92,7 +116,7 @@ class GameRepository:
         except NoResultFound:
             raise HTTPException(status_code = 404, detail = "Game not found")
 
-        if game.game_state != StateEnum.FINISHED:
+        if game.game_state.state != StateEnum.FINISHED:
             raise HTTPException(status_code = 404, detail = "The game is not finished")
         
         players = game.players

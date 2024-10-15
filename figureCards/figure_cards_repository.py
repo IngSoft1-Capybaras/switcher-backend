@@ -1,9 +1,17 @@
 from sqlalchemy.orm import Session
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
+from player.models import Player
+from game.models import Game
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+import pdb
 
 class FigureCardsRepository:
 
@@ -14,8 +22,8 @@ class FigureCardsRepository:
                                                     FigureCard.player.has(game_id=game_id)).all()
 
         if not figure_cards:
-            raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
-
+            # raise HTTPException(status_code=404, detail="There no figure cards associated with this game and player")
+            return []
         # convierto cada elemento en figure_cards a su schema
         figure_cards_list = [FigureCardSchema.model_validate(card) for card in figure_cards]
 
@@ -44,7 +52,7 @@ class FigureCardsRepository:
         )
         db.add(new_card)
         db.commit()
-
+    
     def grab_figure_cards(self, player_id: int, game_id: int,db: Session):
         
         try: 
@@ -92,6 +100,8 @@ class FigureCardsRepository:
         db.commit()
 
         return {"message": "The figure cards was successfully discarded"}
+
+
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:

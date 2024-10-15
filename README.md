@@ -3,14 +3,10 @@
 ## Requirements (Debian Linux)
 
 
-- Python 3.9+
+- Python 3.6+
 ```bash
 sudo apt update
-sudo apt install python3.9
-```
-- In case you had python 3.8 and you want to upgrade to 3.9 (after installing 3.9)
-```bash
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+sudo apt install python3
 ```
 - Pip
 ```bash
@@ -18,7 +14,7 @@ sudo apt install python3-pip
 ```
 - Venv (use your python version)
 ```bash
-sudo apt install python3.9-venv
+sudo apt install python3.8-venv
 ```
 
 ## Installation
@@ -67,10 +63,4 @@ make run_unit_tests
 - Para correr los integration tests:
 ```bash
 make run_integration_tests
-```
-
-- Para obtener el coverage de los tests:
-```bash
-coverage run --source=. --omit="./tests/*" -m pytest && coverage report -m
-coverage html && open htmlcov/index.html &
 ```
