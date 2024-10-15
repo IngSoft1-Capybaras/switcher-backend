@@ -214,4 +214,19 @@ def test_join_game(mock_game_logic, player_repo, game_repo ,mock_db):
         player_repo.create_player.assert_called_once_with(game_id, player_name, mock_db)
     
     
+def test_join_game_full_game(game_repo):
     
+    game_id = 1
+    player_name = "player1"
+
+    game_repo.count_players_in_game.return_value = 4
+
+    game_repo.get_game_by_id.return_value = {"id": game_id, "name": "my game", "max_players": 4, "min_players": 3}
+
+    response = client.post(
+            f"/players/join/{game_id}",
+            json={"player_name": player_name}
+    )
+    
+    assert response.status_code == 403
+    assert response.json()['detail'] == "The game is full."

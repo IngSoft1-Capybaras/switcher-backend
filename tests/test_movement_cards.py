@@ -166,6 +166,8 @@ def test_play_movement_card_invalid_position():
     game_id = 1
     card_id = 1 
     player_id = 4
+    pos_from = BoardPosition(pos=(0, 5)) 
+    pos_to = BoardPosition(pos=(0, 3))
     
     response = client.post(
         f"/deck/movement/play_card",
@@ -181,6 +183,27 @@ def test_play_movement_card_invalid_position():
     assert response.status_code == 422  # Error de validacion de tipo
     assert response.json()["detail"][0]["type"] == "less_than_equal"
     assert response.json()["detail"][0]["msg"] == "Input should be less than or equal to 5"
+
+
+def test_play_movement_card_invalid_move(mock_mov_card_logic, mock_partial_movement_repo, mock_board_repo, mock_db):
+    game_id = 1
+    card_id = 1 
+    player_id = 4
+    
+    mock_mov_card_logic.validate_movement.return_value = False
+    response = client.post(
+        f"/deck/movement/play_card",
+        json={
+            "game_id": game_id,
+            "card_id": card_id,
+            "player_id": player_id,
+            "pos_from": {"pos": [0, 5]},
+            "pos_to": {"pos": [0, 3]}
+        }
+    )
+
+    assert response.status_code == 400
+    assert response.json()['detail'] == "Invalid movement"
 
 def test_undo_movement_success(mock_partial_movement_repo, mock_board_repo, mock_repo, mock_db):
     # Mockeo un ultimo movimiento

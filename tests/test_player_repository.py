@@ -103,6 +103,7 @@ def test_get_player_by_id(player_repo: PlayerRepository, session):
     except NoResultFound:
         raise ValueError("There is no player with id=1 in game with id=1")
     
+
 @pytest.mark.integration_test
 def test_get_player_by_id_no_player(player_repo: PlayerRepository, session):
     
@@ -112,18 +113,15 @@ def test_get_player_by_id_no_player(player_repo: PlayerRepository, session):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "The is no such player"
     
+
 @pytest.mark.integration_test
 def test_get_players_in_game(player_repo: PlayerRepository, session):
-    # session = Session()
-    # try:
     N_players = session.query(Player).filter(Player.game_id == 1).count()
 
     players_in_game = player_repo.get_players_in_game(1, session)
 
     assert len(players_in_game) == N_players
 
-    # finally:
-    #     session.close()
     
 @pytest.mark.integration_test
 def test_get_players_in_game_no_players(player_repo: PlayerRepository, session):
@@ -138,6 +136,7 @@ def test_get_players_in_game_no_players(player_repo: PlayerRepository, session):
 
     assert len(players_in_game) == 0
 
+
 @pytest.mark.integration_test
 def test_get_players_in_game_no_game(player_repo: PlayerRepository, session):
     game_id = 676
@@ -147,10 +146,9 @@ def test_get_players_in_game_no_game(player_repo: PlayerRepository, session):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"Game {game_id} not found"
 
+
 @pytest.mark.integration_test     
-def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerRepository, session):
-    # session = Session()
-    
+def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerRepository, session):    
     res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
@@ -164,10 +162,9 @@ def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerReposi
         
     assert updated_player.turn == turnEnum.SEGUNDO
     
+
 @pytest.mark.integration_test     
-def test_assign_turn_player_no_player(game_repo: GameRepository, player_repo: PlayerRepository, session):
-    # session = Session()
-    
+def test_assign_turn_player_no_player(game_repo: GameRepository, player_repo: PlayerRepository, session):    
     res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
@@ -198,6 +195,7 @@ def test_create_player_success(player_repo: PlayerRepository,game_repo: GameRepo
     assert new_player.name == "Test Player"
     assert new_player.host is False
     assert new_player.winner is False
+
 
 @pytest.mark.integration_test
 def test_create_player_fail(player_repo: PlayerRepository,game_repo: GameRepository, session):
@@ -277,6 +275,7 @@ async def test_leave_game_player_turn(session, player_repo, game_repo, game_stat
     updated_game_state = game_state_repo.get_game_state_by_id(game.id, session)
     assert updated_game_state.current_player == player3_id
 
+
 @pytest.mark.integration_test
 def test_assign_winner_of_game(player_repo: PlayerRepository, session, setup_game_player):
     game, game_state, players, movement_cards = setup_game_player
@@ -288,6 +287,7 @@ def test_assign_winner_of_game(player_repo: PlayerRepository, session, setup_gam
     updated_player = session.query(Player).filter(Player.id == players[0].id).one()
     assert updated_player.winner is True
 
+
 @pytest.mark.integration_test
 def test_assign_winner_of_no_player(player_repo: PlayerRepository, session):
     with pytest.raises(HTTPException) as exc_info:
@@ -295,3 +295,21 @@ def test_assign_winner_of_no_player(player_repo: PlayerRepository, session):
     
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "There is no such player"
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration_test
+async def test_(player_repo: PlayerRepository, game_logic, game_repo, game_state_repo, mov_card_repo, setup_game_player, session):
+    game, game_state, players, mov_cards = setup_game_player
+    player1_id = players[0].id
+    player2_id = players[1].id
+    player3_id = players[2].id
+    
+    game_state_repo.update_game_state(game_id=game.id, state=StateEnum.FINISHED, db=session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await player_repo.leave_game(game_id=game.id, player_id=999, game_logic=game_logic, game_repo=game_repo, 
+                                              game_state_repo=game_state_repo, mov_card_repo=mov_card_repo, db=session)
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Player not found"

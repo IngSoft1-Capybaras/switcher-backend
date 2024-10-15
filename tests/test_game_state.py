@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
-from fastapi import status
+from fastapi import status, HTTPException
 from sqlalchemy.orm import Session
 
 from gameState.game_state_repository import GameStateRepository
@@ -20,6 +20,7 @@ from board.board_logic import BoardLogic, get_board_logic
 from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
 
 from gameState.models import StateEnum, GameState
+from gameState.schemas import GameStateCreate
 from player.schemas import turnEnum, PlayerInDB
 from movementCards.schemas import MovementCardSchema, typeEnum
 
@@ -246,12 +247,14 @@ def test_get_current_player(mock_game_state_repo, mock_db):
     mock_game_state_repo.get_current_player.called_once_with(game_id, mock_db)
 
 
-def test_get_game_state_by_id(mock_game_state, mock_game_state_repo, mock_db):
+def test_get_game_state_by_id(mock_game_state_repo, mock_db):
     game_id = 1
-    mock_game_state_repo.get_game_state_by_id.return_value = mock_game_state
+    current_player_id = 1
+    game_state = GameStateCreate(id=1, state= StateEnum.WAITING, game_id = game_id, current_player=current_player_id)
+    mock_game_state_repo.get_game_state_by_id.return_value = game_state
     
     response = client.get(f"/game_state/{game_id}")
     
     assert response.status_code == 200
-    assert response.json() == mock_game_state.model_dump()
+    assert response.json() == game_state.model_dump()
     mock_game_state_repo.get_game_state_by_id.assert_called_once_with(game_id, mock_db)
