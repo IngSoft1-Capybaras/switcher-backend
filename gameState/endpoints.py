@@ -2,9 +2,7 @@ from fastapi import APIRouter, Depends,status
 from sqlalchemy.orm import Session
 from database.db import get_db
 
-from gameState.models import  StateEnum
-
-from gameState.models import  StateEnum
+from gameState.models import StateEnum
 
 from .game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -29,9 +27,8 @@ game_state_router = APIRouter(
 )
 
 @game_state_router.get("/{game_id}/current_turn", status_code=status.HTTP_200_OK)
-async def get_current_player(game_id: int, db: Session = Depends(get_db)):
-    game_state_repo =  GameStateRepository()
-    
+async def get_current_player(game_id: int, db: Session = Depends(get_db), 
+                             game_state_repo: GameStateRepository = Depends()):    
     return game_state_repo.get_current_player(game_id, db)
 
 @game_state_router.patch("/{game_id}/finish_turn", status_code= status.HTTP_200_OK)
