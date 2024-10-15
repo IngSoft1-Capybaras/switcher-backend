@@ -19,7 +19,7 @@ from board.board_logic import BoardLogic, get_board_logic
 
 from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
 
-from gameState.models import StateEnum
+from gameState.models import StateEnum, GameState
 from player.schemas import turnEnum, PlayerInDB
 from movementCards.schemas import MovementCardSchema, typeEnum
 
@@ -81,9 +81,15 @@ def mock_partial_movement_logic():
     return MagicMock(spec=PartialMovementLogic)
 
 
+@pytest.fixture
+def mock_game_state():
+    return MagicMock(spec=GameState)
+
 # Apply the override before running the tests
 @pytest.fixture(autouse=True)
-def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, mock_game_repo, mock_figure_cards_logic, mock_game_state_repo, mock_movement_cards_logic, mock_player_logic,mock_board_logic, mock_partial_movement_logic, mock_db):
+def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_player_repo, mock_board_repo, 
+                              mock_game_repo, mock_figure_cards_logic, mock_game_state_repo, mock_movement_cards_logic, 
+                              mock_player_logic,mock_board_logic, mock_partial_movement_logic, mock_game_state, mock_db):
     def override_get_db():
         return mock_db
     
@@ -111,6 +117,7 @@ def setup_dependency_override(mock_mov_card_repo, mock_fig_card_repo, mock_playe
     app.dependency_overrides[MovementCardsRepository] = lambda: mock_mov_card_repo
     app.dependency_overrides[BoardLogic] = lambda: mock_board_logic
     app.dependency_overrides[PartialMovementLogic] = lambda: mock_partial_movement_logic
+    app.dependency_overrides[GameState] = lambda: mock_game_state
 
     
     app.dependency_overrides[get_fig_cards_logic] = override_get_fig_cards_logic
@@ -225,3 +232,26 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
         mock_fig_card_repo.grab_figure_cards.called_once_with(current_player_id, game_id, mock_db)
         mock_mov_card_repo.grab_mov_cards.called_once_with(current_player_id, game_id, mock_db)
         mock_partial_movement_logic.revert_partial_movements.assert_called_once_with(game_id, current_player_id, mock_db)
+
+
+def test_get_current_player(mock_game_state_repo, mock_db):
+    game_id = 2
+    current_player_id = 7
+    
+    mock_game_state_repo.get_current_player.return_value = {"current_player_id": current_player_id}
+
+    response = client.get("/game_state/2/current_turn")
+
+    assert response.status_code == 200
+    mock_game_state_repo.get_current_player.called_once_with(game_id, mock_db)
+
+
+def test_get_game_state_by_id(mock_game_state, mock_game_state_repo, mock_db):
+    game_id = 1
+    mock_game_state_repo.get_game_state_by_id.return_value = mock_game_state
+    
+    response = client.get(f"/game_state/{game_id}")
+    
+    assert response.status_code == 200
+    assert response.json() == mock_game_state.model_dump()
+    mock_game_state_repo.get_game_state_by_id.assert_called_once_with(game_id, mock_db)
