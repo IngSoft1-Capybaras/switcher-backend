@@ -43,6 +43,7 @@ def test_get_games(game_repository: GameRepository, session):
 
     assert len(list_of_games) == min(5, N_games)
 
+
 @pytest.mark.integration_test
 def test_get_game_by_id(game_repository: GameRepository, session):
     game_id = 1
@@ -61,6 +62,14 @@ def test_get_game_by_id_not_found(game_repository: GameRepository, session):
     assert excinfo.value.status_code == 404
     assert "Game not found" in str(excinfo.value.detail)
 
+
+@pytest.mark.integration_test
+def test_count_players_in_game_no_game(game_repository: GameRepository, session):
+    non_existent_game_id = 999
+    with pytest.raises(HTTPException) as excinfo:
+        game_repository.count_players_in_game(non_existent_game_id, session)
+    assert excinfo.value.status_code == 404
+    assert "Game not found" in str(excinfo.value.detail)
 
 
 @pytest.mark.integration_test
@@ -92,6 +101,15 @@ def test_get_games_paging(game_repository: GameRepository, session):
     assert len(games_page_1) <= 5
     assert len(games_page_2) <= 5
     assert games_page_1 != games_page_2  # Me fijo que haya distintos juegos en cada pagina
+
+
+@pytest.mark.integration_test
+def test_get_game_winner_game_not_found(game_repository: GameRepository, session):
+    non_existent_game_id = 999
+    with pytest.raises(HTTPException) as excinfo:
+        game_repository.get_game_winner(non_existent_game_id, session)
+    assert excinfo.value.status_code == 404
+    assert "Game not found" in str(excinfo.value.detail)
 
 
 @pytest.mark.integration_test
@@ -168,6 +186,21 @@ def test_delete_inexistent_game(game_repository: GameRepository, session):
 
 
 @pytest.mark.integration_test
+def test_delete_inexistent_game_state(game_repository: GameRepository, session):    
+    game = Game(name="Test game", min_players=2, max_players=4)
+    session.add(game)
+    session.commit()
+    game_id = game.id
+
+    # elimino el juego con id 999
+    with pytest.raises(HTTPException) as excinfo:
+        game_repository.delete_game(game_id, session)
+
+    assert excinfo.value.status_code == 404
+    assert f"GameState not found" in str(excinfo.value.detail)
+
+
+@pytest.mark.integration_test
 def test_delete_game(game_repository: GameRepository, game_state_repository: GameStateRepository, session):    
     game_id = 1
     game_state_repository.update_game_state(game_id, StateEnum.FINISHED, session)
@@ -199,3 +232,23 @@ def test_delete_game_not_finished(game_repository: GameRepository, game_state_re
     res = game_repository.delete_game(game_id, session)
 
     assert res == {"message": "Only FINISHED games can be deleted."}
+
+
+@pytest.mark.integration_test
+def test_get_games_no_games(game_repository: GameRepository, 
+                            game_state_repository: GameStateRepository, session):
+    res = game_repository.get_games(session)
+    list_of_games = res['games']
+    print(list_of_games)
+    print(res["total_pages"])
+    # borro los juegos existentes
+    session.query(Game).delete()
+    session.commit()
+    
+    res = game_repository.get_games(session)
+    print(res)
+    list_of_games = res['games']
+    total_pages = res['total_pages']
+    
+    assert len(list_of_games) == 0
+    assert total_pages == 1
