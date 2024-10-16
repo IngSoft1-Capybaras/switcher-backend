@@ -378,7 +378,7 @@ class FigureCardsLogic:
         
         figures = []
         figure_or_bool = False
-        figure_id = 1
+        figure_id = 0
         
         for k in range(6): # y axis 
             for l in range(6): # x axis 

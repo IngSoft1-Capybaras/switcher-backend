@@ -192,7 +192,10 @@ class BoardRepository:
         # Group boxes by figure_id
         figures = {}
         for box in boxes: 
+            if box.figure_id not in figures:
+                figures[box.figure_id] = []
             figures[box.figure_id].append({
+                "id": box.id,
                 "color": box.color,
                 "pos_x": box.pos_x,
                 "pos_y": box.pos_y,
@@ -200,6 +203,6 @@ class BoardRepository:
             })
         
         # Convert the dictionary to a list of lists
-        formatted_figures = [figures[figure_id-1] for figure_id in figures if figure_id is not None]
+        formatted_figures = [figures[figure_id] for figure_id in figures if figure_id is not None]
         
         return formatted_figures
