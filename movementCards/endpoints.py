@@ -11,6 +11,7 @@ from board.schemas import BoardPosition
 from board.board_repository import BoardRepository
 from partial_movement.partial_movement_repository import PartialMovementRepository, get_partial_movement_repository
 
+from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 from connection_manager import manager
 
 movement_cards_router = APIRouter(
@@ -41,6 +42,7 @@ async def play_movement_card(
                                 partial_mov_repo: PartialMovementRepository = Depends() ,
                                 mov_cards_repo: MovementCardsRepository = Depends(),
                                 board_repo: BoardRepository = Depends(),
+                                fig_logic: FigureCardsLogic = Depends(get_fig_cards_logic),
                                 db: Session = Depends(get_db)
                             ):
     #validar movimiento
@@ -58,10 +60,17 @@ async def play_movement_card(
     
     #se realizan los cambios en el tablero
     board_repo.switch_boxes(request.game_id, request.pos_from, request.pos_to, db) 
-    
     #se avisa a los jugadores del nuevo tablero
     message = {
             "type": f"{request.game_id}:MOVEMENT_UPDATE"
+        }
+    await manager.broadcast(message)
+    
+    #calculamos las nuevas figuras
+    fig_logic.get_formed_figures(request.game_id, db)
+    #se avisa a los jugadores del nuevo tablero
+    message = {
+            "type": f"{request.game_id}:BOARD_UPDATE"
         }
     await manager.broadcast(message)
     
