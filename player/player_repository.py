@@ -68,7 +68,8 @@ class PlayerRepository:
 
         # Buscamos el estado de la partida
         game_state = game_state_repo.get_game_state_by_id(game_id, db)
-        
+        player = self.get_player_by_id(game_id, player_id, db)
+
         if game_state.state == StateEnum.PLAYING:
             # Me aseguro que no sea el turno del jugador
             if game_state.current_player == player_id:
@@ -95,8 +96,12 @@ class PlayerRepository:
         db.commit()
         # chequeo la condicion de ganar por abandono
         if game_state.state == StateEnum.PLAYING:
-                await game_logic.check_win_condition_one_player_left(game_id, db)
+            await game_logic.check_win_condition_one_player_left(game_id, db)
 
+        if player.host and game_state.state == StateEnum.WAITING:
+            # al borrar el juego, borro todos los datos asociados a este
+            game_repo.delete_game(game_id, db)
+            
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
     
     
