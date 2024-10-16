@@ -4,6 +4,9 @@ from .models import Board, Box, ColorEnum
 from .schemas import BoardAndBoxesOut
 from fastapi import HTTPException, status, Depends
 from .board_repository import BoardRepository
+from figureCards.figure_cards_repository import FigureCardsRepository
+from player.player_repository import PlayerRepository
+from figureCards.figure_cards_logic import get_fig_cards_logic
 
 def get_board_logic(board_repo: BoardRepository = Depends()):
     return BoardLogic(board_repo)
@@ -14,6 +17,7 @@ class BoardLogic:
         self.board_repo = board_repo
             
     def configure_board(self, game_id: int, db: Session):
+        figLogic = get_fig_cards_logic() 
         # Nos aseguramos que un tablero no haya sido creado
         existing_board = self.board_repo.get_existing_board(game_id, db)
         
@@ -32,6 +36,10 @@ class BoardLogic:
                 pos_x = i % 6
                 pos_y = i // 6
                 self.board_repo.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y, db)
+        
+
+        figLogic.get_formed_figures(game_id, db)
+        
         return {"message": "Board created successfully"}
 
     def get_box_color(self, board_id: int, pos_x: int, pos_y: int, db: Session):

@@ -17,6 +17,7 @@ class Box(BaseModel):
     id_board: int
 
 class BoxOut(BaseModel):
+    id: int
     color: ColorEnum
     pos_x: int
     pos_y: int

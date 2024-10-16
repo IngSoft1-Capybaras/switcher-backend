@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy import null
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from typing import List
@@ -44,7 +45,8 @@ class BoardRepository:
             pos_x=pos_x,
             pos_y=pos_y,
             game_id=game_id,
-            board_id=board_id
+            board_id=board_id,
+            highlight = False
         )    
         db.add(new_box)
         db.commit()
@@ -143,3 +145,61 @@ class BoardRepository:
         db.refresh(box)
         
         return BoxOut.model_validate(box) if box else None
+    
+    def highlight_box(self, box_id: int, db: Session):
+        box = db.query(Box).filter(Box.id == box_id).first()
+        if not box:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box to highlight not found")
+
+        box.highlight = True
+        db.commit()
+        
+    def reset_highlight_for_all_boxes(self, game_id: int, db: Session):
+        # Bulk update en todas las boxes
+        result = db.query(Box).filter(Box.game_id == game_id).update({Box.highlight: False})
+        
+        if result == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No boxes found for the game")
+        
+        
+        # Guardar cambios
+        db.commit()
+        
+    def update_figure_id_box(self, box_id: int, figure_id: int,  db: Session):
+        box = db.query(Box).filter(Box.id == box_id).first()
+        if not box:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box to highlight not found")
+
+        box.figure_id = figure_id
+        db.commit()
+        
+    def reset_figure_for_all_boxes(self, game_id: int, db: Session):
+        # Bulk update en todas las boxes
+        result = db.query(Box).filter(Box.game_id == game_id).update({Box.figure_id: None})
+        
+        if result == 0:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No boxes found for the game")
+        
+        # Guardar cambios
+        db.commit()
+        
+    def get_figures(self, game_id: int, db: Session):
+        # Query all boxes for the given game
+        boxes = db.query(Box).filter(Box.game_id == game_id, Box.figure_id.is_not(None)).all()
+        
+        if not boxes:
+            return []
+        # Group boxes by figure_id
+        figures = {}
+        for box in boxes: 
+            figures[box.figure_id].append({
+                "color": box.color,
+                "pos_x": box.pos_x,
+                "pos_y": box.pos_y,
+                "highlighted": box.highlight
+            })
+        
+        # Convert the dictionary to a list of lists
+        formatted_figures = [figures[figure_id-1] for figure_id in figures if figure_id is not None]
+        
+        return formatted_figures

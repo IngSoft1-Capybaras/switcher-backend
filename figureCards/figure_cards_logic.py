@@ -4,7 +4,6 @@ import random
 from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from board.board_logic import BoardLogic
 from board.board_repository import BoardRepository
 from connection_manager import manager
 from game.models import Game
@@ -12,7 +11,6 @@ from gameState.game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
 from board.board_repository import BoardRepository
 from gameState.game_state_repository import GameStateRepository
-from board.board_logic import BoardLogic
 
 from .figure_cards_repository import FigureCardsRepository
 from .models import (DirectionEnum, FigureCard, FigurePaths, direction_map,
@@ -60,7 +58,7 @@ class FigureCardsLogic:
 
     def check_surroundings(self, path, figure, pointer, board_id, color, db):
         print(f"\n(62) Checking surroundings for pointer: {pointer}\n")
-        boardLogic = BoardLogic(BoardRepository())
+        board_repo = BoardRepository()
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
         for direction in DirectionEnum:
             print(f"\n(66) Check surr Direction: {direction}\n")
@@ -69,7 +67,8 @@ class FigureCardsLogic:
             pointer = self.move_pointer(pointer, direction)
             if self.is_valid_pointer(pointer):
                 print(f"\n(71) Pointer: {pointer}\n")
-                box_color = boardLogic.get_box_color(board_id, pointer[0], pointer[1], db)
+                box = board_repo.get_box_by_position(board_id, pointer[0], pointer[1], db)
+                box_color = box.color
                 print(f"\n(73) BoxColor: {box_color}\n")
                 bel_to_fig = self.belongs_to_figure(pointer, figure)
                 print(f"\n(75) BelongsToFigure: {bel_to_fig}\n")
@@ -99,9 +98,8 @@ class FigureCardsLogic:
                 return True
         return False
 
-    def check_path_blind(self, path, pointer, board_id, color, db):
+    def check_path_blind(self, path, pointer, board_id, color, figure_id, db):
         boardRepo = BoardRepository()
-        boardLogic = BoardLogic(boardRepo)
 
         result = True
         figure = [] # list of boxes that form the figure
@@ -124,7 +122,8 @@ class FigureCardsLogic:
                 result = False
                 logging.debug(f"\n(98) Result: False (invalid pointer)\n")
                 break
-            get_color = boardLogic.get_box_color(board_id, pointer[0], pointer[1], db)
+            box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
+            get_color = box.color
             logging.debug(f"\n(100) Color: {get_color}\n")
             printable_box = boardRepo.get_box_by_position(board_id, pointer[0], pointer[1], db)
             logging.debug(f"\n(101) Box: {printable_box}\n")
@@ -140,10 +139,14 @@ class FigureCardsLogic:
         # si obtuvimos una figura valida, chequear que no sea contigua a ningun otro color de su mismo tipo
         if result:
             for fig_box in figure:
-                # highlight the box in the board
-                fig_box.highlighted = True
+                
                 if not self.check_surroundings(path, figure, (fig_box.pos_x, fig_box.pos_y), board_id, color, db):
                     return False
+                
+                # highlight the box in the board
+                boardRepo.highlight_box(fig_box.id, db)
+                boardRepo.update_figure_id_box(fig_box.id, figure_id, db)
+                fig_box.highlighted = True
                 
             return figure # return the figure if it is valid
 
@@ -151,7 +154,7 @@ class FigureCardsLogic:
 
 
     def check_path(self, path, figure, pointer, board, color, db):
-        boardLogic = BoardLogic(BoardRepository())
+        board_repo = BoardRepository()
         result = True
         print(f"\n(89) Path: {path}\n")
         # Hacer todos los chequeos para la 1er casilla de la figura
@@ -159,7 +162,9 @@ class FigureCardsLogic:
         if not self.belongs_to_figure(pointer, figure):
             result = False
         # chequear que la casilla de la figura sea del color de la figura
-        if boardLogic.get_box_color(board.board_id, pointer[0], pointer[1], db) != color:
+        box = board_repo.get_box_by_position(board.board_id, pointer[0], pointer[1], db)
+        get_color = box.color
+        if get_color != color:
             result = False
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
         check_surroundings = self.check_surroundings(path, figure, pointer, board.board_id, color, db)
@@ -183,7 +188,9 @@ class FigureCardsLogic:
             # if not inBounds:
                 # raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
                 # result = {'message': "Boxes given out of type figure bounds"}
-            result = result and (boardLogic.get_box_color(board.board_id , pointer[0] , pointer[1], db) == color) and inBounds and check_surroundings
+            box = board_repo.get_box_by_position(board.board_id, pointer[0], pointer[1], db)
+            get_color = box.color
+            result = result and (get_color == color) and inBounds and check_surroundings
             print(f"\n(187) Result: {result}\n")
 
             if not result:
@@ -238,8 +245,8 @@ class FigureCardsLogic:
 
     def check_valid_figure(self,figure,figure_type,board, db):
         pointer = self.get_pointer_from_figure(figure,0)
-        boardLogic = BoardLogic(BoardRepository())
-        color = BoardLogic.get_box_color(boardLogic, board.board_id, pointer[0], pointer[1], db)
+        board_repo = BoardRepository()
+        color = board_repo.get_box_by_position(board.board_id, pointer[0], pointer[1], db)
         if color != figure[0].color:
             raise HTTPException(status_code=404, detail="Color of figure does not match with color in board")
         validType = False
@@ -277,7 +284,6 @@ class FigureCardsLogic:
         return result
 
     def modifiyBoardTest(self, board, db):
-        boardLogic = BoardLogic(BoardRepository())
         boardRepo = BoardRepository()
         board = boardRepo.get_configured_board(board.game_id, db)
         # Modificar las casillas para formar una figura valida
@@ -351,40 +357,49 @@ class FigureCardsLogic:
         # clear output.log 
         open('output.log', 'w').close()
         board_repo = BoardRepository()
-        board_logic = BoardLogic(board_repo)
-        # chequear que el juego exista y este iniciado
+        
+        # Chequear que el juego exista y este iniciado
         gameStateRepo = GameStateRepository()
         game = gameStateRepo.get_game_state_by_id(game_id, db)
+        
         if game == None:
             raise HTTPException(status_code=404, detail="Game not found when getting formed figures")
         if game.state != "PLAYING":
             raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
         
+        # Chequear board existe
         board_id = board_repo.get_existing_board(game_id, db).id
         if board_id == None:
             raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
-            
+        
+        # Reset del tablero
+        board_repo.reset_highlight_for_all_boxes(game_id, db)
+        board_repo.reset_highlight_for_all_boxes(game_id, db)
+        
         figures = []
         figure_or_bool = False
+        figure_id = 1
+        
         for k in range(6): # y axis 
             for l in range(6): # x axis 
-                # asignar pointer siempre y cuando sea distinto de las posiciones de las figuras ya formadas
+                # Asignar pointer siempre y cuando sea distinto de las posiciones de las figuras ya formadas
                 pointer = self.is_pointer_different_from_formed_figures((l,k), figures)
                 if pointer == False:
                     continue
-                color = board_logic.get_box_color(board_id, pointer[0], pointer[1], db)
+                box = board_repo.get_box_by_position(board_id, pointer[0], pointer[1], db)
+                color = box.color
                 for path in FigurePaths:
                     for i in range(4): # 4 rotaciones del path
-                        figure_or_bool = self.check_path_blind(path.path, pointer, board_id, color, db)
+                        figure_or_bool = self.check_path_blind(path.path, pointer, board_id, color, figure_id, db)
                         if figure_or_bool != False :
                             figures.append(figure_or_bool)
+                            figure_id += 1
                             break
                         path.path = [direction_map[direction] for direction in path.path]
                     
                     if figure_or_bool != False:
                         break
 
-        return figures
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), player_repo: PlayerRepository = Depends()):
     return FigureCardsLogic(fig_card_repo, player_repo)
