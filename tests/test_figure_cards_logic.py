@@ -75,3 +75,15 @@ def test_create_fig_deck(fig_cards_logic, player_logic):
         assert isinstance(call[0][1], int)
         assert isinstance(call[0][2], typeEnum)
         assert isinstance(call[0][3], bool)
+
+
+def test_create_fig_deck_no_players(fig_cards_logic, player_logic):
+    mock_session = MagicMock()
+    game_id = 1
+        
+    player_logic.player_repo.get_players_in_game.return_value = []
+    
+    with patch('random.shuffle', lambda x: x):
+        response = fig_cards_logic.create_fig_deck(mock_session, game_id)
+    
+    assert response == {"message": "Figure deck was not created, there no players in game"}

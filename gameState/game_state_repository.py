@@ -90,11 +90,11 @@ class GameStateRepository:
 
         next_player = next((player for player in players if player.turn == next_turn), None)
 
-        if not next_player:
-            raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Next player not found"
-            )
+        # if not next_player:
+        #     raise HTTPException(
+        #     status_code=status.HTTP_404_NOT_FOUND,
+        #     detail="Next player not found"
+        #     )
         
         return next_player.id
 

@@ -228,6 +228,16 @@ def test_return_partial_movements_by_player(partial_movement_repo, setup_game_pl
     assert partial_movements[0].mov_card_id == 1
     assert partial_movements[1].mov_card_id == 2
     
+
+@pytest.mark.integration_test
+def test_return_partial_movements_by_player_mov_not_found(partial_movement_repo, session):
+    game_id = 999
+    player_id = 999
+    partial_movements = partial_movement_repo.return_partial_movements_by_player(game_id, player_id, session)
+    
+    assert partial_movements == []
+
+
 @pytest.mark.integration_test
 def test_undo_movement_by_id(partial_movement_repo, setup_game_player_card, session):
     game, player, card = setup_game_player_card

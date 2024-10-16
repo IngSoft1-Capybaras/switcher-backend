@@ -8,6 +8,7 @@ from movementCards.movement_cards_repository import MovementCardsRepository
 from game.models import Game
 from gameState.models import GameState, StateEnum
 from movementCards.models import MovementCard, typeEnum
+from movementCards.schemas import MovementCardOut
 from player.models import Player
 from fastapi import HTTPException
 
@@ -227,6 +228,7 @@ def test_grab_mov_cards_and_reshuffle(movement_cards_repository: MovementCardsRe
     positions_left = {card.position for card in cards_left}
     assert positions_left == {2, 3, 4, 5}
 
+
 @pytest.mark.integration_test
 def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsRepository, session):
     # Crear un juego y agregarlo a la sesión
@@ -278,6 +280,37 @@ def test_reshuffle_movement_deck(movement_cards_repository: MovementCardsReposit
     assert len(unused_cards_after_reshuffle) == 5
     positions_left = {card.position for card in unused_cards_after_reshuffle}
     assert positions_left == {0, 1, 2, 3, 4}
+
+
+@pytest.mark.integration_test
+def test_reshuffle_movement_deck_no_used_cards(movement_cards_repository: MovementCardsRepository, session):
+    # Crear un juego y agregarlo a la sesión
+    game = Game(name="Test Game", max_players=3, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+    session.add_all([player1, player2])
+    session.commit()
+
+    # Agregar cartas de movimiento no usadas al juego
+    session.add_all([
+        MovementCard(player_id = player1.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+        MovementCard(player_id = player1.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+        MovementCard(player_id = player2.id, game_id=game.id, type=typeEnum.LINEAL_CONT, description='', used=False),
+    ])
+    session.commit()
+    
+    with pytest.raises(HTTPException) as excinfo:
+        movement_cards_repository.reshuffle_movement_deck(game.id, session)
+
+    assert excinfo.value.status_code == 400
+    assert excinfo.value.detail == "No used cards available to reshuffle"
 
 
 @pytest.mark.integration_test
@@ -382,6 +415,7 @@ def test_discard_mov_card_invalid_card(movement_cards_repository: MovementCardsR
     assert excinfo.value.status_code == 404
     assert f"There no movement cards associated with this id 999" in str(excinfo.value.detail)
 
+
 @pytest.mark.integration_test
 def test_mark_card_partially_used(movement_cards_repository, session):
     game = Game(name='name', min_players=2, max_players=3)
@@ -456,3 +490,25 @@ def test_mark_card_in_player_hand_not_found(movement_cards_repository, session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "No movement card found"
+
+
+@pytest.mark.integration_test
+def test_get_movement_card_type(movement_cards_repository: MovementCardsRepository, session):
+    card_id = 1
+    mov_card = session.query(MovementCard).filter(MovementCard.id == card_id).one()
+    type = typeEnum(mov_card.type)
+
+    movement_type = movement_cards_repository.get_movement_card_type(card_id, session)
+
+    assert type == movement_type
+
+
+@pytest.mark.integration_test
+def test_get_movement_card_type_card_not_found(movement_cards_repository: MovementCardsRepository, session):
+    card_id = 999
+    # uso un card_id exageradamente grande para que salte la exception
+    with pytest.raises(HTTPException) as excinfo:
+        movement_cards_repository.get_movement_card_type(card_id, session)
+    
+    assert excinfo.value.status_code == 404
+    assert "No movement card found" in str(excinfo.value.detail)
