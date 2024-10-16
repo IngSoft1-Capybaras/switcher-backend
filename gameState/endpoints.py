@@ -86,6 +86,10 @@ async def start_game(
     # Asignar turnos aleatoriamente cada jugador y obtener primer jugador
     first_player_id = player_logic.assign_random_turns(players,db)
     
+    # Cambiar estado de la partida
+    game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
+    game_state_repo.update_current_player(game_id, first_player_id, db)
+    
     #Crear tablero
     board_creation_result = board_logic.configure_board(game_id, db)
     
@@ -96,9 +100,6 @@ async def start_game(
     #Crear Mazo Figuras para cada jugador
     fig_deck_creation = fig_cards_logic.create_fig_deck(db, game_id)
     
-    # Cambiar estado de la partida
-    game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
-    game_state_repo.update_current_player(game_id, first_player_id, db)
     
     #notificar a los jugadores
     message = {
