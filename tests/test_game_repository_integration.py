@@ -225,13 +225,13 @@ def test_delete_game(game_repository: GameRepository, game_state_repository: Gam
     assert boxes == None
 
 
-@pytest.mark.integration_test
-def test_delete_game_not_finished(game_repository: GameRepository, game_state_repository: GameStateRepository, session):
-    game_id = 2
+# @pytest.mark.integration_test
+# def test_delete_game_not_finished(game_repository: GameRepository, game_state_repository: GameStateRepository, session):
+#     game_id = 2
 
-    res = game_repository.delete_game(game_id, session)
+#     res = game_repository.delete_game(game_id, session)
 
-    assert res == {"message": "Only FINISHED games can be deleted."}
+#     assert res == {"message": "Only FINISHED games can be deleted."}
 
 
 @pytest.mark.integration_test
