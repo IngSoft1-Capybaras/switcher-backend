@@ -8,7 +8,7 @@ from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
 
-from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut
+from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut, Box as BoxDB
 
 
 class BoardRepository:
@@ -132,7 +132,7 @@ class BoardRepository:
         box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
         if not box:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box not found {pos_x}, {pos_y}")
-        return BoxOut.model_validate(box) if box else None
+        return BoxDB.model_validate(box) if box else None
 
     def upd_box_color(self, board_id: int, pos_x: int, pos_y: int, color: ColorEnum, db: Session):
         box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
@@ -195,7 +195,6 @@ class BoardRepository:
             if box.figure_id not in figures:
                 figures[box.figure_id] = []
             figures[box.figure_id].append({
-                "id": box.id,
                 "color": box.color,
                 "pos_x": box.pos_x,
                 "pos_y": box.pos_y,

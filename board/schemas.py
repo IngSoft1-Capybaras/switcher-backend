@@ -10,14 +10,17 @@ class ColorEnum(str, Enum):
 
     
 class Box(BaseModel):
+    id: int
     color: ColorEnum
     pos_x: int
     pos_y: int
-    game_id: int
-    id_board: int
+    highlighted: bool = False
+    
+    model_config = ConfigDict(from_attributes = True)
+
+
 
 class BoxOut(BaseModel):
-    id: int
     color: ColorEnum
     pos_x: int
     pos_y: int
