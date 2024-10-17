@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 from database.db import get_db
 
 from player.player_repository import PlayerRepository
-from player.schemas import PlayerJoinRequest
+from player.models import turnEnum
+from player.schemas import PlayerJoinRequest, PlayerCreateMatch
 from player.endpoints import player_router
 
 from game.game_repository import GameRepository, get_game_repository
@@ -15,6 +16,8 @@ from game.schemas import GameInDB
 from game.game_logic import get_game_logic, GameLogic
 
 from gameState.game_state_repository import GameStateRepository
+from gameState.models import StateEnum
+from gameState.schemas import GameStateCreate
 
 from movementCards.movement_cards_repository import MovementCardsRepository, get_movement_cards_repository
 
@@ -134,11 +137,17 @@ def test_get_player_by_id(player_repo, mock_db):
     
     player_repo.get_player_by_id.assert_called_once_with(game_id, player_id, mock_db)
 
-def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo, mock_game_logic, mock_db):
+
+def test_leave_game_playing(player_repo, game_repo, movement_cards_repo, game_state_repo, mock_game_logic, mock_db):
     
     game_id = 1
     player_id = 1
-    
+
+    player = PlayerCreateMatch(name="Player1", host=True, turn=turnEnum.PRIMERO)
+    game_state = GameStateCreate(id=1, state= StateEnum.PLAYING, game_id = game_id, current_player=player_id)
+
+    player_repo.get_player_by_id.return_value = player
+    game_state_repo.get_game_state_by_id.return_value =  game_state
     player_repo.leave_game.return_value = {
         "message": "Player has successfully left the game",
         "changed_turn": True
@@ -151,7 +160,7 @@ def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo
         assert response.status_code == 200
         assert response.json() == {"type": "GAMES_LIST_UPDATE"}
 
-        # Recibimos tres mensajes por broadcast
+        # Recibimos 4 mensajes por broadcast
         messages = []
         for _ in range(4):
             message = websocket.receive_json()
@@ -161,7 +170,7 @@ def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo
             {"type": f"{game_id}:NEXT_TURN"},
             {"type": f"{game_id}:MOVEMENT_UPDATE"},
             {"type": "GAMES_LIST_UPDATE"},
-            {"type": f"{game_id}:GAME_INFO_UPDATE"}
+            {"type": f"{game_id}:GAME_INFO_UPDATE"},
         ]
         
         # Nos aseguramos que cada mensaje fue recibido
@@ -174,6 +183,49 @@ def test_leave_game(player_repo, game_repo, movement_cards_repo, game_state_repo
         )
 
 
+def test_leave_game_host(player_repo, game_repo, movement_cards_repo, game_state_repo, mock_game_logic, mock_db):
+    
+    game_id = 1
+    player_id = 1
+
+    player = PlayerCreateMatch(name="Player1", host=True, turn=turnEnum.PRIMERO)
+    game_state = GameStateCreate(id=1, state= StateEnum.WAITING, game_id = game_id, current_player=player_id)
+
+    player_repo.get_player_by_id.return_value = player
+    game_state_repo.get_game_state_by_id.return_value =  game_state
+
+    player_repo.leave_game.return_value = {
+        "message": "Player has successfully left the game",
+        "changed_turn": True
+    }
+    
+    with client.websocket_connect("/ws") as websocket:
+        response = client.post(
+            f"/players/{player_id}/leave?game_id={game_id}"
+        )
+        assert response.status_code == 200
+        assert response.json() == {"type": "GAMES_LIST_UPDATE"}
+
+        # Recibimos 5 mensajes por broadcast
+        messages = []
+        for _ in range(3):
+            message = websocket.receive_json()
+            messages.append(message)
+        
+        expected_messages = [
+            {"type": "GAMES_LIST_UPDATE"},
+            {"type": f"{game_id}:GAME_INFO_UPDATE"},
+            {"type": "OWNER_LEFT"}
+        ]
+        
+        # Nos aseguramos que cada mensaje fue recibido
+        for expected_message in expected_messages:
+            assert expected_message in messages
+        
+        player_repo.leave_game.assert_called_once_with(
+            game_id, player_id, mock_game_logic, game_repo, 
+            game_state_repo, movement_cards_repo, mock_db
+        )
 
 def test_join_game(mock_game_logic, player_repo, game_repo ,mock_db):
     
