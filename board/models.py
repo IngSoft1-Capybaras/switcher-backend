@@ -2,6 +2,7 @@ from enum import Enum
 from sqlalchemy import Boolean, Column, Integer, String, Enum as SQLAEnum, ForeignKey
 from sqlalchemy.orm import relationship
 from database.db import Base
+from figureCards.models import typeEnum
 
 class ColorEnum(Enum):
     RED = "RED"
@@ -20,6 +21,7 @@ class Box(Base):
     board_id = Column(Integer, ForeignKey('boards.id', use_alter=True, ondelete='CASCADE'), nullable=False)
     highlight = Column(Boolean, nullable=False)
     figure_id = Column(Integer, nullable=True)
+    figure_type = Column(SQLAEnum(typeEnum), nullable=True)
 
 
     game = relationship("Game", back_populates="boxes")

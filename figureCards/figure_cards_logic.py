@@ -98,7 +98,7 @@ class FigureCardsLogic:
                 return True
         return False
 
-    def check_path_blind(self, path, pointer, board_id, color, figure_id, db):
+    def check_path_blind(self, path, pointer, board_id, color, figure_id, figure_type, db):
         boardRepo = BoardRepository()
 
         result = True
@@ -145,7 +145,7 @@ class FigureCardsLogic:
                 
                 # highlight the box in the board
                 boardRepo.highlight_box(fig_box.id, db)
-                boardRepo.update_figure_id_box(fig_box.id, figure_id, db)
+                boardRepo.update_figure_id_box(fig_box.id, figure_id, figure_type, db)
                 fig_box.highlighted = True
                 
             return figure # return the figure if it is valid
@@ -374,7 +374,7 @@ class FigureCardsLogic:
         
         # Reset del tablero
         board_repo.reset_highlight_for_all_boxes(game_id, db)
-        board_repo.reset_highlight_for_all_boxes(game_id, db)
+        board_repo.reset_figure_for_all_boxes(game_id, db)
         
         figures = []
         figure_or_bool = False
@@ -390,7 +390,7 @@ class FigureCardsLogic:
                 color = box.color
                 for path in FigurePaths:
                     for i in range(4): # 4 rotaciones del path
-                        figure_or_bool = self.check_path_blind(path.path, pointer, board_id, color, figure_id, db)
+                        figure_or_bool = self.check_path_blind(path.path, pointer, board_id, color,figure_id, path.type, db)
                         if figure_or_bool != False :
                             figures.append(figure_or_bool)
                             figure_id += 1

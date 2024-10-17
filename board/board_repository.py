@@ -8,6 +8,8 @@ from game.models import Game
 from gameState.models import StateEnum
 from .models import Board, Box, ColorEnum
 
+from figureCards.models import typeEnum
+
 from .schemas import BoardOut, BoardAndBoxesOut, BoardPosition, BoxOut, Box as BoxDB
 
 
@@ -176,17 +178,18 @@ class BoardRepository:
         # Guardar cambios
         db.commit()
         
-    def update_figure_id_box(self, box_id: int, figure_id: int,  db: Session):
+    def update_figure_id_box(self, box_id: int, figure_id: int, figure_type: typeEnum ,  db: Session):
         box = db.query(Box).filter(Box.id == box_id).first()
         if not box:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box to highlight not found")
 
+        box.figure_type = figure_type
         box.figure_id = figure_id
         db.commit()
         
     def reset_figure_for_all_boxes(self, game_id: int, db: Session):
         # Bulk update en todas las boxes
-        result = db.query(Box).filter(Box.game_id == game_id).update({Box.figure_id: None})
+        result = db.query(Box).filter(Box.game_id == game_id).update({Box.figure_type: None, Box.figure_id: None})
         
         if result == 0:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No boxes found for the game")
@@ -209,7 +212,8 @@ class BoardRepository:
                 "color": box.color,
                 "pos_x": box.pos_x,
                 "pos_y": box.pos_y,
-                "highlighted": box.highlight
+                "highlighted": box.highlight,
+                "figure_type": box.figure_type
             })
         
         # Convert the dictionary to a list of lists
