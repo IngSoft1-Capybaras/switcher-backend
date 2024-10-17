@@ -101,13 +101,13 @@ async def start_game(
     fig_deck_creation = fig_cards_logic.create_fig_deck(db, game_id)
     
     #notificar a los jugadores
-    message = {
-            "type":f"{game_id}:GAME_STARTED"
-        }
-    await manager.broadcast(message)
+    # message = {
+    #         "type":f"{game_id}:GAME_STARTED"
+    #     }
+    # await manager.broadcast(message)
 
     
-    fig_cards_logic.get_formed_figures(game_id, db)
+    await fig_cards_logic.get_formed_figures(game_id, db)
     
     #notificar a los jugadores
     message = {
