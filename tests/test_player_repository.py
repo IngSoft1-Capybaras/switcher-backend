@@ -111,7 +111,7 @@ def test_get_player_by_id_no_player(player_repo: PlayerRepository, session):
         player_repo.get_player_by_id(121, 121, session)
 
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "The is no such player"
+    assert exc_info.value.detail == "There is no such player"
     
 
 @pytest.mark.integration_test
@@ -299,7 +299,7 @@ def test_assign_winner_of_no_player(player_repo: PlayerRepository, session):
 
 @pytest.mark.asyncio
 @pytest.mark.integration_test
-async def test_(player_repo: PlayerRepository, game_logic, game_repo, game_state_repo, mov_card_repo, setup_game_player, session):
+async def test_player_leave_no_players(player_repo: PlayerRepository, game_logic, game_repo, game_state_repo, mov_card_repo, setup_game_player, session):
     game, game_state, players, mov_cards = setup_game_player
     player1_id = players[0].id
     player2_id = players[1].id
@@ -312,4 +312,30 @@ async def test_(player_repo: PlayerRepository, game_logic, game_repo, game_state
                                               game_state_repo=game_state_repo, mov_card_repo=mov_card_repo, db=session)
     
     assert exc_info.value.status_code == 404
-    assert exc_info.value.detail == "Player not found"
+    assert exc_info.value.detail == "There is no such player"
+
+
+@pytest.mark.asyncio
+@pytest.mark.integration_test
+async def test_player_leave_host(player_repo: PlayerRepository, game_logic, game_repo, game_state_repo, mov_card_repo, setup_game_player, session):
+    game, game_state, players, mov_cards = setup_game_player
+    player1_id = players[0].id
+    player2_id = players[1].id
+    player3_id = players[2].id
+    
+    game_state_repo.update_game_state(game_id=game.id, state=StateEnum.WAITING, db=session)
+
+    result = await player_repo.leave_game(game_id=game.id, player_id=player2_id, game_logic=game_logic, game_repo=game_repo, 
+                                 game_state_repo=game_state_repo, mov_card_repo=mov_card_repo, db=session)
+    
+    # me fijo que se haya borrado el juego
+    game_in_db = session.query(Game).filter(Game.id == game.id).first()
+    players_in_db = session.query(Player).filter(Player.game_id == game.id).first()
+    game_state_in_db = session.query(GameState).filter(GameState.game_id == game.id).first()
+
+    assert game_in_db == None
+    assert players_in_db == None
+    assert game_state_in_db == None
+
+    # Verificamos el jugador ha abandonado la partida exitosamente
+    assert result == {"message": "Player has successfully left the game", "changed_turn": False}
