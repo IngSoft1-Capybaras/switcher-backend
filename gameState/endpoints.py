@@ -100,7 +100,6 @@ async def start_game(
     #Crear Mazo Figuras para cada jugador
     fig_deck_creation = fig_cards_logic.create_fig_deck(db, game_id)
     
-    
     #notificar a los jugadores
     message = {
             "type":f"{game_id}:GAME_STARTED"

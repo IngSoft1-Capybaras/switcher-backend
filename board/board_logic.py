@@ -36,8 +36,6 @@ class BoardLogic:
                 pos_y = i // 6
                 self.board_repo.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y, db)
         
-
-        
         return {"message": "Board created successfully"}
 
     def get_box_color(self, board_id: int, pos_x: int, pos_y: int, db: Session):
