@@ -22,7 +22,7 @@ class PlayerRepository:
                                                 Player.game_id == game_id).one()
         
         except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "The is no such player")
+            raise HTTPException(status_code = 404, detail = "There is no such player")
         
         
         return PlayerInDB.model_validate(player_in_db)
