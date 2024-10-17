@@ -17,7 +17,6 @@ class BoardLogic:
         self.board_repo = board_repo
             
     def configure_board(self, game_id: int, db: Session):
-        figLogic = get_fig_cards_logic() 
         # Nos aseguramos que un tablero no haya sido creado
         existing_board = self.board_repo.get_existing_board(game_id, db)
         
@@ -38,7 +37,6 @@ class BoardLogic:
                 self.board_repo.add_box_to_board(new_board.id, game_id, color, pos_x, pos_y, db)
         
 
-        figLogic.get_formed_figures(game_id, db)
         
         return {"message": "Board created successfully"}
 

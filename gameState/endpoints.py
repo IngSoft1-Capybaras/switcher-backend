@@ -79,7 +79,7 @@ async def start_game(
     fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic),
     board_logic: BoardLogic = Depends(get_board_logic)
 ):
-    
+
     #Verificar que existan jugadores en la partida
     players = player_repo.get_players_in_game(game_id, db)
     
@@ -105,6 +105,16 @@ async def start_game(
     message = {
             "type":f"{game_id}:GAME_STARTED"
         }
+    await manager.broadcast(message)
+
+    
+    fig_cards_logic.get_formed_figures(game_id, db)
+    
+    #notificar a los jugadores
+    message = {
+            "type":f"{game_id}:BOARD_UPDATE"
+        }
+
     await manager.broadcast(message)
 
     return {"message": "Game status updated, ur playing!"}
