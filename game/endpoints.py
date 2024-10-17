@@ -36,13 +36,15 @@ async def create_game(game: GameCreate,
 @game_router.get("/games")
 async def get_games(page: int = Query(1, ge=1, description = "Numero de pagina, empieza en 1"),
                     limit: int = Query(5, ge=1, descripton = "Limita el numero de partidas mostradas por pagina"),
+                    name: str = Query(None, description = "Filtrar partidas por nombre"),
+                    num_players: int = Query(None, ge=1, description = "Filtrar por numero de jugadores"),
                     db: Session = Depends(get_db), 
                     repo: GameRepository = Depends()):
 
     # Calculo el offset segun la pagina y el limite
     offset = (page - 1) * limit
 
-    return repo.get_games(db, offset=offset, limit=limit)
+    return repo.get_games(db, offset=offset, limit=limit, name=name, num_players=num_players)
 
 # Obtener partida segun id
 @game_router.get("/games/{game_id}")
