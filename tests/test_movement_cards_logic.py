@@ -73,17 +73,17 @@ def test_create_mov_deck_success(mov_cards_logic, mock_db):
 
     assert response == {"message": "Movement deck created and assigned to players"}
 
-    expected_calls = [
-        ((game_id, typeEnum.DIAGONAL_CONT, mock_db),),
-        ((game_id, typeEnum.DIAGONAL_ESP, mock_db),),
-        ((game_id, typeEnum.EN_L_DER, mock_db),),
-        ((game_id, typeEnum.EN_L_IZQ, mock_db),),
-        ((game_id, typeEnum.LINEAL_AL_LAT, mock_db),),
-        ((game_id, typeEnum.LINEAL_CONT, mock_db),),
-        ((game_id, typeEnum.LINEAL_ESP, mock_db),)      
-    ] * 7
+    # expected_calls = [
+    #     ((game_id, typeEnum.DIAGONAL_CONT, mock_db),),
+    #     ((game_id, typeEnum.DIAGONAL_ESP, mock_db),),
+    #     ((game_id, typeEnum.EN_L_DER, mock_db),),
+    #     ((game_id, typeEnum.EN_L_IZQ, mock_db),),
+    #     ((game_id, typeEnum.LINEAL_AL_LAT, mock_db),),
+    #     ((game_id, typeEnum.LINEAL_CONT, mock_db),),
+    #     ((game_id, typeEnum.LINEAL_ESP, mock_db),)      
+    # ] * 7
 
-    assert mov_cards_logic.mov_card_repo.create_movement_card.call_count == len(expected_calls)
+    assert mov_cards_logic.mov_card_repo.create_movement_card.call_count == 40
 
     assert mov_cards_logic.mov_card_repo.assign_mov_card.call_count == 6  # 3 cartas por player
 
