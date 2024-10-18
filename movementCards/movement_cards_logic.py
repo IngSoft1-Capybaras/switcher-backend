@@ -23,13 +23,13 @@ class MovementCardLogic:
     def create_mov_deck(self, game_id: int, db: Session):
         
         #Creamos una lista con los tipos de cartas de movimiento
-        types_list = ([typeEnum.DIAGONAL_CONT] * 7 +
-                        [typeEnum.DIAGONAL_ESP] * 7  + 
-                        [typeEnum.EN_L_DER] * 7 + 
-                        [typeEnum.EN_L_IZQ] * 7 + 
-                        [typeEnum.LINEAL_AL_LAT] * 7 +
-                        [typeEnum.LINEAL_CONT] * 7 +
-                        [typeEnum.LINEAL_ESP] * 7
+        types_list = ([typeEnum.DIAGONAL_CONT] * 6 +
+                        [typeEnum.DIAGONAL_ESP] * 6  + 
+                        [typeEnum.EN_L_DER] * 6 + 
+                        [typeEnum.EN_L_IZQ] * 6 + 
+                        [typeEnum.LINEAL_AL_LAT] * 5 +
+                        [typeEnum.LINEAL_CONT] * 5 +
+                        [typeEnum.LINEAL_ESP] * 6
                         )  
         #Random
         random.shuffle(types_list)
