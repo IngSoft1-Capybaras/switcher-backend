@@ -40,15 +40,24 @@ class FigureCardsLogic:
         
         #Creamos una lista con los tipos de cartas de figuras
         
-        cards = list(typeEnum)
+        hard_cards = [card for card in typeEnum if card.name.startswith('FIG') and not card.name.startswith('FIGE')]
+        easy_cards = [card for card in typeEnum if card.name.startswith('FIGE')]
+
+        hard_cards_per_player = 36 // len(players)
+        easy_cards_per_player = 14 // len(players)
         
         for player in players:
             #Random
-            random.shuffle(cards)
+            random.shuffle(easy_cards)
+            random.shuffle(hard_cards)
+
+            player_cards = (hard_cards[:hard_cards_per_player] + easy_cards[:easy_cards_per_player])
+
+            random.shuffle(player_cards)
 
             #armo el mazo para el jugador
-            show=True
-            for index, figure in enumerate(cards):
+            show = True
+            for index, figure in enumerate(player_cards):
                 if index == SHOW_LIMIT:
                     show = False
                 self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
