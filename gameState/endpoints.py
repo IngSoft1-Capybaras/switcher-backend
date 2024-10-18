@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends,status
+from time import sleep
+from fastapi import APIRouter, Depends,status, BackgroundTasks
 from sqlalchemy.orm import Session
 from database.db import get_db
 
@@ -67,9 +68,11 @@ async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depe
     
     return {"message": "Current player successfully updated"}
 
+
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)
 async def start_game(
     game_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     player_repo: PlayerRepository = Depends(),
     game_state_repo: GameStateRepository = Depends(),
@@ -79,44 +82,28 @@ async def start_game(
     fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic),
     board_logic: BoardLogic = Depends(get_board_logic)
 ):
-
-    #Verificar que existan jugadores en la partida
+    # Step 1: Set up the game state so that it can be fetched immediately.
     players = player_repo.get_players_in_game(game_id, db)
-    
-    # Asignar turnos aleatoriamente cada jugador y obtener primer jugador
-    first_player_id = player_logic.assign_random_turns(players,db)
-    
-    # Cambiar estado de la partida
+
+    # Step 2: Assign random turns and set the current player
+    first_player_id = player_logic.assign_random_turns(players, db)
     game_state_repo.update_game_state(game_id, StateEnum.PLAYING, db)
     game_state_repo.update_current_player(game_id, first_player_id, db)
-    
-    #Crear tablero
+
+    # Step 3: Create the board and decks for players
     board_creation_result = board_logic.configure_board(game_id, db)
-    
-    #Crear Mazo Movimientos y asignar 3 a cada jugador
     mov_deck_creation = mov_cards_logic.create_mov_deck(game_id, db)
-
-    
-    #Crear Mazo Figuras para cada jugador
     fig_deck_creation = fig_cards_logic.create_fig_deck(db, game_id)
-    
-    #notificar a los jugadores
-    # message = {
-    #         "type":f"{game_id}:GAME_STARTED"
-    #     }
-    # await manager.broadcast(message)
 
-    
-    await fig_cards_logic.get_formed_figures(game_id, db)
-    
-    #notificar a los jugadores
+    # Step 4: Notify players that the game has started
     message = {
-            "type":f"{game_id}:BOARD_UPDATE"
-        }
-
+        "type": f"{game_id}:GAME_STARTED"
+    }
     await manager.broadcast(message)
 
-    return {"message": "Game status updated, ur playing!"}
+    return {"message": "Game status updated, you are playing!"}
+
+
 
 @game_state_router.get("/{game_id}")
 async def get_game_state(game_id: int, db: Session = Depends(get_db), repo: GameStateRepository = Depends()):
