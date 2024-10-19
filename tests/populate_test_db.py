@@ -41,7 +41,7 @@ def create_board(game, session):
     return board
 
 def create_box(color, pos_x, pos_y, game, board, session):
-    box = Box(color=color, pos_x=pos_x, pos_y=pos_y, game_id=game.id, board_id=board.id)
+    box = Box(color=color, pos_x=pos_x, pos_y=pos_y, game_id=game.id, board_id=board.id, highlight= False)
     session.add(box)
     # session.flush()
     session.commit()
