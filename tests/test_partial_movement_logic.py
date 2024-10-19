@@ -32,7 +32,7 @@ def test_revert_partial_movements_no_movements(partial_movement_logic, mock_part
     
     result = partial_movement_logic.revert_partial_movements(game_id=1, player_id=1, db=mock_db_session)
     
-    assert result == {"message": "No partial movements to revert"}
+    assert result == False
     mock_partial_repo.return_partial_movements_by_player.assert_called_once_with(1, 1, mock_db_session)
 
 def test_revert_partial_movements_success(partial_movement_logic, mock_partial_repo, mock_board_repo, mock_mov_card_repo, mock_db_session):
@@ -43,7 +43,7 @@ def test_revert_partial_movements_success(partial_movement_logic, mock_partial_r
     
     result = partial_movement_logic.revert_partial_movements(game_id=1, player_id=1, db=mock_db_session)
     
-    assert result == {"message": "partial movements deleted successfully"}
+    assert result == True
     assert mock_board_repo.switch_boxes.call_count == 2
     assert mock_mov_card_repo.mark_card_in_player_hand.call_count == 2
     assert mock_partial_repo.undo_movement_by_id.call_count == 2
