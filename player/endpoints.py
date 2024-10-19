@@ -5,6 +5,7 @@ from .player_repository import PlayerRepository
 from .schemas import PlayerJoinRequest
 from game.game_repository import GameRepository
 from gameState.game_state_repository import GameStateRepository
+from gameState.models import StateEnum
 from movementCards.movement_cards_repository import MovementCardsRepository
 
 from connection_manager import manager
@@ -37,22 +38,30 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
     #Revertir movimientos parciales si es necesario
     reverted_movements = partial_movement_logic.revert_partial_movements(game_id, player_id,db)
 
-    
-    response = await repo.leave_game(game_id, player_id, game_logic, game_repo, game_state_repo, mov_card_repo, db)
-
-    #Si se cambia el turno del jugador actual porque este decidio abandonar la partida
-    if response.get("changed_turn"):
+    # aviso que se fue el owner
+    player = repo.get_player_by_id(game_id, player_id, db)
+    game_state = game_state_repo.get_game_state_by_id(game_id, db)
+    if player.host and game_state.state == StateEnum.WAITING:
         message = {
-            "type":f"{game_id}:NEXT_TURN"
+            "type": "OWNER_LEFT"
         }
         await manager.broadcast(message)
-    
-    
-    #Notificamos nuevo tablero
-    message = {
-            "type": f"{game_id}:MOVEMENT_UPDATE"
-        }
-    await manager.broadcast(message)
+
+    response = await repo.leave_game(game_id, player_id, game_logic, game_repo, game_state_repo, mov_card_repo, db)
+
+    if game_state.state == StateEnum.PLAYING:
+        #Si se cambia el turno del jugador actual porque este decidio abandonar la partida
+        if response.get("changed_turn"):
+            message = {
+                "type":f"{game_id}:NEXT_TURN"
+            }
+            await manager.broadcast(message)
+        
+        #Notificamos nuevo tablero
+        message = {
+                "type": f"{game_id}:MOVEMENT_UPDATE"
+            }
+        await manager.broadcast(message)
     
     message = {
             "type":f"{game_id}:GAME_INFO_UPDATE"

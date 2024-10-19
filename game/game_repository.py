@@ -99,15 +99,15 @@ class GameRepository:
             raise HTTPException(status_code = 404, detail = f"GameState not found")
         
 
-        if game_state.state == StateEnum.FINISHED:
-            # elimino solo el game porque esta la constraint on delete cascade
-            db.delete(game)
-            db.commit()
+        # if game_state.state == StateEnum.FINISHED:
+        # elimino solo el game porque esta la constraint on delete cascade
+        db.delete(game)
+        db.commit()
 
-            return {"message": f"The game {game_id} was succesfully deleted."}
+        return {"message": f"The game {game_id} was succesfully deleted."}
         
-        else:
-            return {"message": "Only FINISHED games can be deleted."}
+        # else:
+        #     return {"message": "Only FINISHED games can be deleted."}
 
 
     def get_game_winner(self, game_id: int, db: Session) -> PlayerInDB:
