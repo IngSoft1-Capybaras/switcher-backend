@@ -66,14 +66,6 @@ async def play_movement_card(
         }
     await manager.broadcast(message)
     
-    #calculamos las nuevas figuras
-    fig_logic.get_formed_figures(request.game_id, db)
-    #se avisa a los jugadores del nuevo tablero
-    message = {
-            "type": f"{request.game_id}:BOARD_UPDATE"
-        }
-    await manager.broadcast(message)
-    
     #Cambiar mensaje
     return {"message": "Great move..."}
 

@@ -44,13 +44,13 @@ async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depe
     player_id = game_state_repo.get_current_player(game_id, db)
     
     #Nos deshacemos de los mov parciales
-    partial_movement_logic.revert_partial_movements(game_id, player_id["current_player_id"],db)
-    
+    movements_to_erase = partial_movement_logic.revert_partial_movements(game_id, player_id["current_player_id"],db)
+
     #Notificamos nuevo tablero
-    message = {
-            "type": f"{game_id}:MOVEMENT_UPDATE"
-        }
-    await manager.broadcast(message)
+    # message = {
+    #         "type": f"{game_id}:MOVEMENT_UPDATE"
+    #     }
+    # await manager.broadcast(message)
     
     #Cambiamos el turno actual
     next_player_id = game_state_repo.get_next_player_id(game_id, db)
@@ -66,7 +66,7 @@ async def finish_turn(game_id: int, game_state_repo:  GameStateRepository = Depe
     message = {"type":f"{game_id}:NEXT_TURN"}
     await manager.broadcast(message)
     
-    return {"message": "Current player successfully updated"}
+    return {"message": "Current player successfully updated", "reverted_movements": movements_to_erase}
 
 
 @game_state_router.patch("/start/{game_id}", status_code=status.HTTP_200_OK)

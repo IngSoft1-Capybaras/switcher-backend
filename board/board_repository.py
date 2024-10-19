@@ -213,6 +213,7 @@ class BoardRepository:
                 "pos_x": box.pos_x,
                 "pos_y": box.pos_y,
                 "highlighted": box.highlight,
+                "figure_id": box.figure_id,
                 "figure_type": box.figure_type
             })
         

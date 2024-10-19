@@ -35,7 +35,7 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
                      mov_card_repo: MovementCardsRepository = Depends()):
     
     #Revertir movimientos parciales si es necesario
-    partial_movement_logic.revert_partial_movements(game_id, player_id,db)
+    reverted_movements = partial_movement_logic.revert_partial_movements(game_id, player_id,db)
 
     
     response = await repo.leave_game(game_id, player_id, game_logic, game_repo, game_state_repo, mov_card_repo, db)
@@ -65,7 +65,7 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
     await manager.broadcast(message)
 
 
-    return message
+    return {"reverted_movements": reverted_movements}
 
 @player_router.post("/players/join/{game_id}", status_code= status.HTTP_201_CREATED)
 async def join_game(game_id: int, 
