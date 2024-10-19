@@ -28,7 +28,7 @@ class PartialMovementLogic:
         partial_movements = self.partial_repo.return_partial_movements_by_player(game_id,player_id,db)
         
         if not partial_movements:
-            return {"message": "No partial movements to revert"}
+            return False
         
         for movement in partial_movements:
             # Usamos switch boxes para revertir los cambios en el tablero
@@ -41,4 +41,4 @@ class PartialMovementLogic:
             # Eliminamos el movimiento
             self.partial_repo.undo_movement_by_id(movement.id, db)
             
-        return {"message": "partial movements deleted successfully"}
+        return True

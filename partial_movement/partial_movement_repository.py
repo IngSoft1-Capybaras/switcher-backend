@@ -85,6 +85,14 @@ class PartialMovementRepository:
         db.delete(partial_movement)
         db.commit()
 
+    def delete_all_partial_movements_by_player(self,player_id: int, db: Session):
+        
+        db.query(PartialMovements).filter(
+            PartialMovements.player_id == player_id
+        ).delete(synchronize_session=False)
+        
+        db.commit()
+
 
 def get_partial_movement_repository(partial_movement_repo: PartialMovementRepository = Depends()) -> PartialMovementRepository:
     return partial_movement_repo

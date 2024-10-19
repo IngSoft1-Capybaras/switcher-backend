@@ -204,7 +204,19 @@ class MovementCardsRepository:
         movement_card.used = True
         db.commit()
         
-        
+    
+
+    def discard_all_player_partially_used_cards(self, player_id: int, db: Session):
+            partially_used_cards = db.query(MovementCard).filter(
+                MovementCard.player_id == player_id,
+                MovementCard.used == True
+            ).all()
+
+            for card in partially_used_cards:
+                card.player_id = None
+                card.position = None
+
+            db.commit()  
         
         
 def get_movement_cards_repository(movement_cards_repo: MovementCardsRepository = Depends()) -> MovementCardsRepository:
