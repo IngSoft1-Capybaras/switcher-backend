@@ -11,31 +11,44 @@ from gameState.schemas import GameStateInDB
 from math import ceil
 class GameRepository:
 
-    def get_games(self, db : Session, limit: int = 5, offset: int = 0) -> list:
-        # Fetch games
-        games = db.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING).all()
+    def get_games(self, db: Session, limit: int = 5, offset: int = 0, name: str = None, num_players: int = None) -> dict:
+        query = db.query(Game).join(GameState).filter(GameState.state == StateEnum.WAITING)
         
+        # filters
+        if name:
+            query = query.filter(Game.name.ilike(f"%{name}%"))  # case-insensitive
+
+        games = query.all()
+
+        if num_players is not None:
+            games = [game for game in games if game.players_count() == num_players] 
+        
+        # amount of games filtered
+        total_games = len(games)
+        
+        # fetch games with pagination
+        games = games[offset:offset+limit]
+
         if not games:
-            return {"total_pages": 1,
-                    "games": []}
-        
-        total_pages = ceil(len(games) / limit)
-        start_idx = offset
-        end_idx = min(offset + limit, len(games))
-        
-        selected_games = games[start_idx:end_idx]
+            return {
+                "total_pages": 1,
+                "games": []
+            }
 
-        # Conveert games to a list of dicts and filter by available
-        games_list = [{"id": game.id, "players_count": game.players_count(), 
-                       "max_players": game.max_players, "min_players": game.min_players, 
-                       "name": game.name, "is_private": game.is_private } for game in selected_games]        
+        # calculate total pages
+        total_pages = ceil(total_games / limit)
         
+        # Convert games to a list of dicts
+        games_list = [{"id": game.id, "players_count": game.players_count(),
+                    "max_players": game.max_players, "min_players": game.min_players,
+                    "name": game.name, "is_private": game.is_private } for game in games]
+        
+        return {
+            "total_pages": total_pages,
+            "games": games_list
+        }
 
-        return {"total_pages": total_pages, 
-                "games": games_list}
     
-
-        # return games_list
     def get_game_by_id(self, game_id: int, db : Session) -> GameInDB:
         
         # Fetch the specifc game by its id
