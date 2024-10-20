@@ -183,7 +183,7 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         )
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.json() == {"message": "Game status updated, ur playing!"}
+        assert response.json() == {"message": "Game status updated, you are playing!"}
         
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}:GAME_STARTED"
@@ -202,6 +202,7 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
     game_id = 2
     next_player_id = 3
     current_player_id = 7
+    movements_to_erase = False
     
     mock_game_state_repo.get_current_player.return_value = {"current_player_id": current_player_id}
     mock_game_state_repo.get_next_player_id.return_value = next_player_id
@@ -210,7 +211,7 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
     
     mock_fig_card_repo.grab_figure_cards.return_value = None
     mock_mov_card_repo.grab_mov_cards.return_value = None
-    mock_partial_movement_logic.revert_partial_movements.return_value = None
+    mock_partial_movement_logic.revert_partial_movements.return_value = movements_to_erase
 
     with client.websocket_connect("/ws") as websocket:
 
@@ -219,10 +220,7 @@ def test_finish_turn(mock_game_state_repo, mock_fig_card_repo, mock_mov_card_rep
         )
         
         assert response.status_code == status.HTTP_200_OK
-        assert response.json() == {"message": "Current player successfully updated"}
-        
-        movement_update = websocket.receive_json()
-        assert movement_update["type"] == f"{game_id}:MOVEMENT_UPDATE"
+        assert response.json() == {"message": "Current player successfully updated", "reverted_movements": movements_to_erase}
         
         game_state_update = websocket.receive_json()
         assert game_state_update["type"] == f"{game_id}:NEXT_TURN"
