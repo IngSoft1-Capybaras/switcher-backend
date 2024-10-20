@@ -6,16 +6,16 @@ from sqlalchemy.orm import sessionmaker
 from board.board_repository import BoardRepository
 from board.models import Board, Box, ColorEnum
 from board.schemas import BoardOut, BoardAndBoxesOut, BoxOut, BoardPosition
+from board.board_logic import BoardLogic, get_board_logic
 
-from database.db import Base, engine
+from database.db import engine
 
 from game.game_repository import GameRepository
-from game.models import Game
 from game.schemas import GameCreate
 from gameState.game_state_repository import GameStateRepository
 from player.schemas import PlayerCreateMatch
 
-logging.getLogger("sqlalchemy.engine").setLevel(logging.ERROR) # Para evitar que se muestren los logs de SQL Alchemy, setear en INFO para ver comportamiento anterior
+import pdb; 
 
 #Configuración de la sesión
 Session = sessionmaker(bind=engine)
@@ -24,6 +24,9 @@ Session = sessionmaker(bind=engine)
 def board_repository():
     return BoardRepository()
 
+@pytest.fixture
+def board_logic(board_repository):
+    return get_board_logic(board_repository)
 
 @pytest.fixture
 def game_repository():
@@ -148,20 +151,26 @@ def test_get_configured_board_for_board_not_configured(board_repository: BoardRe
 
 
 @pytest.mark.integration_test
-def test_get_configured_board(board_repository: BoardRepository, game_state_repository: GameStateRepository, session):
+def test_get_configured_board(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, board_logic: BoardLogic, session):
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+    board_logic.configure_board(new_game.id, session)
+
+    # inicializo el juego
+    game_state_repository.update_game_state(new_game.id, "PLAYING", session)
     
-    # obtengo partida existente (asumiendo que ya esta creada)
-    game = session.query(Game).first()
     # obtengo el tablero existente (asumiendo que ya esta creado)
-    board = board_repository.get_existing_board(game.id, session)
-    # mockeo iniciarlo
-    game_state_repository.update_game_state(game.id, "PLAYING", session)
+    board = board_repository.get_existing_board(new_game.id, session)
+
     # obtengo el tablero y toda la info de sus boxes (asumiendo que ya esta configurado)
-    configured_board = board_repository.get_configured_board(game.id, session)
+    configured_board = board_repository.get_configured_board(new_game.id, session)
     
     assert isinstance(configured_board, BoardAndBoxesOut)
     assert configured_board.game_id is not None
     assert configured_board.board_id is not None
+    #pdb.set_trace()
     assert len(configured_board.boxes) == 6
     for row in configured_board.boxes:
         assert len(row) == 6
@@ -170,7 +179,7 @@ def test_get_configured_board(board_repository: BoardRepository, game_state_repo
             assert box.color.name in [color.name for color in [ColorEnum.BLUE, ColorEnum.GREEN, ColorEnum.RED, ColorEnum.YELLOW]]
             assert box.pos_x in range(6)
             assert box.pos_y in range(6)
-    assert configured_board.game_id == game.id
+    assert configured_board.game_id == new_game.id
     assert configured_board.board_id == board.id
 
 

@@ -85,7 +85,6 @@ class BoardRepository:
             if not boxes_row:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Boxes not found in row {index}")
 
-            rows_in_board.append(boxes_row)
             formatted_boxes_row = [
                 {
                     "color": box.color,
