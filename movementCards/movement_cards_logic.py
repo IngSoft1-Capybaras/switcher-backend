@@ -170,8 +170,8 @@ class MovementCardLogic:
         to_x, to_y = pos_to.pos
         
         # Verificar si la posición final está en uno de los extremos de la misma fila o columna
-        is_same_row = from_x == to_x and (to_y == 0 or to_y == 5)
-        is_same_column = from_y == to_y and (to_x == 0 or to_x == 5)
+        is_same_column = from_x == to_x and ((to_y == 0 or to_y == 5) or  (from_y == 0 or from_y == 5))
+        is_same_row = from_y == to_y and ((to_x == 0 or to_x == 5) or (from_x == 0 or from_x == 5))
         
         return is_same_row or is_same_column
     
