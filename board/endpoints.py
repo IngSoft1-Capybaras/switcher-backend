@@ -36,16 +36,16 @@ async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepo
     # return repo.get_configured_board(game_id, db)
 
 @board_router.patch("/calculate_figures/{game_id}", status_code=status.HTTP_200_OK)
-async def calculate_figures(
+async def get_formed_figures(
     game_id: int,
     db: Session = Depends(get_db),
     fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic)
 ):
     # sleep(5)
-    fig_cards_logic.get_formed_figures(game_id, db)
+    await fig_cards_logic.get_formed_figures(game_id, db)
 
     
     message = {"type": f"{game_id}:BOARD_UPDATE"}
     await manager.broadcast(message)
     
-    return {"message": "Sorry for the wait "}
+    return {"message": "Figures Calculated!"}
