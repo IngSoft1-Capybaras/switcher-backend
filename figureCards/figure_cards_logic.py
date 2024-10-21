@@ -22,7 +22,6 @@ from partial_movement.partial_movement_repository import PartialMovementReposito
 from movementCards.movement_cards_repository import MovementCardsRepository
 
 SHOW_LIMIT = 3
-logging.basicConfig(filename='output.log', level=logging.DEBUG)
 
 class FigureCardsLogic:
     def __init__(
@@ -63,6 +62,29 @@ class FigureCardsLogic:
                 self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
 
         return {"message": "Figure deck created"}
+    
+    def check_game_exists(self, game_id, db):
+        game = db.query(Game).filter(Game.id == game_id).first()
+        if not game:
+            raise HTTPException(status_code=404, detail="Game not found")
+        return game
+    
+    def check_game_in_progress(self, game_id, db):
+        gameStateRepo = GameStateRepository()
+        game = gameStateRepo.get_game_state_by_id(game_id, db)
+        
+        if game is None:
+            raise HTTPException(status_code=404, detail="Game not found when getting formed figures")
+        if game.state != "PLAYING":
+            raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
+        return game
+
+    def get_board_or_404(self, game_id, db):
+        board_repo = BoardRepository()
+        board = board_repo.get_configured_board(game_id, db)
+        if board is None:
+            raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
+        return board
 
     def is_valid_pointer(self, pointer):
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
@@ -206,15 +228,10 @@ class FigureCardsLogic:
         result = False
         for path in FigurePaths:
             if path.type == figure_type:
-                # chequear las 4 rotaciones posibles del path
                 for _ in range(4):
-                    # Chequear los 4 posibles puntos de referencia de la figura (depende de que tan rotada venga) 
                     for rot in range(4):
-                        # Cambiar el pointer a la posición inicial de la figura rotada 90 grados j veces
                         pointer = self.get_pointer_from_figure(figure, rot)
-
                         partial_result = self.check_path_blind(path.path, pointer, board, color, None, None, db, figure)
-                        # Si una de las rotaciones sigue un path valido, la figura es valida (luego chequearemos que no se superpongan)
                         if partial_result:
                             result = True
                             break
@@ -337,30 +354,11 @@ class FigureCardsLogic:
         return pointer
     
     async def get_formed_figures(self, game_id, db):
-        # clear output.log 
-        # open('output.log', 'w').close()
         board_repo = BoardRepository()
-        
-        # Chequear que el juego exista y este iniciado
-        gameStateRepo = GameStateRepository()
-        game = gameStateRepo.get_game_state_by_id(game_id, db)
-        
-        if game == None:
-            raise HTTPException(status_code=404, detail="Game not found when getting formed figures")
-        if game.state != "PLAYING":
-            raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
-        
-        board = board_repo.get_configured_board(game_id, db)
-        if board == None:
-            raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
-        
+        game = self.check_game_in_progress(game_id, db)
+        board = self.get_board_or_404(game_id, db)
         # self.modifiyBoardTest(board,db)
 
-        # Chequear board existe
-        board_id = board.board_id
-        if board_id == None:
-            raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
-        
         # Reset del tablero
         board_repo.reset_highlight_for_all_boxes(game_id, db)
         board_repo.reset_figure_for_all_boxes(game_id, db)
@@ -378,7 +376,7 @@ class FigureCardsLogic:
                     continue
                 color = box.color
 
-                # Check if there are at least 4 blocks of the same color before applying paths
+                # Check if there are at least 4 adjacent blocks of the same color before applying paths
                 if not self.has_minimum_length(pointer, board, color, db, min_length=4):
                     continue
                 
