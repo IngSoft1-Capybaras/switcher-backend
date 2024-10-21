@@ -268,3 +268,36 @@ def test_undo_inexistent_movement_by_id(partial_movement_repo, session):
     
     assert excinfo.value.status_code == 404
     assert "Partial movement not found" in str(excinfo.value.detail)
+
+@pytest.mark.integration_test
+def test_delete_all_partial_movements_by_player(partial_movement_repo: PartialMovementRepository, setup_game_player_card, session: Session):
+    game, player, card = setup_game_player_card
+
+    partial_mov1 = PartialMovements(
+        pos_from_x=0,
+        pos_from_y=0,
+        pos_to_x=1,
+        pos_to_y=1,
+        game_id=game.id,
+        player_id=player.id,
+        mov_card_id=1
+    )
+    partial_mov2 = PartialMovements(
+        pos_from_x=1,
+        pos_from_y=1,
+        pos_to_x=2,
+        pos_to_y=2,
+        game_id=game.id,
+        player_id=player.id,
+        mov_card_id=2
+    )
+
+    session.add(partial_mov1)
+    session.add(partial_mov2)
+    session.commit()
+
+    assert session.query(PartialMovements).filter_by(player_id=player.id).count() == 2
+
+    partial_movement_repo.delete_all_partial_movements_by_player(player.id, session)
+
+    assert session.query(PartialMovements).filter_by(player_id=player.id).count() == 0

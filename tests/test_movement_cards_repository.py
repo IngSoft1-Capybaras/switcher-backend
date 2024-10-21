@@ -1,3 +1,4 @@
+import pdb
 import pytest
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
@@ -512,3 +513,44 @@ def test_get_movement_card_type_card_not_found(movement_cards_repository: Moveme
     
     assert excinfo.value.status_code == 404
     assert "No movement card found" in str(excinfo.value.detail)
+    
+    
+@pytest.mark.integration_test
+def test_discard_all_player_partially_used_cards(movement_cards_repository: MovementCardsRepository, session: Session):
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+
+    partially_used_card1 = MovementCard(player_id=player.id, game_id=game.id, type=typeEnum.DIAGONAL_CONT, description='', used=True)
+    partially_used_card2 = MovementCard(player_id=player.id, game_id=game.id, type=typeEnum.EN_L_DER, description='', used=True)
+    session.add_all([partially_used_card1, partially_used_card2])
+    session.commit()
+    
+    #pdb.set_trace()
+
+    movement_cards_repository.discard_all_player_partially_used_cards(player.id, session)
+
+    discarded_cards = session.query(MovementCard).filter(
+        MovementCard.player_id == player.id,
+        MovementCard.used == True
+    ).all()
+
+    assert len(discarded_cards) == 0
+
+    discarded_cards = session.query(MovementCard).filter(
+        MovementCard.used == True,
+        MovementCard.game_id == game.id
+    ).all()
+
+    for card in discarded_cards:
+        assert card.player_id is None
+        assert card.position is None
+        

@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
-from player.player_logic import PlayerLogic
+from player.player_logic import get_player_logic
 from player.models import turnEnum
 from game.models import Game
 
@@ -8,7 +8,7 @@ from game.models import Game
 @pytest.fixture
 def player_logic():
     mock_player_repo = MagicMock()
-    return PlayerLogic(player_repo=mock_player_repo)
+    return get_player_logic(mock_player_repo)
 
 @patch('player.player_logic.random.sample')
 def test_assign_random_turns(mock_player_random_sample, player_logic):

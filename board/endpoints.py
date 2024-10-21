@@ -29,7 +29,7 @@ async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepo
     # obtener figuras formadas
 
     result = repo.get_configured_board(game_id, db)
-    result_dict = result.dict()
+    result_dict = result.model_dump()
     result_dict["formed_figures"] = repo.get_figures(game_id, db)
 
     return BoardAndBoxesOut(**result_dict)
