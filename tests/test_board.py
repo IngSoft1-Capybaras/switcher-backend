@@ -125,7 +125,7 @@ async def test_calculate_figures(mock_fig_cards_logic, mock_db):
 
         assert response.status_code == 200
         result = response.json()
-        assert result["message"] == "Sorry for the wait "
+        assert result["message"] == "Figures Calculated!"
 
         mock_fig_cards_logic.get_formed_figures.assert_called_once_with(game_id, mock_db)
 

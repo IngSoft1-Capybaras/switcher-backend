@@ -284,7 +284,6 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
     board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to.pos[0], pos_to.pos[1], session)
 
     # Hacemos el intercambio
-
     with pytest.raises(HTTPException) as exc_info:
         board_repository.switch_boxes(game.id, pos_from, pos_to, session)
     
@@ -293,7 +292,7 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
 
 
 @pytest.mark.integration_test
-def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, game_repository: GameRepository, session):
+def test_switch_boxes_inexistent_box_to(board_repository: BoardRepository, game_repository: GameRepository, session):
     res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
