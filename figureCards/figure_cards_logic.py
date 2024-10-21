@@ -1,4 +1,3 @@
-import logging
 import random
 
 from fastapi import Depends, HTTPException
@@ -252,7 +251,7 @@ class FigureCardsLogic:
 
         return result
 
-    def modifiyBoardTest(self, board, db):
+    """def modifiyBoardTest(self, board, db):
         boardRepo = BoardRepository()
         board = boardRepo.get_configured_board(board.game_id, db)
         # Modificar las casillas para formar una figura valida
@@ -274,7 +273,7 @@ class FigureCardsLogic:
         # boardRepo.upd_box_color(board.board_id, 0, 3, "BLUE", db)
 
         return board
-
+    """
     async def play_figure_card(self, figureInfo, db):
 
         gameStateRepo = GameStateRepository()
