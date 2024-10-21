@@ -38,6 +38,3 @@ class BoardLogic:
         
         return {"message": "Board created successfully"}
 
-    def get_box_color(self, board_id: int, pos_x: int, pos_y: int, db: Session):
-        box = self.board_repo.get_box_by_position(board_id, pos_x, pos_y, db)
-        return box.color
