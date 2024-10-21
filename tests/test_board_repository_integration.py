@@ -1,6 +1,5 @@
 import pytest
-import logging
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from sqlalchemy.orm import sessionmaker
 
 from board.board_repository import BoardRepository
@@ -15,6 +14,7 @@ from game.schemas import GameCreate
 from gameState.game_state_repository import GameStateRepository
 from player.schemas import PlayerCreateMatch
 
+from figureCards.models import typeEnum
 import pdb; 
 
 #Configuración de la sesión
@@ -127,6 +127,26 @@ def test_get_configured_board_for_game_with_no_board(   board_repository: BoardR
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Board not found"
 
+@pytest.mark.integration_test
+def test_get_configured_board_for_game_board_with_no_boxes(   board_repository: BoardRepository, 
+                                                        game_repository: GameRepository,
+                                                        game_state_repository: GameStateRepository, 
+                                                        session):
+
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+
+    game_state_repository.update_game_state(new_game.id, "PLAYING", session)
+    
+    board_repository.create_new_board(new_game.id, session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_configured_board(new_game.id, session)
+    
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Boxes not found in row 0"
 
 @pytest.mark.integration_test
 def test_get_configured_board_for_board_not_configured(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, session):
@@ -259,7 +279,7 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
     board = board_repository.create_new_board(game.id, session)
 
     # Creo una casillaa
-    pos_from = BoardPosition(pos=(0, 0))
+    pos_from = BoardPosition(pos=(3, 4))
     pos_to = BoardPosition(pos=(1, 1))
     board_repository.add_box_to_board(board.id, game.id, ColorEnum.RED, pos_to.pos[0], pos_to.pos[1], session)
 
@@ -274,7 +294,6 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
 
 @pytest.mark.integration_test
 def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, game_repository: GameRepository, session):
-        # Crear una partida y un tablero
     res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
@@ -282,13 +301,10 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
     
     board = board_repository.create_new_board(game.id, session)
 
-    # Creo una casilla
     pos_from = BoardPosition(pos=(0, 0))
     board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from.pos[0], pos_from.pos[1], session)
 
     pos_to = BoardPosition(pos=(1, 1))
-
-    # Hacemos el intercambio
 
     with pytest.raises(HTTPException) as exc_info:
         board_repository.switch_boxes(game.id, pos_from, pos_to, session)
@@ -313,3 +329,265 @@ def test_switch_boxes_inexistent_game(board_repository: BoardRepository, session
     
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"Game not found"
+    
+@pytest.mark.integration_test
+def test_get_box_by_position(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
+    
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_from = BoardPosition(pos=(0, 0))
+    board_repository.add_box_to_board(board.id, game.id, ColorEnum.BLUE, pos_from.pos[0], pos_from.pos[1], session)
+
+    result = board_repository.get_box_by_position(board.id, 0, 0, session)
+    assert result.pos_x == 0
+    assert result.pos_y == 0
+    assert result.color == 'BLUE'
+    
+@pytest.mark.integration_test
+def test_get_box_by_position_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    game = res.get('game')
+    
+    board = board_repository.create_new_board(game.id, session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.get_box_by_position(board.id, 10, 10, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "Box not found 10, 10"
+
+@pytest.mark.integration_test
+def test_upd_box_color(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    new_color = ColorEnum.BLUE
+    board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+
+    result = board_repository.upd_box_color(board.id, pos_x, pos_y, new_color, session)
+    assert result.pos_x == pos_x
+    assert result.pos_y == pos_y
+    assert result.color == 'BLUE'
+
+@pytest.mark.integration_test
+def test_upd_box_color_no_color(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    new_color = ColorEnum.BLUE
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.upd_box_color(board.id, 10, 10, new_color, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "Box not found"
+
+@pytest.mark.integration_test
+def test_highlight_box(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    box = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+
+    board_repository.highlight_box(box.id, session)
+    highlighted_box = session.query(Box).filter(Box.id == box.id).first()
+    assert highlighted_box.highlight == True
+    
+@pytest.mark.integration_test
+def test_highlight_box_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board_repository.create_new_board(game.id, session)
+    
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.highlight_box(999, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "Box to highlight not found"
+
+@pytest.mark.integration_test
+def test_reset_highlight_for_all_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    box1 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+    box2 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x + 1, pos_y, session)
+    board_repository.highlight_box(box1.id, session)
+    board_repository.highlight_box(box2.id, session)
+
+    highlighted_box1 = session.query(Box).filter(Box.id == box1.id).first()
+    highlighted_box2 = session.query(Box).filter(Box.id == box2.id).first()
+    assert highlighted_box1.highlight == True
+    assert highlighted_box2.highlight == True
+
+    board_repository.reset_highlight_for_all_boxes(game.id, session)
+    reset_box1 = session.query(Box).filter(Box.id == box1.id).first()
+    reset_box2 = session.query(Box).filter(Box.id == box2.id).first()
+    assert reset_box1.highlight == False
+    assert reset_box2.highlight == False
+    
+
+@pytest.mark.integration_test
+def test_reset_highlight_for_all_boxes_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board_repository.create_new_board(game.id, session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.reset_highlight_for_all_boxes(game.id, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "No boxes found for the game"
+    
+
+@pytest.mark.integration_test
+def test_update_figure_id_box(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    box = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+
+    figure_id = 1
+    figure_type = typeEnum.FIG01
+    board_repository.update_figure_id_box(box.id, figure_id, figure_type, session)
+    updated_box = session.query(Box).filter(Box.id == box.id).first()
+    assert updated_box.figure_id == figure_id
+    assert updated_box.figure_type == figure_type
+    
+@pytest.mark.integration_test
+def test_update_figure_id_box_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
+    # Setup: Create a game and a board
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    
+    board_repository.create_new_board(game.id, session)
+    
+    figure_id = 1
+    figure_type = typeEnum.FIG01
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.update_figure_id_box(999, figure_id, figure_type, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "Box to highlight not found"
+
+@pytest.mark.integration_test
+def test_reset_figure_for_all_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    
+    box1 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+    box2 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x + 1, pos_y, session)
+    
+    board_repository.update_figure_id_box(box1.id, 1, typeEnum.FIG01, session)
+    board_repository.update_figure_id_box(box2.id, 2, typeEnum.FIG02, session)
+
+    updated_box1 = session.query(Box).filter(Box.id == box1.id).first()
+    updated_box2 = session.query(Box).filter(Box.id == box2.id).first()
+    
+    assert updated_box1.figure_id == 1
+    assert updated_box1.figure_type == typeEnum.FIG01
+    assert updated_box2.figure_id == 2
+    assert updated_box2.figure_type == typeEnum.FIG02
+
+    board_repository.reset_figure_for_all_boxes(game.id, session)
+    reset_box1 = session.query(Box).filter(Box.id == box1.id).first()
+    reset_box2 = session.query(Box).filter(Box.id == box2.id).first()
+    
+    assert reset_box1.figure_id is None
+    assert reset_box1.figure_type is None
+    assert reset_box2.figure_id is None
+    assert reset_box2.figure_type is None
+    
+@pytest.mark.integration_test
+def test_reset_figure_for_all_boxes_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board_repository.create_new_board(game.id, session)
+
+    with pytest.raises(HTTPException) as exc_info:
+        board_repository.reset_figure_for_all_boxes(game.id, session)
+    
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail == "No boxes found for the game"
+    
+
+@pytest.mark.integration_test
+def test_get_figures(board_repository: BoardRepository, game_repository: GameRepository, session: Session):
+
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board = board_repository.create_new_board(game.id, session)
+
+    pos_x, pos_y = 0, 0
+    initial_color = ColorEnum.RED
+    box1 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
+    box2 = board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x + 1, pos_y, session)
+    board_repository.update_figure_id_box(box1.id, 1, typeEnum.FIG01, session)
+    board_repository.update_figure_id_box(box2.id, 1, typeEnum.FIG01, session)
+
+    figures = board_repository.get_figures(game.id, session)
+    assert len(figures) == 1
+    assert len(figures[0]) == 2
+    assert figures[0][0]['figure_id'] == 1
+    assert figures[0][0]['figure_type'] == typeEnum.FIG01
+    assert figures[0][1]['figure_id'] == 1
+    assert figures[0][1]['figure_type'] == typeEnum.FIG01
+
+
+@pytest.mark.integration_test
+def test_get_figures_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session: Session):
+
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+                                      PlayerCreateMatch(name="Test Player"),
+                                      session)
+    game = res.get('game')
+    board_repository.create_new_board(game.id, session)
+
+    figures = board_repository.get_figures(game.id, session)
+    assert figures == []

@@ -1,8 +1,13 @@
 import pytest
 from unittest.mock import MagicMock, patch
+
 from figureCards.figure_cards_logic import FigureCardsLogic
 from figureCards.models import typeEnum
+
 from player.player_logic import PlayerLogic
+
+from board.schemas import ColorEnum, BoxOut
+
 
 @pytest.fixture
 def player_repo():
@@ -87,3 +92,27 @@ def test_create_fig_deck_no_players(fig_cards_logic, player_logic):
         response = fig_cards_logic.create_fig_deck(mock_session, game_id)
     
     assert response == {"message": "Figure deck was not created, there no players in game"}
+    
+
+def test_is_pointer_different_from_formed_figures(fig_cards_logic):
+    pointer = (2, 3)
+    
+    figures = [
+        [
+            BoxOut(id=1, color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01),
+            BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01)
+        ],
+        [
+            BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02),
+            BoxOut(id=4, color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02)
+        ]
+    ]
+    
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result == False
+
+    pointer = (4, 4)
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result == pointer
+    
+
