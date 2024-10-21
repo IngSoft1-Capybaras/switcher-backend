@@ -29,14 +29,14 @@ async def get_board(game_id: int, db: Session = Depends(get_db), repo: BoardRepo
     # obtener figuras formadas
 
     result = repo.get_configured_board(game_id, db)
-    result_dict = result.dict()
+    result_dict = result.model_dump()
     result_dict["formed_figures"] = repo.get_figures(game_id, db)
 
     return BoardAndBoxesOut(**result_dict)
     # return repo.get_configured_board(game_id, db)
 
 @board_router.patch("/calculate_figures/{game_id}", status_code=status.HTTP_200_OK)
-async def start_game(
+async def calculate_figures(
     game_id: int,
     db: Session = Depends(get_db),
     fig_cards_logic: FigureCardsLogic = Depends(get_fig_cards_logic)
@@ -48,4 +48,4 @@ async def start_game(
     message = {"type": f"{game_id}:BOARD_UPDATE"}
     await manager.broadcast(message)
     
-    return {"message": "Game status updated, you are playing!"}
+    return {"message": "Sorry for the wait "}

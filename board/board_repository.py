@@ -52,6 +52,9 @@ class BoardRepository:
         )    
         db.add(new_box)
         db.commit()
+        db.refresh(new_box)
+        
+        return new_box
 
     def get_configured_board(self, game_id: int, db: Session):
         """
