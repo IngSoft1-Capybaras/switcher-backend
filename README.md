@@ -55,7 +55,7 @@ Los valores posibles de ENVIRONMENT son `production`, `test` y `development`. Pa
 export PYTHONPATH="/path/to/this/project/
 ```
 
-Para correr los unittests:
+- Para correr los unittests:
 ```bash
 make run_unit_tests
 ```
@@ -63,4 +63,10 @@ make run_unit_tests
 - Para correr los integration tests:
 ```bash
 make run_integration_tests
+```
+
+- Para correr todos los tests y ver el coverage total
+```bash
+make run_coverage
+open htmlcov/index.html &
 ```
