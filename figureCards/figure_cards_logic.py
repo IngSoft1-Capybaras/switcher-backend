@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from board.board_repository import BoardRepository
 from connection_manager import manager
+from game.game_logic import get_game_logic
+from game.game_repository import GameRepository
 from game.models import Game
 from gameState.game_state_repository import GameStateRepository
 from player.player_repository import PlayerRepository
@@ -312,6 +314,12 @@ class FigureCardsLogic:
 
             # Avisar por websocket que se jugo una carta de figura
             game_id = figureInfo.game_id
+
+            game_repo = GameRepository()
+            player_repo = PlayerRepository()
+            fig_card_repo = FigureCardsRepository()
+            game_logic = get_game_logic(game_repo, gameStateRepo, player_repo, fig_card_repo)
+            await game_logic.check_win_condition_no_figure_cards(figureInfo.game_id, figureInfo.player_id, db)
             
             message = {
                     "type":f"{game_id}:FIGURE_UPDATE"
