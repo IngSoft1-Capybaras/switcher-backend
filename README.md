@@ -55,7 +55,7 @@ Los valores posibles de ENVIRONMENT son `production`, `test` y `development`. Pa
 export PYTHONPATH="/path/to/this/project/
 ```
 
-Para correr los unittests:
+- Para correr los unittests:
 ```bash
 make run_unit_tests
 ```
@@ -64,3 +64,12 @@ make run_unit_tests
 ```bash
 make run_integration_tests
 ```
+
+- Para correr todos los tests y ver el coverage total
+```bash
+make run_coverage
+open htmlcov/index.html &
+```
+
+Para abrir el archivo desde la consola se puede usar `open` en algunas distribuciones de linux, sino tambien se puede usar el comando `firefox`
+para abrirlo si es que tiene firefox instalado. En caso de no poder abrirlo a la consola, puede ir, dentro del proyecto, a ./htmlcov/ y clickear el archivo index.htlm y eso deberia abrirle una pestania en su navegador predeterminado con el reporte del coverage.

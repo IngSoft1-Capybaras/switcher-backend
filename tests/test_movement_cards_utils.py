@@ -1,38 +1,35 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
+from board.schemas import BoardPosition
 from movementCards.utils import MovementCardUtils
-from movementCards.models import typeEnum
-
 
 @pytest.fixture
-def mov_cards_utils():
-    mock_mov_cards_repo = MagicMock()
-    mock_player_repo = MagicMock()
-    return MovementCardUtils(mov_card_repo=mock_mov_cards_repo, player_repo=mock_player_repo)
+def mov_card_utils():
+    return MovementCardUtils()
 
-def test_create_mov_deck(mov_cards_utils):
-    mock_session = MagicMock()
-    game_id = 1
+def test_calculate_differences_positive(mov_card_utils):
+    pos_from = BoardPosition(pos=(1, 1))
+    pos_to = BoardPosition(pos=(4, 5))
     
-    with patch('random.shuffle', lambda x: x):
-        response = mov_cards_utils.create_mov_deck(mock_session, game_id)
+    x_diff, y_diff = mov_card_utils.calculate_differences(pos_from, pos_to)
     
-    assert response == {"message": "Movement deck created and assigned to players"}
-    
-    expected_calls = [
-        ((game_id, typeEnum.DIAGONAL_CONT, mock_session),),
-        ((game_id, typeEnum.DIAGONAL_ESP, mock_session),),
-        ((game_id, typeEnum.EN_L_DER, mock_session),),
-        ((game_id, typeEnum.EN_L_IZQ, mock_session),),
-        ((game_id, typeEnum.LINEAL_AL_LAT, mock_session),),
-        ((game_id, typeEnum.LINEAL_CONT, mock_session),),
-        ((game_id, typeEnum.LINEAL_ESP, mock_session),)      
-    ] * 7
+    assert x_diff == 3
+    assert y_diff == 4
 
-    # mov_cards_utils.mov_card_repo.create_movement_card.assert_has_calls(expected_calls, any_order=True)
+def test_calculate_differences_negative(mov_card_utils):
+    pos_from = BoardPosition(pos=(5, 5))
+    pos_to = BoardPosition(pos=(2, 1))
     
-    # me fijo que tenga 49 llamadas
-    assert mov_cards_utils.mov_card_repo.create_movement_card.call_count == len(expected_calls)
+    x_diff, y_diff = mov_card_utils.calculate_differences(pos_from, pos_to)
     
+    assert x_diff == 3
+    assert y_diff == 4
+
+def test_calculate_differences_zero(mov_card_utils):
+    pos_from = BoardPosition(pos=(3, 3))
+    pos_to = BoardPosition(pos=(3, 3))
     
+    x_diff, y_diff = mov_card_utils.calculate_differences(pos_from, pos_to)
     
+    assert x_diff == 0
+    assert y_diff == 0

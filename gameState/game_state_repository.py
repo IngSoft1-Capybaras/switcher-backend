@@ -3,9 +3,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.exc import NoResultFound
 from .models import GameState, StateEnum
 from .schemas import GameStateInDB
-from database.db import get_db
 from player.models import Player, turnEnum
-import logging
 
 
 class GameStateRepository:
@@ -92,11 +90,11 @@ class GameStateRepository:
 
         next_player = next((player for player in players if player.turn == next_turn), None)
 
-        if not next_player:
-            raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Next player not found"
-            )
+        # if not next_player:
+        #     raise HTTPException(
+        #     status_code=status.HTTP_404_NOT_FOUND,
+        #     detail="Next player not found"
+        #     )
         
         return next_player.id
 

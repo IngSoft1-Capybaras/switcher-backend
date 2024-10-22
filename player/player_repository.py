@@ -1,3 +1,4 @@
+from typing import Dict, Union
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import NoResultFound
 from fastapi import Depends, HTTPException, status
@@ -5,13 +6,13 @@ from .models import Player, turnEnum
 from .schemas import PlayerInDB
 from game.models import Game
 from game.game_repository import GameRepository
-from game.utils import GameUtils
 from gameState.models import GameState, StateEnum
 from gameState.game_state_repository import GameStateRepository
-from connection_manager import manager
-from figureCards.models import FigureCard
 from movementCards.models import MovementCard
+from movementCards.movement_cards_repository import MovementCardsRepository
 
+
+import pdb
 class PlayerRepository:
     
     def get_player_by_id(self, game_id: int, player_id: int, db : Session) -> PlayerInDB:   
@@ -21,7 +22,7 @@ class PlayerRepository:
                                                 Player.game_id == game_id).one()
         
         except NoResultFound:
-            raise HTTPException(status_code = 404, detail = "The is no such player")
+            raise HTTPException(status_code = 404, detail = "There is no such player")
         
         
         return PlayerInDB.model_validate(player_in_db)
@@ -52,69 +53,61 @@ class PlayerRepository:
         
         
     
-    async def leave_game(self, game_id: int, player_id: int, db: Session):
-        try:
-            game = db.query(Game).filter(Game.id == game_id).one()
-        except NoResultFound :
-            raise HTTPException(status_code=404, detail="Game not found")
-        
-        try:
-            game_state = db.query(GameState).filter(GameState.game_id == game_id).one()
-        except NoResultFound :
-            raise HTTPException(status_code=404, detail="Game state not found")
-        
+    async def leave_game(
+                            self, 
+                            game_id: int, 
+                            player_id: int, 
+                            game_logic, 
+                            game_repo: GameRepository, 
+                            game_state_repo: GameStateRepository, 
+                            mov_card_repo: MovementCardsRepository, 
+                            db: Session
+                        ) -> Dict[str, Union[str, bool]]:
+
         changed_turn = False
-        
+
+        # Buscamos el estado de la partida
+        game_state = game_state_repo.get_game_state_by_id(game_id, db)
+        player = self.get_player_by_id(game_id, player_id, db)
+
         if game_state.state == StateEnum.PLAYING:
-            #me aseguro que no sea el turno del jugador
+            # Me aseguro que no sea el turno del jugador
             if game_state.current_player == player_id:
-                game_state_repo = GameStateRepository()
-                #si lo es, le pasamos el turno al siguiente jugador
+                
+                # Si lo es, le pasamos el turno al siguiente jugador
                 next_player_id = game_state_repo.get_next_player_id(game_id, db)
-                game_state_repo.update_current_player(game_id, next_player_id,db)
+                game_state_repo.update_current_player(game_id, next_player_id, db)
                 changed_turn = True
                 
-            
-            # descarto sus cartas de figura
-            player_figure_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id).all()
-            
-            if not player_figure_cards:
-                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any figure cards")
-            
-
-            for figure_card in player_figure_cards:
-                db.delete(figure_card)
-
-            # mando sus cartas de movimiento al mazo
+            # Buscamos sus cartas de movimiento
             player_movement_cards = db.query(MovementCard).filter(MovementCard.player_id == player_id).all()
-            
-            if not player_movement_cards:
-                raise HTTPException(status_code = 404, detail = f"Player {player_id} doesn't have any movement cards")
-            
+            # Mando sus cartas de movimiento al mazo
             for movement_card in player_movement_cards:
-                movement_card.player_id = None
-        
-
-        # delete() devuelve la cantidad de filas afectadas por la operacion
+                mov_card_repo.discard_mov_card(movement_card.id, db)
+                
+        # Delete() devuelve la cantidad de filas afectadas por la operacion
         rows_deleted = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).delete()
-
-        # si son cero las filas es porque no encontro el jugador
-        if rows_deleted == 0:
-            raise HTTPException(status_code = 404, detail = "There is no such player")
-
-        db.commit()
-
-        game_utils = GameUtils(GameRepository())
-
-        if game_state.state == StateEnum.PLAYING:
-            # chequeo la condicion de ganar por abandono
-            await game_utils.check_win_condition(game, db)
         
+        # Si son cero las filas es porque no encontro el jugador
+        if rows_deleted == 0:
+            raise HTTPException(status_code=404, detail="Player not found")
+        
+        # Guardamos los cambios
+        db.commit()
+        # chequeo la condicion de ganar por abandono
+        if game_state.state == StateEnum.PLAYING:
+            await game_logic.check_win_condition_one_player_left(game_id, db)
+
+        if player.host and game_state.state == StateEnum.WAITING:
+            # al borrar el juego, borro todos los datos asociados a este
+            game_repo.delete_game(game_id, db)
+            
         return {"message": "Player has successfully left the game", "changed_turn": changed_turn}
+    
     
     def create_player(self, game_id: int, player_name: str, db : Session) -> int:
         try:
-            game_status = db.query(GameState).filter(GameState.game_id == game_id).first()  
+            game_status = db.query(GameState).filter(GameState.game_id == game_id).one()  
             game_status_id = game_status.id
         except NoResultFound:
             raise HTTPException(status_code= status.HTTP_404_NOT_FOUND, detail="No game status for game")
@@ -139,3 +132,12 @@ class PlayerRepository:
             db.close()
             
         return {"player_id": player_id}
+    
+    def assign_winner_of_game(self, game_id: int, player_id: int, db: Session):
+        try:
+            player = db.query(Player).filter(Player.id == player_id, Player.game_id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code = 404, detail = "There is no such player")
+        
+        player.winner = True
+        db.commit()

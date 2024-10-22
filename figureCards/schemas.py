@@ -1,7 +1,8 @@
 from enum import Enum
-from typing import Optional
+from typing import List, Optional, Tuple
 from pydantic import BaseModel, ConfigDict
 from .models import typeEnum, DifficultyEnum
+from board.schemas import BoxIn
 
 # Schema de cartas de figura
 class FigureCardSchema(BaseModel):
@@ -16,4 +17,8 @@ class FigureCardSchema(BaseModel):
     model_config = ConfigDict(from_attributes = True)
     
     
-    
+class PlayFigureCardInput(BaseModel):
+    player_id: int
+    game_id: int
+    card_id: int
+    figure: List[BoxIn]
