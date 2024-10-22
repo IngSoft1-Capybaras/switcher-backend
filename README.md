@@ -70,3 +70,6 @@ make run_integration_tests
 make run_coverage
 open htmlcov/index.html &
 ```
+
+Para abrir el archivo desde la consola se puede usar `open` en algunas distribuciones de linux, sino tambien se puede usar el comando `firefox`
+para abrirlo si es que tiene firefox instalado. En caso de no poder abrirlo a la consola, puede ir, dentro del proyecto, a ./htmlcov/ y clickear el archivo index.htlm y eso deberia abrirle una pestania en su navegador predeterminado con el reporte del coverage.
