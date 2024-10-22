@@ -12,5 +12,5 @@ run_integration_tests:
 
 run_coverage:
 	coverage run --source=. --omit="./tests/*,./database/*" -m pytest && coverage report -m
-	coverage html && firefox htmlcov/index.html &
+	coverage html
 
