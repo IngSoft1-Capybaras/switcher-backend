@@ -96,7 +96,9 @@ class PlayerRepository:
         db.commit()
         # chequeo la condicion de ganar por abandono
         if game_state.state == StateEnum.PLAYING:
-            await game_logic.check_win_condition_one_player_left(game_id, db)
+            if game_logic.check_win_condition_one_player_left(game_id, db):
+                winner_id = self.get_players_in_game(game_id, db)[0].id
+                await game_logic.handle_win(game_id, winner_id, db)
 
         if player.host and game_state.state == StateEnum.WAITING:
             # al borrar el juego, borro todos los datos asociados a este
