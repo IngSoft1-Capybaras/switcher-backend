@@ -34,7 +34,6 @@ class GameLogic:
         players_left = self.player_repo.get_players_in_game(game_id, db)
 
         if len(players_left) == 1:
-            # await self.handle_win(game_id, players_left[0].id, db)
             return True
             
         return False
@@ -43,7 +42,6 @@ class GameLogic:
     def check_win_condition_no_figure_cards(self, game_id: int, player_id: int, db: Session):
 
         if len(self.figure_cards_repo.get_figure_cards(game_id, player_id, db)) == 0:
-            # await self.handle_win(game_id, player_id, db)
             return True
             
         return False
