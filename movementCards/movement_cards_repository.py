@@ -11,6 +11,24 @@ from game.models import Game
 
 
 class MovementCardsRepository:
+    
+    def get_players_movement_cards(self, game_id: int, db : Session) -> list:
+        try:
+            db.query(Game).filter(Game.id == game_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code = 404, detail = f"Game not found")
+        
+        movement_cards = db.query(MovementCard).filter( 
+                                                        MovementCard.game_id == game_id,
+                                                        MovementCard.player_id.is_not(None)
+                                                      ).all()
+
+        if not movement_cards:
+            raise HTTPException(status_code=404, detail="There no movement cards associated with this game")
+
+        movement_cards_list = [MovementCardSchema.model_validate(card) for card in movement_cards]
+
+        return movement_cards_list
 
     def get_movement_cards(self, game_id: int, player_id: int, db : Session) -> list:
         # Fetch figure cards associated with the player and game
