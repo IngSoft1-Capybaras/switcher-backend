@@ -235,7 +235,7 @@ def test_leave_game_host(player_repo, game_repo, movement_cards_repo, game_state
         expected_messages = [
             {"type": "GAMES_LIST_UPDATE"},
             {"type": f"{game_id}:GAME_INFO_UPDATE"},
-            {"type": "OWNER_LEFT"}
+            {"type": f"{game_id}:OWNER_LEFT"}
         ]
         
         # Nos aseguramos que cada mensaje fue recibido
