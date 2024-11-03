@@ -43,7 +43,7 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
     game_state = game_state_repo.get_game_state_by_id(game_id, db)
     if player.host and game_state.state == StateEnum.WAITING:
         message = {
-            "type": "OWNER_LEFT"
+            "type": f"{game_id}:OWNER_LEFT"
         }
         await manager.broadcast(message)
 
