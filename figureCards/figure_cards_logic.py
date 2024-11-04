@@ -71,14 +71,16 @@ class FigureCardsLogic:
             for index, figure in enumerate(player_cards):
                 if index == SHOW_LIMIT:
                     show = False
-                self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
+                self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, False, db)
 
         return {"message": "Figure deck created"}
     
+
     def check_game_exists(self, game_id: int, db: Session) -> GameInDB:
         game = self.game_repo.get_game_by_id(game_id, db)
         return game
     
+
     def check_game_in_progress(self, game_id: int, db: Session) -> None:
         game = self.game_state_repo.get_game_state_by_id(game_id, db)
         
@@ -87,14 +89,17 @@ class FigureCardsLogic:
         if game.state != "PLAYING":
             raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
 
+
     def get_board_or_404(self, game_id: int, db: Session) ->  BoardAndBoxesOut :
         board = self.board_repo.get_configured_board(game_id, db)
         if board is None:
             raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
         return board
 
+
     def is_valid_pointer(self, pointer: tuple[int, int]) -> bool:
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
+
 
     def check_surroundings(self, path: list[DirectionEnum], figure: list[BoxOut], pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session) -> bool:
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
@@ -109,11 +114,11 @@ class FigureCardsLogic:
                 if (box_color == color) and not bel_to_fig:
                     return False
                 
-
             # retrotraer el pointer    
             pointer = pointerBefore
                 
         return True
+
 
     def move_pointer(self, pointer: tuple[int,int], direction: DirectionEnum) -> tuple[int,int]:
         if direction == DirectionEnum.UP:
@@ -126,11 +131,13 @@ class FigureCardsLogic:
             pointer = (pointer[0] + 1, pointer[1])
         return pointer
 
+
     def belongs_to_figure(self, pointer: tuple[int,int], figure: list[BoxOut]) -> bool:
         for fig_box in figure:
             if fig_box.pos_x == pointer[0] and fig_box.pos_y == pointer[1]:
                 return True
         return False
+
 
     def check_path_blind(self, path: list[DirectionEnum], pointer: tuple[int, int], board: BoardAndBoxesOut, color: ColorEnum, figure_id: int, figure_type: str, db: Session, board_figure: Optional[list[BoxOut]] = None) -> Union[bool, list[BoxOut]]:
         result = True
@@ -184,6 +191,7 @@ class FigureCardsLogic:
 
         return result
 
+
     def get_pointer_from_figure(self, figure: list[BoxOut], rot: int) -> tuple[int,int]:
         if len(figure) == 0:
             raise HTTPException(status_code=404, detail="Empty figure")
@@ -223,6 +231,7 @@ class FigureCardsLogic:
 
         return (x,y)
 
+
     def check_valid_figure(self, figure: list[BoxOut], figure_type: str, board: BoardAndBoxesOut, db: Session) -> bool:
         pointer = self.get_pointer_from_figure(figure,0)
         color = board.boxes[pointer[1]][pointer[0]].color
@@ -254,6 +263,7 @@ class FigureCardsLogic:
             raise HTTPException(status_code=404, detail="Invalid figure type")
 
         return result
+
 
     async def play_figure_card(self, figureInfo: PlayFigureCardInput, db: Session) -> dict:
 
@@ -304,6 +314,7 @@ class FigureCardsLogic:
 
     # Logica de resaltar figuras formadas
 
+
     def has_minimum_length(self, pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session, min_length: int) -> bool:
         length = 0
         queue = [pointer]
@@ -325,6 +336,7 @@ class FigureCardsLogic:
                         queue.append(next_pointer)
         return False
 
+
     def is_pointer_different_from_formed_figures(self, pointer: tuple[int,int], figures: list[list[BoxOut]]) -> Union[bool, tuple[int,int]]:
         for figure in figures:
             for fig_box in figure:
@@ -332,6 +344,7 @@ class FigureCardsLogic:
                     return False
         return pointer
     
+
     async def get_formed_figures(self, game_id: int, db: Session) -> None:
         self.check_game_in_progress(game_id, db)
         board = self.get_board_or_404(game_id, db)
