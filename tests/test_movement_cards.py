@@ -69,6 +69,49 @@ def setup_dependency_override(mock_repo,mock_mov_card_logic, mock_partial_moveme
     app.dependency_overrides = {}  # Clean up overrides after test
 
 
+def test_get_players_movement_cards_success(mock_repo, mock_db):
+    mock_movement_cards = [
+        MovementCardSchema(id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=1, game_id=1), 
+        MovementCardSchema(id=2, type=typeEnum.EN_L_DER, description="test", used=False, player_id=1, game_id=1),
+        MovementCardSchema(id=3, type=typeEnum.EN_L_DER, description="test", used=False, player_id=1, game_id=1),
+        MovementCardSchema(id=4, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=2, game_id=1), 
+        MovementCardSchema(id=5, type=typeEnum.EN_L_DER, description="test", used=False, player_id=2, game_id=1),
+        MovementCardSchema(id=6, type=typeEnum.EN_L_DER, description="test", used=False, player_id=2, game_id=1)
+    ]
+    
+    mock_repo.get_players_movement_cards.return_value = mock_movement_cards
+
+    response = client.get("/deck/movement/1")
+
+    assert response.status_code == 200
+    assert response.json() == [card.model_dump() for card in mock_movement_cards]
+    mock_repo.get_players_movement_cards.assert_called_once_with(1, mock_db)
+
+def test_get_players_movement_cards_not_found(mock_repo, mock_db):
+    mock_repo.get_players_movement_cards.side_effect = HTTPException(
+        status_code=404, 
+        detail="There are no movement cards associated with this game"
+    )
+
+    response = client.get("/deck/movement/1")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "There are no movement cards associated with this game"}
+    mock_repo.get_players_movement_cards.assert_called_once_with(1, mock_db)
+    
+def test_get_players_movement_cards_game_not_found(mock_repo, mock_db):
+    mock_repo.get_players_movement_cards.side_effect = HTTPException(
+        status_code=404, 
+        detail="Game not found"
+    )
+
+    response = client.get("/deck/movement/112442")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Game not found"}
+    mock_repo.get_players_movement_cards.assert_called_once_with(112442, mock_db)
+
+
 def test_get_movement_cards_success(mock_repo, mock_db):
     mock_movement_cards = [
         MovementCardSchema(id=1, type=typeEnum.DIAGONAL_CONT, description="test", used=True, player_id=1, game_id=1), 
