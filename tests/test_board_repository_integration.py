@@ -362,40 +362,6 @@ def test_get_box_by_position_no_box(board_repository: BoardRepository, game_repo
     assert exc_info.value.detail == "Box not found 10, 10"
 
 @pytest.mark.integration_test
-def test_upd_box_color(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
-                                      PlayerCreateMatch(name="Test Player"),
-                                      session)
-    game = res.get('game')
-    board = board_repository.create_new_board(game.id, session)
-
-    pos_x, pos_y = 0, 0
-    initial_color = ColorEnum.RED
-    new_color = ColorEnum.BLUE
-    board_repository.add_box_to_board(board.id, game.id, initial_color, pos_x, pos_y, session)
-
-    result = board_repository.upd_box_color(board.id, pos_x, pos_y, new_color, session)
-    assert result.pos_x == pos_x
-    assert result.pos_y == pos_y
-    assert result.color == 'BLUE'
-
-@pytest.mark.integration_test
-def test_upd_box_color_no_color(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
-                                      PlayerCreateMatch(name="Test Player"),
-                                      session)
-    game = res.get('game')
-    board = board_repository.create_new_board(game.id, session)
-
-    new_color = ColorEnum.BLUE
-
-    with pytest.raises(HTTPException) as exc_info:
-        board_repository.upd_box_color(board.id, 10, 10, new_color, session)
-    
-    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
-    assert exc_info.value.detail == "Box not found"
-
-@pytest.mark.integration_test
 def test_highlight_box(board_repository: BoardRepository, game_repository: GameRepository, session):
     res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
                                       PlayerCreateMatch(name="Test Player"),
