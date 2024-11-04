@@ -60,31 +60,31 @@ def test_create_fig_deck(fig_cards_logic, player_logic):
     assert response == {"message": "Figure deck created"}
     
     expected_calls = [
-        ((1, game_id, typeEnum.FIGE01, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE02, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE03, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE04, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE05, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE06, False, mock_session),),
-        ((1, game_id, typeEnum.FIGE07, False, mock_session),),
-        ((1, game_id, typeEnum.FIG01, True, mock_session),),
-        ((1, game_id, typeEnum.FIG02, True, mock_session),),
-        ((1, game_id, typeEnum.FIG03, True, mock_session),),
-        ((1, game_id, typeEnum.FIG04, False, mock_session),),
-        ((1, game_id, typeEnum.FIG05, False, mock_session),),
-        ((1, game_id, typeEnum.FIG06, False, mock_session),),
-        ((1, game_id, typeEnum.FIG07, False, mock_session),),
-        ((1, game_id, typeEnum.FIG08, False, mock_session),),
-        ((1, game_id, typeEnum.FIG09, False, mock_session),),
-        ((1, game_id, typeEnum.FIG10, False, mock_session),),
-        ((1, game_id, typeEnum.FIG11, False, mock_session),),
-        ((1, game_id, typeEnum.FIG12, False, mock_session),),
-        ((1, game_id, typeEnum.FIG13, False, mock_session),),
-        ((1, game_id, typeEnum.FIG14, False, mock_session),),
-        ((1, game_id, typeEnum.FIG15, False, mock_session),),
-        ((1, game_id, typeEnum.FIG16, False, mock_session),),
-        ((1, game_id, typeEnum.FIG17, False, mock_session),),
-        ((1, game_id, typeEnum.FIG18, False, mock_session),)
+        ((1, game_id, typeEnum.FIGE01, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE02, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE03, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE04, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE05, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE06, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIGE07, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG01, True, False, mock_session),),
+        ((1, game_id, typeEnum.FIG02, True, False, mock_session),),
+        ((1, game_id, typeEnum.FIG03, True, False, mock_session),),
+        ((1, game_id, typeEnum.FIG04, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG05, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG06, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG07, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG08, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG09, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG10, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG11, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG12, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG13, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG14, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG15, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG16, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG17, False, False, mock_session),),
+        ((1, game_id, typeEnum.FIG18, False, False, mock_session),)
     ]
     
     # fig_cards_logic.fig_card_repo.create_figure_card.assert_has_calls(expected_calls, any_order=True)
@@ -92,18 +92,19 @@ def test_create_fig_deck(fig_cards_logic, player_logic):
     assert fig_cards_logic.fig_card_repo.create_figure_card.call_count == len(expected_calls)
     
     calls = fig_cards_logic.fig_card_repo.create_figure_card.call_args_list
-    
+
     # me fijo que solo hayan 3 cartas mostradas
     shown_cards = sum(1 for call in calls if call[0][3] is True)
     assert shown_cards == 3
 
     # me fijo que las funciones se llamen correctamente
     for call in calls:
-        assert len(call[0]) == 5 # cada llamada tiene 5 arguments
+        assert len(call[0]) == 6 # cada llamada tiene 5 arguments
         assert isinstance(call[0][0], int)
         assert isinstance(call[0][1], int)
         assert isinstance(call[0][2], typeEnum)
         assert isinstance(call[0][3], bool)
+        assert isinstance(call[0][4], bool)
 
 
 def test_create_fig_deck_no_players(fig_cards_logic, player_logic):

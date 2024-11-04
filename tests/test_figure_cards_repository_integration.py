@@ -78,7 +78,7 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, 
                                                FigureCard.player_id == 1).count()
 
     
-    figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, session)
+    figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, False, session)
     
     assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
     
@@ -100,15 +100,15 @@ def test_grab_figure_cards(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player2.id, game_id=game.id, show=True, type=typeEnum.FIG02)
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player2.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG02)
     ])
     session.commit()
     
@@ -139,14 +139,14 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
     ])
     session.commit()
     
