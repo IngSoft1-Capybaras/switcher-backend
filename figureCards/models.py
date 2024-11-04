@@ -46,6 +46,8 @@ class FigureCard(Base):
     player_id = Column(Integer, ForeignKey('players.id', use_alter=True, ondelete='CASCADE'), nullable=False)
     type = Column(SQLAEnum(typeEnum), nullable=False)
     game_id = Column(Integer, ForeignKey('games.id', ondelete='CASCADE'), nullable=False)
+    blocked = Column(Boolean, nullable=False)
+
 
     player = relationship("Player", back_populates="figure_cards")
     game = relationship("Game", back_populates="figure_cards")
