@@ -75,9 +75,8 @@ class FigureCardsLogic:
 
         return {"message": "Figure deck created"}
     
-    def check_game_exists(self, game_id: int, db: Session) -> GameInDB:
-        game = self.game_repo.get_game_by_id(game_id, db)
-        return game
+    def check_game_exists(self, game_id: int, db: Session) -> None:
+        self.game_repo.get_game_by_id(game_id, db)
     
     def check_game_in_progress(self, game_id: int, db: Session) -> None:
         game = self.game_state_repo.get_game_state_by_id(game_id, db)
@@ -257,6 +256,10 @@ class FigureCardsLogic:
 
     async def play_figure_card(self, figureInfo: PlayFigureCardInput, db: Session) -> dict:
 
+        # chequear que el juego exista y este en progreso
+        self.check_game_exists(figureInfo.game_id, db)
+        self.check_game_in_progress(figureInfo.game_id, db)
+
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
 
@@ -272,9 +275,6 @@ class FigureCardsLogic:
             return {"message": "The figure card does not belong to the player"}
         if not figure_card.show:
             return {"message": "The card is not shown"}
-
-        # lets modify the existing board to have a figure to test this validation
-        # board = self.modifiyBoardTest(board, db)
         
         # chequear que la figura es valida (compara con la figura de la carta)
         valid = self.check_valid_figure( figureInfo.figure, figure_card.type, board, db)
@@ -333,7 +333,10 @@ class FigureCardsLogic:
         return pointer
     
     async def get_formed_figures(self, game_id: int, db: Session) -> None:
+        # Chequear que el juego exista y este en progreso
+        self.check_game_exists(game_id, db)
         self.check_game_in_progress(game_id, db)
+
         board = self.get_board_or_404(game_id, db)
 
         # Reset del tablero
