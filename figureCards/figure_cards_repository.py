@@ -43,17 +43,18 @@ class FigureCardsRepository:
 
         return figure_card_schema
     
-    def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, show: bool, db: Session):
+    def create_figure_card(self, player_id: int, game_id: int, figure: typeEnum, show: bool, blocked: bool, db: Session):
         new_card = FigureCard(
             type=figure,
             show=show,
             game_id= game_id,
-            player_id=player_id
+            player_id=player_id,
+            blocked=blocked
         )
         db.add(new_card)
         db.commit()
     
-    def grab_figure_cards(self, player_id: int, game_id: int,db: Session):
+    def grab_figure_cards(self, player_id: int, game_id: int, db: Session):
         
         try: 
             db.query(Game).filter(Game.id == game_id).one()
