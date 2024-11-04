@@ -57,7 +57,7 @@ def create_movement_card(description, used, player, game, type, session):
     return card
 
 def create_figure_card(show, difficulty, player, type, game, session):
-    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, type=type, game_id=game.id)
+    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, type=type, game_id=game.id, blocked= False)
     session.add(card)
     # session.flush()
     session.commit()
