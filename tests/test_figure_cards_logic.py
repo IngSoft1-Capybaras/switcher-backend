@@ -23,14 +23,24 @@ def player_repo():
     return MagicMock()
 
 @pytest.fixture
+def game_repo():
+    return MagicMock()
+
+@pytest.fixture
 def game_state_repo():
     return MagicMock()
 
+@pytest.fixture
+def board_repo():
+    return MagicMock()
 
 @pytest.fixture
-def fig_cards_logic(player_repo):
-    mock_fig_cards_repo = MagicMock()
-    return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=mock_fig_cards_repo)
+def fig_card_repo():
+    return MagicMock()
+
+@pytest.fixture
+def fig_cards_logic(player_repo, fig_card_repo, game_repo, game_state_repo, board_repo):
+    return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=fig_card_repo, game_repo=game_repo, game_state_repo=game_state_repo, board_repo=board_repo)
 
 @pytest.fixture
 def player_logic(player_repo):
@@ -237,12 +247,9 @@ def test_get_pointer_from_figure_invalid_rotation(fig_cards_logic):
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Invalid rotation"
     
-@patch('figureCards.figure_cards_logic.BoardRepository')
-def test_get_board_or_404_board_found(mock_board_repo, fig_cards_logic):
+def test_get_board_or_404_board_found(fig_cards_logic):
     game_id = 1
     mock_db = MagicMock()
-    mock_repo = MagicMock()
-    mock_board_repo.return_value = mock_repo
 
     mock_board = {
         "game_id":game_id,
@@ -250,7 +257,7 @@ def test_get_board_or_404_board_found(mock_board_repo, fig_cards_logic):
         "boxes":[]
     }
     
-    mock_repo.get_configured_board.return_value = mock_board
+    fig_cards_logic.board_repo.get_configured_board.return_value = mock_board
     
     result = fig_cards_logic.get_board_or_404(game_id, mock_db)
 
@@ -258,23 +265,45 @@ def test_get_board_or_404_board_found(mock_board_repo, fig_cards_logic):
     assert result == mock_board
     
 
-@patch('figureCards.figure_cards_logic.GameStateRepository')
-def test_check_game_in_progress_game_found(mock_game_state_repo, fig_cards_logic):
+def test_check_game_in_progress_game_not_found(fig_cards_logic):
     game_id = 1
     mock_db = MagicMock()
-    mock_repo = MagicMock()
-    mock_game_state_repo.return_value = mock_repo
+
+    fig_cards_logic.game_state_repo.get_game_state_by_id.return_value = None
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_game_in_progress(game_id, mock_db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not found when getting formed figures"
+
+def test_check_game_in_progress_game_not_in_progress(fig_cards_logic):
+    game_id = 1
+    mock_db = MagicMock()
 
     mock_game_state = GameStateInDB(
         id=1,
+        state=StateEnum.FINISHED,
         game_id=game_id,
-        state=StateEnum.PLAYING,
-        current_player=1
+        current_player=None
     )
-    mock_repo.get_game_state_by_id.return_value = mock_game_state
+    fig_cards_logic.game_state_repo.get_game_state_by_id.return_value = mock_game_state
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_game_in_progress(game_id, mock_db)
 
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Game not in progress when getting formed figures"
+
+def test_check_game_in_progress_game_playing(fig_cards_logic):
+    game_id = 1
+    mock_db = MagicMock()
+
+    mock_game_state = GameStateInDB(
+        id=1,
+        state=StateEnum.PLAYING,
+        game_id=game_id,
+        current_player=None
+    )
+    fig_cards_logic.game_state_repo.get_game_state_by_id.return_value = mock_game_state
     result = fig_cards_logic.check_game_in_progress(game_id, mock_db)
 
-    assert result.id == 1
-    assert result.game_id == game_id
-    assert result.state == StateEnum.PLAYING
+    assert result is None

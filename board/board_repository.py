@@ -148,18 +148,6 @@ class BoardRepository:
         if not box:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Box not found {pos_x}, {pos_y}")
         return BoxDB.model_validate(box) if box else None
-
-    def upd_box_color(self, board_id: int, pos_x: int, pos_y: int, color: ColorEnum, db: Session):
-        box = db.query(Box).filter(Box.board_id == board_id, Box.pos_x == pos_x, Box.pos_y == pos_y).first()
-        
-        if not box:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Box not found")
-        
-        box.color = color
-        db.commit()
-        db.refresh(box)
-        
-        return BoxOut.model_validate(box) if box else None
     
     def highlight_box(self, box_id: int, db: Session):
         box = db.query(Box).filter(Box.id == box_id).first()
