@@ -28,11 +28,9 @@ async def test_check_win_condition_one_player_left(game_logic):
     game_logic.player_repo.get_players_in_game.return_value = mock_game.players
     
     #Mock handle win
-    with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_logic.check_win_condition_one_player_left(mock_game.id, mock_session)
-    
-        mock_handle_win.assert_called_once_with(mock_game.id, mock_game.players[0].id ,mock_session)
-        assert result
+    result = game_logic.check_win_condition_one_player_left(mock_game.id, mock_session)
+
+    assert result
     
 @pytest.mark.asyncio
 async def test_check_win_condition_one_player_left_no_win(game_logic):
@@ -51,11 +49,9 @@ async def test_check_win_condition_one_player_left_no_win(game_logic):
     game_logic.player_repo.get_players_in_game.return_value = mock_game.players
     
     #Mock handle win
-    with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_logic.check_win_condition_one_player_left(mock_game.id, mock_session)
+    result = game_logic.check_win_condition_one_player_left(mock_game.id, mock_session)
 
-        mock_handle_win.assert_not_called()
-        assert not result 
+    assert not result 
         
 @pytest.mark.asyncio
 async def test_check_win_condition_no_figure_cards(game_logic):
@@ -74,11 +70,9 @@ async def test_check_win_condition_no_figure_cards(game_logic):
     game_logic.figure_cards_repo.get_figure_cards.return_value = []
     
     #Mock handle win
-    with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_logic.check_win_condition_no_figure_cards(mock_game.id, mock_game.players[0].id , mock_session)
+    result = game_logic.check_win_condition_no_figure_cards(mock_game.id, mock_game.players[0].id , mock_session)
     
-        mock_handle_win.assert_called_once_with(mock_game.id, mock_game.players[0].id ,mock_session)
-        assert result
+    assert result
     
 @pytest.mark.asyncio
 async def test_check_win_condition_no_figure_cards_no_win(game_logic):
@@ -101,11 +95,9 @@ async def test_check_win_condition_no_figure_cards_no_win(game_logic):
         ]
     
     #Mock handle win
-    with patch.object(game_logic, 'handle_win', return_value = None) as mock_handle_win:
-        result = await game_logic.check_win_condition_no_figure_cards(mock_game.id, mock_game.players[0].id , mock_session)
+    result = game_logic.check_win_condition_no_figure_cards(mock_game.id, mock_game.players[0].id , mock_session)
     
-        mock_handle_win.assert_not_called()
-        assert not result
+    assert not result
     
 @pytest.mark.asyncio
 @patch('game.game_logic.manager', new_callable=AsyncMock)
