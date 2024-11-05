@@ -103,12 +103,12 @@ class FigureCardsRepository:
         return {"message": "The figure cards was successfully discarded"}
     
 
-    def block_figure_card(self, figure_card_id: int, db: Session):
+    def block_figure_card(self, game_id: int, figure_card_id: int, db: Session):
         # Fetch figure card by id
         try:
-            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
+            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id, FigureCard.game_id == game_id).one()
         except NoResultFound:
-            raise HTTPException(status_code=404, detail= f"There no figure card associated with this id {figure_card_id}")
+            raise HTTPException(status_code=404, detail= f"There no figure card associated with id {figure_card_id} in game {game_id}")
 
         figure_card.blocked = True
 
