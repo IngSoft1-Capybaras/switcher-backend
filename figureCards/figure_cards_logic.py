@@ -95,7 +95,9 @@ class FigureCardsLogic:
     def is_valid_pointer(self, pointer: tuple[int, int]) -> bool:
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
 
-    def check_surroundings(self, path: list[DirectionEnum], figure: list[BoxOut], pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session) -> bool:
+    def check_surroundings(self, figure: list[BoxOut], pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session) -> bool:
+        if color != board.boxes[pointer[1]][pointer[0]].color:
+            return False
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
         for direction in DirectionEnum:
             # chequear que la casilla de alrededor de la figura sea del color de la figura
@@ -168,7 +170,7 @@ class FigureCardsLogic:
         # si obtuvimos una figura valida, chequear que no sea contigua a ningun otro color de su mismo tipo
         if result:
             for fig_box in figure:
-                if not self.check_surroundings(path, figure, (fig_box.pos_x, fig_box.pos_y), board, color, db):
+                if not self.check_surroundings(figure, (fig_box.pos_x, fig_box.pos_y), board, color, db):
                     return False
             
             if (figure_type is not None) and (figure_id is not None):
