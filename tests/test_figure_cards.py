@@ -128,5 +128,5 @@ def test_block_figure_card(mock_repo, mock_db):
         block_card = websocket.receive_json()
         assert block_card["type"] == f"{game_id}:BLOCK_CARD"
 
-        mock_repo.block_figure_card.assert_called_once_with(figure_card_id, mock_db)
+        mock_repo.block_figure_card.assert_called_once_with(game_id, figure_card_id, mock_db)
         
