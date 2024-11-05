@@ -205,41 +205,52 @@ def test_get_board_or_404_board_not_found(fig_cards_logic):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Board not found"
-    
-def test_is_pointer_different_from_formed_figures(fig_cards_logic):
-    pointer = (2, 3)
-    
-    figures = [
-        [
-            BoxOut(id=1, color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01),
-            BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01)
-        ],
-        [
-            BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02),
-            BoxOut(id=4, color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02)
-        ]
-    ]
-    
-    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
-    assert result is False
 
-    pointer = (4, 4)
-    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
-    assert result == pointer
-    
+def test_is_valid_pointer(fig_cards_logic):
+    pointer_inside_bounds = (3, 4)
+    pointer_outside_bounds = (6, 7)
+    pointer_negative = (-1, 2)
+
+    assert fig_cards_logic.is_valid_pointer(pointer_inside_bounds) is True
+
+    assert fig_cards_logic.is_valid_pointer(pointer_outside_bounds) is False
+
+    assert fig_cards_logic.is_valid_pointer(pointer_negative) is False
+
 def test_check_surroundings_invalid_pointer(fig_cards_logic):
-    path = []
     figure = [{"pos_x": 1, "pos_y": 1, "color": ColorEnum.RED}]
     pointer = (1, 1)
     board = BoardAndBoxesOut(
         game_id=1,
         board_id=1,
         boxes=[
-            [BoxOut(id=1, color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False)],
-            [BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False)],
-            [BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False)]
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
         ],
-        figures = []
+        formed_figures = []
     )
     color = ColorEnum.RED
     mock_db = MagicMock()
@@ -248,20 +259,73 @@ def test_check_surroundings_invalid_pointer(fig_cards_logic):
     fig_cards_logic.is_valid_pointer = MagicMock(side_effect=lambda pointer: False)
     fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
 
-    result = fig_cards_logic.check_surroundings(path, figure, pointer, board, color, mock_db)
-    assert result == True
+    result = fig_cards_logic.check_surroundings(figure, pointer, board, color, mock_db)
+    assert result is True
 
-def test_is_valid_pointer(fig_cards_logic):
-    pointer_inside_bounds = (3, 4)
-    pointer_outside_bounds = (6, 7)
-    pointer_negative = (-1, 2)
+    pointer = (-1, -1)
+    result = fig_cards_logic.check_surroundings(figure, pointer, board, color, mock_db)
+    assert result is False
 
-    assert fig_cards_logic.is_valid_pointer(pointer_inside_bounds) == True
+def test_check_surroundings(fig_cards_logic):
+    figure = [
+        BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=1, highlighted=True),
+        BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=1, highlighted=True),
+        BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=True),
+        BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=True)
+    ]
+    pointer = (1, 1)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.RED, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.RED, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.RED, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.RED, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures = []
+    )
+    color = ColorEnum.BLUE
+    db = MagicMock()
 
-    assert fig_cards_logic.is_valid_pointer(pointer_outside_bounds) == False
+    result = fig_cards_logic.check_surroundings(figure, pointer, board, color, db)
 
-    assert fig_cards_logic.is_valid_pointer(pointer_negative) == False
-    
+    assert result is True
+
+    board.boxes[1][1].color = ColorEnum.RED
+
+    result = fig_cards_logic.check_surroundings(figure, pointer, board, color, db)
+
+    assert result is False
+
+    board.boxes[1][1].color = ColorEnum.BLUE
+    board.boxes[1][0].color = ColorEnum.BLUE
+
+    result = fig_cards_logic.check_surroundings(figure, pointer, board, color, db)
+
+    assert result is False
+
 def test_move_pointer(fig_cards_logic):
     initial_pointer = (2, 2)
 
@@ -286,9 +350,79 @@ def test_belongs_to_figure(fig_cards_logic):
     pointer_inside = (1, 1)
     pointer_outside = (3, 3)
 
-    assert fig_cards_logic.belongs_to_figure(pointer_inside, figure) == True
+    assert fig_cards_logic.belongs_to_figure(pointer_inside, figure) is True
 
-    assert fig_cards_logic.belongs_to_figure(pointer_outside, figure) == False
+    assert fig_cards_logic.belongs_to_figure(pointer_outside, figure) is False
+
+def test_check_path_blind(fig_cards_logic):
+    path = [DirectionEnum.RIGHT, DirectionEnum.RIGHT, DirectionEnum.DOWN]
+    pointer = (1, 1)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+    color = ColorEnum.RED
+    figure_id = 1
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+    result = fig_cards_logic.check_path_blind(path, pointer, board, color, figure_id, figure_type, db)
+
+    assert result == [
+        BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False)
+    ]
+
+def test_is_pointer_different_from_formed_figures(fig_cards_logic):
+    pointer = (2, 3)
+    
+    figures = [
+        [
+            BoxOut(id=1, color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01),
+            BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01)
+        ],
+        [
+            BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02),
+            BoxOut(id=4, color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02)
+        ]
+    ]
+    
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result is False
+
+    pointer = (4, 4)
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result == pointer
 
 def test_get_pointer_from_figure(fig_cards_logic):
     figure = [
