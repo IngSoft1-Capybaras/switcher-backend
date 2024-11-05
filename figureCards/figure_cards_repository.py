@@ -101,8 +101,20 @@ class FigureCardsRepository:
         db.commit()
 
         return {"message": "The figure cards was successfully discarded"}
+    
 
+    def block_figure_card(self, figure_card_id: int, db: Session):
+        # Fetch figure card by id
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == figure_card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail= f"There no figure card associated with this id {figure_card_id}")
 
+        figure_card.blocked = True
+
+        db.commit()
+
+        return {"message": "The figure cards was successfully blocked"}
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
