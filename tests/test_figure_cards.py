@@ -49,8 +49,8 @@ def setup_dependency_override(mock_fig_cards_logic, mock_repo, mock_db):
 
 def test_get_figure_cards_success(mock_repo, mock_db):
     mock_figure_cards = [
-        FigureCardSchema(id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY, player_id=1, game_id=1),
-        FigureCardSchema(id=2, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.HARD, player_id=1, game_id=1)
+        FigureCardSchema(id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY, player_id=1, game_id=1, blocked=False),
+        FigureCardSchema(id=2, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.HARD, player_id=1, game_id=1, blocked=False)
     ]
     mock_repo.get_figure_cards.return_value = mock_figure_cards
 
@@ -76,7 +76,7 @@ def test_get_figure_cards_not_found(mock_repo, mock_db):
 
 def test_get_figure_card_by_id_success(mock_repo, mock_db):
     mock_figure_card = FigureCardSchema(
-        id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1)
+        id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1, blocked=False)
     mock_repo.get_figure_card_by_id.return_value = mock_figure_card
 
     response = client.get("/deck/figure/1/1/1")
@@ -109,3 +109,24 @@ async def test_play_figure_card(mock_fig_cards_logic, mock_db):
     response = client.post("/deck/figure/play_card", json=figureInfo.model_dump())
 
     assert response.status_code == 200
+
+
+def test_block_figure_card(mock_repo, mock_db):
+    game_id = 1
+    figure_card_id = 1
+    
+    mock_repo.block_figure_card.return_value = {"message": "The figure cards was successfully blocked"}
+
+    with client.websocket_connect("/ws") as websocket:
+        response = client.post(
+            f"/deck/figure/{game_id}/{figure_card_id}/block_card/"
+        )
+
+        assert response.status_code == 201
+        assert response.json() == {"message": "The figure cards was successfully blocked"}
+
+        block_card = websocket.receive_json()
+        assert block_card["type"] == f"{game_id}:BLOCK_CARD"
+
+        mock_repo.block_figure_card.assert_called_once_with(figure_card_id, mock_db)
+        
