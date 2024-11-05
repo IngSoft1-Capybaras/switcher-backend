@@ -36,9 +36,9 @@ async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLo
 
 # bloquear una carta de figura
 @figure_cards_router.post("/deck/figure/{game_id}/{figure_card_id}/block_card", status_code = status.HTTP_201_CREATED)
-async def play_figure_card(game_id: int, figure_card_id: int, repo: FigureCardsRepository = Depends(get_figure_cards_repository), db: Session = Depends(get_db)):
+async def block_figure_card(game_id: int, figure_card_id: int, repo: FigureCardsRepository = Depends(get_figure_cards_repository), db: Session = Depends(get_db)):
 
     message = {"type": f"{game_id}:BLOCK_CARD"}
     await manager.broadcast(message)
 
-    return repo.block_figure_card(figure_card_id, db)
+    return repo.block_figure_card(game_id, figure_card_id, db)
