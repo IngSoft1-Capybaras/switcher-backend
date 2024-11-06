@@ -100,15 +100,15 @@ def test_grab_figure_cards(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player2.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG02)
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player2.id, game_id=game.id, show=True, type=typeEnum.FIG02, blocked = False)
     ])
     session.commit()
     
@@ -139,14 +139,14 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False)
     ])
     session.commit()
     
@@ -157,9 +157,120 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
         FigureCard.game_id == game.id,
         FigureCard.show == True
     ).all()
-    #Reviso que no el jugador no obtuvo mas cartas del mazo
+    #Reviso que el jugador no obtuvo mas cartas del mazo
     assert len(shown_cards_player1) == 3
     
+@pytest.mark.integration_test
+def test_grab_figure_cards_needed_but_one_blocked(figure_cards_repository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add_all([player1])
+    session.commit()
+    
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = True),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+    ])
+    session.commit()
+    
+    figure_cards_repository.grab_figure_cards(player1.id, game.id, session)
+
+    shown_cards_player1 = session.query(FigureCard).filter(
+        FigureCard.player_id == player1.id,
+        FigureCard.game_id == game.id,
+        FigureCard.show == True
+    ).all()
+    #Reviso que el jugador no obtuvo mas cartas del mazo
+    assert len(shown_cards_player1) == 2
+
+@pytest.mark.integration_test
+def test_grab_figure_cards_not_needed_and_one_blocked(figure_cards_repository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add_all([player1])
+    session.commit()
+    
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = True),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+    ])
+    session.commit()
+    
+    figure_cards_repository.grab_figure_cards(player1.id, game.id, session)
+
+    shown_cards_player1 = session.query(FigureCard).filter(
+        FigureCard.player_id == player1.id,
+        FigureCard.game_id == game.id,
+        FigureCard.show == True
+    ).all()
+    #Reviso que el jugador no obtuvo mas cartas del mazo
+    assert len(shown_cards_player1) == 3
+    
+@pytest.mark.integration_test
+def test_grab_figure_cards_this_should_never_happen(figure_cards_repository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    game_state = GameState(game_id = game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+    
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add_all([player1])
+    session.commit()
+    
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, type=typeEnum.FIG01 , blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = True),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+    ])
+    session.commit()
+    
+    figure_cards_repository.grab_figure_cards(player1.id, game.id, session)
+
+    shown_cards_player1 = session.query(FigureCard).filter(
+        FigureCard.player_id == player1.id,
+        FigureCard.game_id == game.id,
+        FigureCard.show == True
+    ).all()
+    
+    
+    assert len(shown_cards_player1) == 3
 
 @pytest.mark.integration_test
 def test_grab_figure_cards_no_player(figure_cards_repository, session):

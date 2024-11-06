@@ -49,8 +49,8 @@ def setup_dependency_override(mock_fig_cards_logic, mock_repo, mock_db):
 
 def test_get_figure_cards_success(mock_repo, mock_db):
     mock_figure_cards = [
-        FigureCardSchema(id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY, player_id=1, game_id=1),
-        FigureCardSchema(id=2, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.HARD, player_id=1, game_id=1)
+        FigureCardSchema(id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY, player_id=1, game_id=1, blocked = False),
+        FigureCardSchema(id=2, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.HARD, player_id=1, game_id=1, blocked = False)
     ]
     mock_repo.get_figure_cards.return_value = mock_figure_cards
 
@@ -76,7 +76,7 @@ def test_get_figure_cards_not_found(mock_repo, mock_db):
 
 def test_get_figure_card_by_id_success(mock_repo, mock_db):
     mock_figure_card = FigureCardSchema(
-        id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1)
+        id=1, type=typeEnum.FIG01, show=True, difficulty=DifficultyEnum.EASY , player_id=1, game_id=1, blocked = False)
     mock_repo.get_figure_card_by_id.return_value = mock_figure_card
 
     response = client.get("/deck/figure/1/1/1")
