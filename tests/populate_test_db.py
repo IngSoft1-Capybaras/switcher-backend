@@ -56,8 +56,9 @@ def create_movement_card(description, used, player, game, type, session):
 
     return card
 
-def create_figure_card(show, difficulty, player, type, game, session):
-    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, type=type, game_id=game.id, blocked= False)
+
+def create_figure_card(show, difficulty, player, type, game, blocked, session):
+    card = FigureCard(show=show, difficulty=difficulty, player_id=player.id, type=type, game_id=game.id, blocked=blocked)
     session.add(card)
     # session.flush()
     session.commit()
@@ -101,7 +102,7 @@ def populate_database():
         # Create figure cards
         for player in players:
             for _ in range(3):
-                create_figure_card(False, random.choice(list(DifficultyEnum)), player, random.choice(list(figTypeEnum)), game, session)
+                create_figure_card(False, random.choice(list(DifficultyEnum)), player, random.choice(list(figTypeEnum)), game, False, session)
 
         # Commit the session
         session.commit()

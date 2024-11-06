@@ -12,6 +12,7 @@ class FigureCardSchema(BaseModel):
     difficulty: Optional[DifficultyEnum] = None
     player_id: int
     game_id :  int
+    blocked: bool
     
     
     model_config = ConfigDict(from_attributes = True)

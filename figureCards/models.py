@@ -48,7 +48,6 @@ class FigureCard(Base):
     game_id = Column(Integer, ForeignKey('games.id', ondelete='CASCADE'), nullable=False)
     blocked = Column(Boolean, nullable=False)
 
-
     player = relationship("Player", back_populates="figure_cards")
     game = relationship("Game", back_populates="figure_cards")
 

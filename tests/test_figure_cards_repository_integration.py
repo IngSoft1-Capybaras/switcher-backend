@@ -78,7 +78,7 @@ def test_create_new_figure_card(figure_cards_repository: FigureCardsRepository, 
                                                FigureCard.player_id == 1).count()
 
     
-    figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, session)
+    figure_cards_repository.create_figure_card(1, 1, typeEnum.FIG04, True, False, session)
     
     assert session.query(FigureCard).filter(FigureCard.player_id == 1).count() == N_cards + 1
     
@@ -146,7 +146,7 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
         FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
         FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
         FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, type=typeEnum.FIG01, blocked = False)
     ])
     session.commit()
     
