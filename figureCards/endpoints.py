@@ -35,14 +35,8 @@ async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLo
 
 
 # bloquear una carta de figura
-@figure_cards_router.post("/deck/figure/{game_id}/{player_id}/{figure_card_id}/block_card", status_code = status.HTTP_201_CREATED)
-async def block_figure_card(game_id: int, player_id: int, figure_card_id: int, repo: FigureCardsRepository = Depends(get_figure_cards_repository), 
-                            logic: FigureCardsLogic = Depends(get_fig_cards_logic), db: Session = Depends(get_db)):
-    valid = logic.check_valid_block(game_id, player_id, figure_card_id, db)
-    if valid:
-        message = {"type": f"{game_id}:BLOCK_CARD"}
-        await manager.broadcast(message)
-
-        return repo.block_figure_card(game_id, figure_card_id, db)
-    else:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
+@figure_cards_router.post("/deck/figure/{game_id}/{player_id}/{figure_card_id}/block_card", status_code = status.HTTP_200_OK)
+async def block_figure_card(game_id: int, player_id: int, figure_card_id: int, logic: FigureCardsLogic = Depends(get_fig_cards_logic), 
+                            db: Session = Depends(get_db)):
+    
+    return await logic.block_figure_card(game_id, player_id, figure_card_id, db)
