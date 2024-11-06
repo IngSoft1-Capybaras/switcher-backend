@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 from sqlalchemy.orm import Session
 
@@ -11,7 +11,9 @@ from player.player_logic import PlayerLogic
 from board.schemas import ColorEnum, BoxOut, BoardAndBoxesOut
 
 from gameState.schemas import GameStateInDB, StateEnum
-from fastapi import HTTPException
+from fastapi import HTTPException, status
+
+from connection_manager import ConnectionManager
 
 @pytest.fixture
 def mock_db():
@@ -43,8 +45,16 @@ def fig_cards_logic(player_repo, fig_card_repo, game_repo, game_state_repo, boar
     return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=fig_card_repo, game_repo=game_repo, game_state_repo=game_state_repo, board_repo=board_repo)
 
 @pytest.fixture
+def mock_fig_cards_logic():
+    return MagicMock(spec=FigureCardsLogic)
+
+@pytest.fixture
 def player_logic(player_repo):
     return PlayerLogic(player_repo= player_repo)
+
+@pytest.fixture
+def mock_manager():
+    return MagicMock(spec=ConnectionManager)
 
 def test_create_fig_deck(fig_cards_logic, player_logic):
     mock_session = MagicMock()
@@ -366,3 +376,52 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
 
     is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
     assert is_valid
+
+
+@pytest.mark.asyncio
+async def test_block_figure_card_success(fig_cards_logic, mock_manager, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+    
+    fig_cards_logic.check_valid_block = MagicMock(return_value=True)
+    
+    with patch('connection_manager.ConnectionManager.broadcast', new_callable=AsyncMock) as mock_broadcast:
+        fig_cards_logic.fig_card_repo.block_figure_card = MagicMock()
+        
+        await fig_cards_logic.block_figure_card(game_id, player_id, figure_card_id, mock_db)
+        
+        fig_cards_logic.check_valid_block.assert_called_once_with(
+            game_id, player_id, figure_card_id, mock_db
+        )
+        
+        mock_broadcast.assert_called_once_with({"type": f"{game_id}:BLOCK_CARD"})
+        
+        fig_cards_logic.fig_card_repo.block_figure_card.assert_called_once_with(
+            game_id, figure_card_id, mock_db
+        )
+
+@pytest.mark.asyncio
+async def test_block_figure_card_invalid_block(fig_cards_logic, mock_manager, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+    
+    fig_cards_logic.check_valid_block = MagicMock(return_value=False)
+    
+    with patch('connection_manager.ConnectionManager.broadcast', new_callable=AsyncMock) as mock_broadcast:
+        fig_cards_logic.fig_card_repo.block_figure_card = MagicMock()
+        
+        with pytest.raises(HTTPException) as exc_info:
+            await fig_cards_logic.block_figure_card(game_id, player_id, figure_card_id, mock_db)
+        
+        assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+        assert exc_info.value.detail == "Invalid blocking"
+        
+        fig_cards_logic.check_valid_block.assert_called_once_with(
+            game_id, player_id, figure_card_id, mock_db
+        )
+        
+        mock_broadcast.assert_not_called()
+        
+        fig_cards_logic.fig_card_repo.block_figure_card.assert_not_called()
