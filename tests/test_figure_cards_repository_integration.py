@@ -225,3 +225,50 @@ def test_discard_inexistent_figure_card(figure_cards_repository, session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"There no figure card associated with this id {figure_card_id}"
+
+
+@pytest.mark.integration_test
+def test_unblock_figure_card(figure_cards_repository: FigureCardsRepository, session: Session):
+    game = Game(name="My Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+
+    figure_card = FigureCard(player_id=player.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=True)
+    session.add(figure_card)
+    session.commit()
+
+    response = figure_cards_repository.unblock_figure_card(figure_card.id, session)
+
+    assert response == {"message": "The figure card was successfully unblocked"}
+
+    unblocked_card = session.query(FigureCard).filter(FigureCard.id == figure_card.id).one()
+    assert unblocked_card.blocked == False
+
+
+@pytest.mark.integration_test
+def test_unblock_figure_card_not_found(figure_cards_repository: FigureCardsRepository, session: Session):
+    game = Game(name="My Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+    
+    with pytest.raises(HTTPException) as exc_info:
+        figure_cards_repository.unblock_figure_card(999, session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Figure card not found"

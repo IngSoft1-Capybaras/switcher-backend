@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
 
 from figureCards.figure_cards_logic import FigureCardsLogic
-from figureCards.models import typeEnum, DirectionEnum
+from figureCards.models import typeEnum, DirectionEnum, FigureCard
 
 from player.player_logic import PlayerLogic
 
@@ -308,3 +308,71 @@ def test_check_game_in_progress_game_playing(fig_cards_logic):
     result = fig_cards_logic.check_game_in_progress(game_id, mock_db)
 
     assert result is None
+    
+def test_check_need_to_unblock_card_one_card_blocked(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
+        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=True)
+    ]
+
+    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_called_once_with(1, mock_db)
+
+def test_check_need_to_unblock_card_one_card_not_blocked(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
+        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
+    ]
+
+    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    
+    
+def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
+        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=True),
+        FigureCard(id=2, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
+    ]
+
+    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    
+
+def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
+        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False),
+        FigureCard(id=2, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
+    ]
+
+    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+
+
+def test_check_need_to_unblock_no_cards(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = []
+
+    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
