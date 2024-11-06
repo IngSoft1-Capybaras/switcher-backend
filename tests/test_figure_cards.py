@@ -115,13 +115,14 @@ async def test_play_figure_card(mock_fig_cards_logic, mock_db):
 
 def test_block_figure_card(mock_repo, mock_db):
     game_id = 1
+    player_id = 1
     figure_card_id = 1
     
     mock_repo.block_figure_card.return_value = {"message": "The figure cards was successfully blocked"}
 
     with client.websocket_connect("/ws") as websocket:
         response = client.post(
-            f"/deck/figure/{game_id}/{figure_card_id}/block_card/"
+            f"/deck/figure/{game_id}/{player_id}/{figure_card_id}/block_card/"
         )
 
         assert response.status_code == 201
@@ -132,3 +133,17 @@ def test_block_figure_card(mock_repo, mock_db):
 
         mock_repo.block_figure_card.assert_called_once_with(game_id, figure_card_id, mock_db)
         
+
+def test_invalid_block_figure_card(mock_repo, mock_fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+    mock_fig_cards_logic.check_valid_block.return_value = False
+    # mock_repo.block_figure_card.side_effect = HTTPException(status_code=400, detail="Invalid blocking")
+
+    response = client.post(f"/deck/figure/{game_id}/{player_id}/{figure_card_id}/block_card/")
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Invalid blocking"}
+
+    mock_repo.block_figure_card.assert_not_called()
