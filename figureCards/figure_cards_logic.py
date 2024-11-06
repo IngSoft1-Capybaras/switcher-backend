@@ -381,6 +381,25 @@ class FigureCardsLogic:
                     
                     if figure_or_bool is not False:
                         break
+
+    
+    def check_valid_block(self, game_id, player_id, figure_card_id, db) -> bool:
+        figure_card = self.fig_card_repo.get_figure_card_by_id(game_id, player_id, figure_card_id, db)
+        if not figure_card.show:
+            return False
+
+        figure_cards = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+
+        has_blocked = any(card.blocked and card.show for card in figure_cards)
+
+        if has_blocked:
+            return False
+        else:
+            show_figure_cards = sum(1 for card in figure_cards if card.show)
+            if show_figure_cards == 1:
+                return False
+
+        return True
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
