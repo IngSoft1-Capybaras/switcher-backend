@@ -371,9 +371,11 @@ class FigureCardsLogic:
                     
     def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> Union[bool, int]:
         cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+        
+        cards_in_hand = [card for card in cards_left if card.show]
 
-        if len(cards_left) == 1 and cards_left[0].blocked:
-            self.fig_card_repo.unblock_figure_card(cards_left[0].id, db)
+        if len(cards_in_hand) == 1 and cards_in_hand[0].blocked:
+            self.fig_card_repo.unblock_figure_card(cards_in_hand[0].id, db)
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
