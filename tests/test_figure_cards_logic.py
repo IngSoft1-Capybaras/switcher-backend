@@ -308,3 +308,61 @@ def test_check_game_in_progress_game_playing(fig_cards_logic):
     result = fig_cards_logic.check_game_in_progress(game_id, mock_db)
 
     assert result is None
+
+
+def test_check_valid_block_card_not_shown(fig_cards_logic, fig_card_repo, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=False)
+    
+    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    assert not is_valid
+
+
+def test_check_valid_block_card_already_blocked(fig_cards_logic, fig_card_repo, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
+    
+    fig_card_repo.get_figure_cards.return_value = [
+        MagicMock(blocked=True, show=True), 
+        MagicMock(blocked=False, show=True),
+    ]
+
+    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    assert not is_valid
+
+
+def test_check_valid_block_only_one_card_shown(fig_cards_logic, fig_card_repo, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
+    
+    fig_card_repo.get_figure_cards.return_value = [
+        MagicMock(blocked=False, show=True),
+    ]
+
+    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    assert not is_valid
+
+
+def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
+    game_id = 1
+    player_id = 1
+    figure_card_id = 1
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
+    
+    fig_card_repo.get_figure_cards.return_value = [
+        MagicMock(blocked=False, show=True),
+        MagicMock(blocked=False, show=True),
+    ]
+
+    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    assert is_valid
