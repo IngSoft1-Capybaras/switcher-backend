@@ -56,6 +56,7 @@ class FigureCardsRepository:
     
     def grab_figure_cards(self, player_id: int, game_id: int, db: Session):
         
+        grab = True
         try: 
             db.query(Game).filter(Game.id == game_id).one()
         except NoResultFound:
@@ -71,10 +72,12 @@ class FigureCardsRepository:
                                                     FigureCard.show == True
                                                     ).all()
         
-        cards_needed = 3 - len(figure_cards)
-        #pdb.set_trace()
+        if any(card.blocked for card in figure_cards):
+            grab = False
         
-        if cards_needed > 0:
+        cards_needed = 3 - len(figure_cards)
+        
+        if grab and cards_needed > 0:
             hidden_cards = db.query(FigureCard).filter(FigureCard.player_id == player_id, 
                                                         FigureCard.game_id == game_id,
                                                         FigureCard.show == False
