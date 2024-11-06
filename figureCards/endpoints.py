@@ -29,5 +29,8 @@ async def get_figure_card_by_id(game_id: int, player_id: int,
 # Jugar una carta de figura
 @figure_cards_router.post("/deck/figure/play_card")
 async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLogic = Depends(get_fig_cards_logic), db: Session = Depends(get_db)):
-
-    return await logic.play_figure_card(figureInfo, db)
+    response = await logic.play_figure_card(figureInfo, db)
+    
+    logic.check_need_to_unblock_card(figureInfo.game_id, figureInfo.player_id, db)
+        
+    return response

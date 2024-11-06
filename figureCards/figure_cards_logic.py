@@ -369,6 +369,12 @@ class FigureCardsLogic:
                     if figure_or_bool is not False:
                         break
                     
+    def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> Union[bool, int]:
+        cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+
+        if len(cards_left) == 1 and cards_left[0].blocked:
+            self.fig_card_repo.unblock_figure_card(cards_left[0].id, db)
+                    
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
                         player_repo: PlayerRepository = Depends(),

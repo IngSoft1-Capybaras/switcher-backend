@@ -1,6 +1,7 @@
+import sqlalchemy
 from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from .models import FigureCard, typeEnum
 from .schemas import FigureCardSchema
 from player.models import Player
@@ -100,7 +101,17 @@ class FigureCardsRepository:
         db.commit()
 
         return {"message": "The figure cards was successfully discarded"}
-
+    
+    def unblock_figure_card(self, card_id: int, db: Session):
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail="Figure card not found")
+        
+        figure_card.blocked = False
+        db.commit()
+        return {"message": "The figure card was successfully unblocked"}
+    
 
 
 
