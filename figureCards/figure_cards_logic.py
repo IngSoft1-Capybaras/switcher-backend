@@ -1,7 +1,7 @@
 import random
 from typing import Optional, Union
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from board.board_repository import BoardRepository
@@ -20,6 +20,8 @@ from player.player_repository import PlayerRepository
 from .figure_cards_repository import FigureCardsRepository
 from .schemas import PlayFigureCardInput
 from .models import (DirectionEnum, FigurePaths, direction_map, typeEnum)
+
+from connection_manager import manager
 
 SHOW_LIMIT = 3
 
@@ -400,6 +402,18 @@ class FigureCardsLogic:
                 return False
 
         return True
+    
+
+    async def block_figure_card(self, game_id, player_id, figure_card_id, db):
+        valid = self.check_valid_block(game_id, player_id, figure_card_id, db)
+    
+        if valid:
+            message = {"type": f"{game_id}:BLOCK_CARD"}
+            await manager.broadcast(message)
+
+            return self.fig_card_repo.block_figure_card(game_id, figure_card_id, db)
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
