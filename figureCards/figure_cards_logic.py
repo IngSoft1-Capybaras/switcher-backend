@@ -386,11 +386,11 @@ class FigureCardsLogic:
 
     
     def check_valid_block(self, figureInfo: BlockFigureCardInput, db) -> bool:
-        figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
+        figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.blocked_player_id, figureInfo.card_id, db)
         if not figure_card.show:
             return False
 
-        figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.player_id, db)
+        figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.blocked_player_id, db)
 
         has_blocked = any(card.blocked and card.show for card in figure_cards)
 
@@ -411,9 +411,13 @@ class FigureCardsLogic:
         valid = self.check_valid_block(figureInfo, db)
     
         if valid:
-            self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, db)
-            self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, db)
-            message = {"type": f"{figureInfo.game_id}:BLOCK_CARD"}
+            self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, db)
+            self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, db)
+            
+            message = {
+                "type": f"{figureInfo.game_id}:BLOCK_CARD"
+            }
+            
             await manager.broadcast(message)
 
             return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
