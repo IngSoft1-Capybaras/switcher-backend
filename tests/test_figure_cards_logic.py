@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from figureCards.figure_cards_logic import FigureCardsLogic
 from figureCards.models import typeEnum, DirectionEnum
+from figureCards.schemas import BlockFigureCardInput
+
 
 from player.player_logic import PlayerLogic
 
@@ -324,10 +326,17 @@ def test_check_valid_block_card_not_shown(fig_cards_logic, fig_card_repo, mock_d
     game_id = 1
     player_id = 1
     figure_card_id = 1
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
+    
 
     fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=False)
     
-    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert not is_valid
 
 
@@ -335,6 +344,12 @@ def test_check_valid_block_card_already_blocked(fig_cards_logic, fig_card_repo, 
     game_id = 1
     player_id = 1
     figure_card_id = 1
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
 
     fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
     
@@ -343,14 +358,17 @@ def test_check_valid_block_card_already_blocked(fig_cards_logic, fig_card_repo, 
         MagicMock(blocked=False, show=True),
     ]
 
-    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert not is_valid
 
 
 def test_check_valid_block_only_one_card_shown(fig_cards_logic, fig_card_repo, mock_db):
-    game_id = 1
-    player_id = 1
-    figure_card_id = 1
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
 
     fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
     
@@ -358,7 +376,26 @@ def test_check_valid_block_only_one_card_shown(fig_cards_logic, fig_card_repo, m
         MagicMock(blocked=False, show=True),
     ]
 
-    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
+    assert not is_valid
+
+
+def test_check_valid_block_wrong_figure(fig_cards_logic, fig_card_repo, mock_db):
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=2, figure_type=typeEnum.FIG01)]
+    )
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
+    
+    fig_card_repo.get_figure_cards.return_value = [
+        MagicMock(blocked=False, show=True),
+        MagicMock(blocked=False, show=True),
+    ]
+
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert not is_valid
 
 
@@ -366,6 +403,12 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
     game_id = 1
     player_id = 1
     figure_card_id = 1
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
 
     fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
     
@@ -374,7 +417,7 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
         MagicMock(blocked=False, show=True),
     ]
 
-    is_valid = fig_cards_logic.check_valid_block(game_id, player_id, figure_card_id, mock_db)
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert is_valid
 
 
@@ -383,29 +426,40 @@ async def test_block_figure_card_success(fig_cards_logic, mock_manager, mock_db)
     game_id = 1
     player_id = 1
     figure_card_id = 1
-    
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
     fig_cards_logic.check_valid_block = MagicMock(return_value=True)
     
     with patch('connection_manager.ConnectionManager.broadcast', new_callable=AsyncMock) as mock_broadcast:
         fig_cards_logic.fig_card_repo.block_figure_card = MagicMock()
         
-        await fig_cards_logic.block_figure_card(game_id, player_id, figure_card_id, mock_db)
+        await fig_cards_logic.block_figure_card(figureInfo, mock_db)
         
         fig_cards_logic.check_valid_block.assert_called_once_with(
-            game_id, player_id, figure_card_id, mock_db
+            figureInfo, mock_db
         )
         
         mock_broadcast.assert_called_once_with({"type": f"{game_id}:BLOCK_CARD"})
         
         fig_cards_logic.fig_card_repo.block_figure_card.assert_called_once_with(
-            game_id, figure_card_id, mock_db
+            figureInfo.game_id, figureInfo.card_id, mock_db
         )
 
 @pytest.mark.asyncio
-async def test_block_figure_card_invalid_block(fig_cards_logic, mock_manager, mock_db):
+async def test_block_figure_card_invalid_block(fig_cards_logic, mock_db):
     game_id = 1
     player_id = 1
     figure_card_id = 1
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
     
     fig_cards_logic.check_valid_block = MagicMock(return_value=False)
     
@@ -413,13 +467,13 @@ async def test_block_figure_card_invalid_block(fig_cards_logic, mock_manager, mo
         fig_cards_logic.fig_card_repo.block_figure_card = MagicMock()
         
         with pytest.raises(HTTPException) as exc_info:
-            await fig_cards_logic.block_figure_card(game_id, player_id, figure_card_id, mock_db)
+            await fig_cards_logic.block_figure_card(figureInfo, mock_db)
         
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         assert exc_info.value.detail == "Invalid blocking"
         
         fig_cards_logic.check_valid_block.assert_called_once_with(
-            game_id, player_id, figure_card_id, mock_db
+            figureInfo, mock_db
         )
         
         mock_broadcast.assert_not_called()
