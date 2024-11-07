@@ -282,6 +282,8 @@ class FigureCardsLogic:
             return {"message": "The figure card does not belong to the player"}
         if not figure_card.show:
             return {"message": "The card is not shown"}
+        if figure_card.blocked:
+            return {"message": "CARD BLOCKED!!!"}
 
         # lets modify the existing board to have a figure to test this validation
         # board = self.modifiyBoardTest(board, db)

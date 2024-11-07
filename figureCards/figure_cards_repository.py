@@ -50,7 +50,7 @@ class FigureCardsRepository:
             show=show,
             game_id= game_id,
             player_id=player_id,
-            blocked=blocked,
+            blocked=blocked, #cambiar  a false
             soft_blocked = False
         )
         db.add(new_card)
