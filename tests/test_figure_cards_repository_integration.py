@@ -100,15 +100,15 @@ def test_grab_figure_cards(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player2.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG02)
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, soft_blocked=False,type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player2.id, game_id=game.id, show=True, blocked=False, soft_blocked=False,type=typeEnum.FIG02)
     ])
     session.commit()
     
@@ -139,14 +139,14 @@ def test_grab_figure_cards_none_needed(figure_cards_repository, session):
     session.commit()
     
     session.add_all([
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
-        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=True, blocked=False, soft_blocked=False, type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False,  type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False,  type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False,  type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False,  type=typeEnum.FIG01),
+        FigureCard(player_id=player1.id, game_id=game.id, show=False, blocked=False,soft_blocked=False,  type=typeEnum.FIG01),
     ])
     session.commit()
     
@@ -228,7 +228,7 @@ def test_discard_inexistent_figure_card(figure_cards_repository, session):
 
 
 @pytest.mark.integration_test
-def test_unblock_figure_card(figure_cards_repository: FigureCardsRepository, session: Session):
+def test_unblock_figure_card(figure_cards_repository: FigureCardsRepository, session):
     game = Game(name="My Game", max_players=4, min_players=2)
     session.add(game)
     session.commit()
@@ -241,7 +241,7 @@ def test_unblock_figure_card(figure_cards_repository: FigureCardsRepository, ses
     session.add(player)
     session.commit()
 
-    figure_card = FigureCard(player_id=player.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=True)
+    figure_card = FigureCard(player_id=player.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=True, soft_blocked=False)
     session.add(figure_card)
     session.commit()
 
@@ -254,7 +254,7 @@ def test_unblock_figure_card(figure_cards_repository: FigureCardsRepository, ses
 
 
 @pytest.mark.integration_test
-def test_unblock_figure_card_not_found(figure_cards_repository: FigureCardsRepository, session: Session):
+def test_unblock_figure_card_not_found(figure_cards_repository: FigureCardsRepository, session):
     game = Game(name="My Game", max_players=4, min_players=2)
     session.add(game)
     session.commit()
@@ -269,6 +269,51 @@ def test_unblock_figure_card_not_found(figure_cards_repository: FigureCardsRepos
     
     with pytest.raises(HTTPException) as exc_info:
         figure_cards_repository.unblock_figure_card(999, session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Figure card not found"
+    
+@pytest.mark.integration_test
+def test_soft_block_figure_card(figure_cards_repository: FigureCardsRepository, session):
+    game = Game(name="My Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+
+    figure_card = FigureCard(player_id=player.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=False, soft_blocked=False)
+    session.add(figure_card)
+    session.commit()
+
+    figure_cards_repository.soft_block_figure_card(figure_card.id, session)
+
+
+    unblocked_card = session.query(FigureCard).filter(FigureCard.id == figure_card.id).one()
+    assert unblocked_card.soft_blocked == True
+
+
+@pytest.mark.integration_test
+def test_soft_block_figure_card_not_found(figure_cards_repository: FigureCardsRepository, session):
+    game = Game(name="My Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player = Player(name="Player", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    session.add(player)
+    session.commit()
+    
+    with pytest.raises(HTTPException) as exc_info:
+        figure_cards_repository.soft_block_figure_card(999, session)
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Figure card not found"

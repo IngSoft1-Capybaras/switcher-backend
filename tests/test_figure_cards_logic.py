@@ -321,6 +321,8 @@ def test_check_need_to_unblock_card_one_card_blocked(fig_cards_logic):
     fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_called_once_with(1, mock_db)
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_called_once_with(1, mock_db)
+
 
 def test_check_need_to_unblock_card_one_card_not_blocked(fig_cards_logic):
     game_id = 1
@@ -334,6 +336,8 @@ def test_check_need_to_unblock_card_one_card_not_blocked(fig_cards_logic):
     fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
+
     
     
 def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
@@ -349,6 +353,8 @@ def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
     fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
+
     
 
 def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
@@ -364,6 +370,7 @@ def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
     fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
 
 
 def test_check_need_to_unblock_no_cards(fig_cards_logic):
@@ -376,3 +383,4 @@ def test_check_need_to_unblock_no_cards(fig_cards_logic):
     fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
