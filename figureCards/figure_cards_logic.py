@@ -389,6 +389,8 @@ class FigureCardsLogic:
 
         if len(cards_in_hand) == 1 and cards_in_hand[0].blocked:
             self.fig_card_repo.unblock_figure_card(cards_in_hand[0].id, db)
+            self.fig_card_repo.soft_block_figure_card(cards_in_hand[0].id, db)
+
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 

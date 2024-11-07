@@ -13,6 +13,7 @@ class FigureCardSchema(BaseModel):
     player_id: int
     game_id :  int
     blocked: bool
+    soft_blocked: bool
     
     
     model_config = ConfigDict(from_attributes = True)

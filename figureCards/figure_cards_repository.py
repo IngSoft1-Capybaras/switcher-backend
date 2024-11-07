@@ -50,7 +50,8 @@ class FigureCardsRepository:
             show=show,
             game_id= game_id,
             player_id=player_id,
-            blocked=blocked
+            blocked=blocked,
+            soft_blocked = False
         )
         db.add(new_card)
         db.commit()
@@ -113,7 +114,14 @@ class FigureCardsRepository:
         db.commit()
         return {"message": "The figure card was successfully unblocked"}
     
-
+    def soft_block_figure_card(self, card_id: int, db: Session):
+        try:
+            figure_card = db.query(FigureCard).filter(FigureCard.id == card_id).one()
+        except NoResultFound:
+            raise HTTPException(status_code=404, detail="Figure card not found")
+        
+        figure_card.soft_blocked = True
+        db.commit()
 
 
 def get_figure_cards_repository(figure_cards_repo: FigureCardsRepository = Depends()) -> FigureCardsRepository:
