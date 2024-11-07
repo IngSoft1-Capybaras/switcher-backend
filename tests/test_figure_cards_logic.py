@@ -43,8 +43,17 @@ def fig_card_repo():
     return MagicMock()
 
 @pytest.fixture
-def fig_cards_logic(player_repo, fig_card_repo, game_repo, game_state_repo, board_repo):
-    return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=fig_card_repo, game_repo=game_repo, game_state_repo=game_state_repo, board_repo=board_repo)
+def mov_card_repo():
+    return MagicMock()
+
+@pytest.fixture
+def partial_mov_repo():
+    return MagicMock()
+
+@pytest.fixture
+def fig_cards_logic(player_repo, fig_card_repo, game_repo, game_state_repo, board_repo, mov_card_repo, partial_mov_repo):
+    return FigureCardsLogic(player_repo=player_repo ,fig_card_repo=fig_card_repo, game_repo=game_repo, game_state_repo=game_state_repo, 
+                            board_repo=board_repo, mov_card_repo=mov_card_repo, partial_mov_repo=partial_mov_repo)
 
 @pytest.fixture
 def mock_fig_cards_logic():
@@ -410,7 +419,7 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
 
-    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True)
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True, type=typeEnum.FIG01)
     
     fig_card_repo.get_figure_cards.return_value = [
         MagicMock(blocked=False, show=True),
@@ -422,7 +431,7 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
 
 
 @pytest.mark.asyncio
-async def test_block_figure_card_success(fig_cards_logic, mock_manager, mock_db):
+async def test_block_figure_card_success(fig_cards_logic, mock_db):
     game_id = 1
     player_id = 1
     figure_card_id = 1
@@ -448,6 +457,8 @@ async def test_block_figure_card_success(fig_cards_logic, mock_manager, mock_db)
         fig_cards_logic.fig_card_repo.block_figure_card.assert_called_once_with(
             figureInfo.game_id, figureInfo.card_id, mock_db
         )
+        fig_cards_logic.partial_mov_repo.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, mock_db)
+        fig_cards_logic.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, mock_db)
 
 @pytest.mark.asyncio
 async def test_block_figure_card_invalid_block(fig_cards_logic, mock_db):
