@@ -18,7 +18,7 @@ from partial_movement.partial_movement_repository import PartialMovementReposito
 from player.player_repository import PlayerRepository
 
 from .figure_cards_repository import FigureCardsRepository
-from .schemas import PlayFigureCardInput
+from .schemas import PlayFigureCardInput, BlockFigureCardInput
 from .models import (DirectionEnum, FigurePaths, direction_map, typeEnum)
 
 from connection_manager import manager
@@ -385,33 +385,36 @@ class FigureCardsLogic:
                         break
 
     
-    def check_valid_block(self, game_id, player_id, figure_card_id, db) -> bool:
-        figure_card = self.fig_card_repo.get_figure_card_by_id(game_id, player_id, figure_card_id, db)
+    def check_valid_block(self, figureInfo: BlockFigureCardInput, db) -> bool:
+        figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
         if not figure_card.show:
             return False
 
-        figure_cards = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+        figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.player_id, db)
 
         has_blocked = any(card.blocked and card.show for card in figure_cards)
 
         if has_blocked:
             return False
-        else:
-            show_figure_cards = sum(1 for card in figure_cards if card.show)
-            if show_figure_cards == 1:
-                return False
+        
+        show_figure_cards = sum(1 for card in figure_cards if card.show)
+        if show_figure_cards == 1:
+            return False
 
+        if figureInfo.figure[0].figure_id != figureInfo.card_id:
+            return False
+        
         return True
     
 
-    async def block_figure_card(self, game_id, player_id, figure_card_id, db):
-        valid = self.check_valid_block(game_id, player_id, figure_card_id, db)
+    async def block_figure_card(self, figureInfo: BlockFigureCardInput, db):
+        valid = self.check_valid_block(figureInfo, db)
     
         if valid:
-            message = {"type": f"{game_id}:BLOCK_CARD"}
+            message = {"type": f"{figureInfo.game_id}:BLOCK_CARD"}
             await manager.broadcast(message)
 
-            return self.fig_card_repo.block_figure_card(game_id, figure_card_id, db)
+            return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
                     
