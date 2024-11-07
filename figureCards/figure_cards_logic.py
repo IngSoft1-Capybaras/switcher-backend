@@ -289,6 +289,8 @@ class FigureCardsLogic:
             return {"message": "The figure card does not belong to the player"}
         if not figure_card.show:
             return {"message": "The card is not shown"}
+        if figure_card.blocked:
+            return {"message": "CARD BLOCKED!!!"}
 
         # lets modify the existing board to have a figure to test this validation
         # board = self.modifiyBoardTest(board, db)
@@ -435,6 +437,16 @@ class FigureCardsLogic:
             return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
+                    
+    def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> Union[bool, int]:
+        cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+        
+        cards_in_hand = [card for card in cards_left if card.show]
+
+        if len(cards_in_hand) == 1 and cards_in_hand[0].blocked:
+            self.fig_card_repo.unblock_figure_card(cards_in_hand[0].id, db)
+            self.fig_card_repo.soft_block_figure_card(cards_in_hand[0].id, db)
+
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
