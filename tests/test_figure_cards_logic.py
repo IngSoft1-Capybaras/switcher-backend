@@ -332,12 +332,10 @@ def test_check_game_in_progress_game_playing(fig_cards_logic):
 
 
 def test_check_valid_block_card_not_shown(fig_cards_logic, fig_card_repo, mock_db):
-    game_id = 1
-    player_id = 1
-    figure_card_id = 1
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
@@ -350,12 +348,10 @@ def test_check_valid_block_card_not_shown(fig_cards_logic, fig_card_repo, mock_d
 
 
 def test_check_valid_block_card_already_blocked(fig_cards_logic, fig_card_repo, mock_db):
-    game_id = 1
-    player_id = 1
-    figure_card_id = 1
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
@@ -374,7 +370,8 @@ def test_check_valid_block_card_already_blocked(fig_cards_logic, fig_card_repo, 
 def test_check_valid_block_only_one_card_shown(fig_cards_logic, fig_card_repo, mock_db):
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
@@ -392,7 +389,8 @@ def test_check_valid_block_only_one_card_shown(fig_cards_logic, fig_card_repo, m
 def test_check_valid_block_wrong_figure(fig_cards_logic, fig_card_repo, mock_db):
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=2, figure_type=typeEnum.FIG01)]
     )
@@ -403,18 +401,22 @@ def test_check_valid_block_wrong_figure(fig_cards_logic, fig_card_repo, mock_db)
         MagicMock(blocked=False, show=True),
         MagicMock(blocked=False, show=True),
     ]
-
+    
+    fig_cards_logic.board_repo.get_configured_board.return_value = MagicMock()
+    fig_cards_logic.check_valid_figure = MagicMock()
+    fig_cards_logic.check_valid_figure.return_value = False
+    mock_game_state = MagicMock(state="PLAYING")
+    mock_game = MagicMock(game_state=mock_game_state)
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_game
     is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert not is_valid
 
 
 def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
-    game_id = 1
-    player_id = 1
-    figure_card_id = 1
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
@@ -426,6 +428,13 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
         MagicMock(blocked=False, show=True),
     ]
 
+    fig_cards_logic.board_repo.get_configured_board.return_value = MagicMock()
+    fig_cards_logic.check_valid_figure = MagicMock()
+    fig_cards_logic.check_valid_figure.return_value = True
+    mock_game_state = MagicMock(state="PLAYING")
+    mock_game = MagicMock(game_state=mock_game_state)
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_game
+
     is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert is_valid
 
@@ -433,11 +442,10 @@ def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
 @pytest.mark.asyncio
 async def test_block_figure_card_success(fig_cards_logic, mock_db):
     game_id = 1
-    player_id = 1
-    figure_card_id = 1
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
@@ -457,17 +465,16 @@ async def test_block_figure_card_success(fig_cards_logic, mock_db):
         fig_cards_logic.fig_card_repo.block_figure_card.assert_called_once_with(
             figureInfo.game_id, figureInfo.card_id, mock_db
         )
-        fig_cards_logic.partial_mov_repo.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, mock_db)
-        fig_cards_logic.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, mock_db)
+        fig_cards_logic.partial_mov_repo.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, mock_db)
+        fig_cards_logic.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, mock_db)
+
 
 @pytest.mark.asyncio
 async def test_block_figure_card_invalid_block(fig_cards_logic, mock_db):
-    game_id = 1
-    player_id = 1
-    figure_card_id = 1
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )

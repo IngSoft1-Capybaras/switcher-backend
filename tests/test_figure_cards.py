@@ -117,7 +117,8 @@ async def test_play_figure_card(mock_fig_cards_logic, mock_db):
 def test_block_figure_card(mock_fig_cards_logic, mock_db):
     figureInfo = BlockFigureCardInput(
         game_id=1,
-        player_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
         card_id=1,
         figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
     )
