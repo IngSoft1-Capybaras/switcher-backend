@@ -401,7 +401,7 @@ class FigureCardsLogic:
         if show_figure_cards == 1:
             return False
 
-        if figureInfo.figure[0].figure_id != figureInfo.card_id:
+        if figureInfo.figure[0].figure_type != figure_card.type:
             return False
         
         return True
@@ -411,6 +411,8 @@ class FigureCardsLogic:
         valid = self.check_valid_block(figureInfo, db)
     
         if valid:
+            self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, db)
+            self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, db)
             message = {"type": f"{figureInfo.game_id}:BLOCK_CARD"}
             await manager.broadcast(message)
 
