@@ -26,7 +26,8 @@ class PlayFigureCardInput(BaseModel):
 
 
 class BlockFigureCardInput(BaseModel):
-    player_id: int
+    blocked_player_id: int
+    blocker_player_id: int
     game_id: int
     card_id: int
     figure: List[BoxOut]
