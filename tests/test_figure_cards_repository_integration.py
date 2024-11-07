@@ -336,3 +336,34 @@ def test_discard_inexistent_figure_card(figure_cards_repository, session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"There no figure card associated with this id {figure_card_id}"
+
+
+@pytest.mark.integration_test
+def test_block_figure_card(figure_cards_repository, session):
+    game_id = 1
+    figure_card_id = 2
+
+    unblocked_card = session.query(FigureCard).filter(FigureCard.game_id == game_id, 
+                                                FigureCard.id == figure_card_id).one()
+    
+    unblocked = unblocked_card.blocked
+    response = figure_cards_repository.block_figure_card(game_id, figure_card_id, session)
+
+    blocked_card = session.query(FigureCard).filter(FigureCard.game_id == game_id, 
+                                                FigureCard.id == figure_card_id).one()
+    
+    # me fijo que sus valores de blocked sean distintos
+    assert unblocked != blocked_card.blocked
+    assert response == {"message": "The figure cards was successfully blocked"}
+
+
+@pytest.mark.integration_test
+def test_block_inexistent_figure_card(figure_cards_repository, session):
+    game_id = 1
+    figure_card_id = 999
+    
+    with pytest.raises(HTTPException) as exc_info:
+        figure_cards_repository.block_figure_card(game_id, figure_card_id, session)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == f"There no figure card associated with id {figure_card_id} in game {game_id}"

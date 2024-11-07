@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from database.db import get_db
 from .figure_cards_repository import FigureCardsRepository, get_figure_cards_repository
 from .figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 from game.game_logic import GameLogic, get_game_logic
-from .schemas import PlayFigureCardInput
+from .schemas import PlayFigureCardInput, BlockFigureCardInput
+from connection_manager import manager
 
 figure_cards_router = APIRouter()
 
@@ -31,3 +32,11 @@ async def get_figure_card_by_id(game_id: int, player_id: int,
 async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLogic = Depends(get_fig_cards_logic), db: Session = Depends(get_db)):
 
     return await logic.play_figure_card(figureInfo, db)
+
+
+# bloquear una carta de figura
+@figure_cards_router.post("/deck/figure/block_card", status_code = status.HTTP_200_OK)
+async def block_figure_card(figureInfo: BlockFigureCardInput, logic: FigureCardsLogic = Depends(get_fig_cards_logic), 
+                            db: Session = Depends(get_db)):
+    
+    return await logic.block_figure_card(figureInfo, db)
