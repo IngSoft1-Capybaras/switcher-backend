@@ -1,7 +1,7 @@
 import random
 from typing import Optional, Union
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from board.board_repository import BoardRepository
@@ -18,8 +18,10 @@ from partial_movement.partial_movement_repository import PartialMovementReposito
 from player.player_repository import PlayerRepository
 
 from .figure_cards_repository import FigureCardsRepository
-from .schemas import PlayFigureCardInput
+from .schemas import PlayFigureCardInput, BlockFigureCardInput
 from .models import (DirectionEnum, FigurePaths, direction_map, typeEnum)
+
+from connection_manager import manager
 
 SHOW_LIMIT = 3
 
@@ -270,6 +272,11 @@ class FigureCardsLogic:
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
 
+        #chequear que no se este adquiriendo una figura del color prohibido
+        if gameState.forbidden_color is not None:
+            if gameState.forbidden_color.name == figureInfo.figure[0].color:
+                return {"message": "No se puede adquirir una figura del color prohibido"}
+
         # chequear que sea el turno del jugador
         if player.id != gameState.current_player:
             return {"message": "It is not the player's turn"}
@@ -297,6 +304,9 @@ class FigureCardsLogic:
             
             self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, db)
             self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, db)
+
+            # Actualizar color prohibido
+            self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
 
             # Avisar por websocket que se jugo una carta de figura
             game_id = figureInfo.game_id
@@ -383,6 +393,50 @@ class FigureCardsLogic:
                     
                     if figure_or_bool is not False:
                         break
+
+    
+    def check_valid_block(self, figureInfo: BlockFigureCardInput, db) -> bool:
+        figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.blocked_player_id, figureInfo.card_id, db)
+        if not figure_card.show:
+            return False
+
+        figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.blocked_player_id, db)
+
+        has_blocked = any(card.blocked and card.show for card in figure_cards)
+
+        if has_blocked:
+            return False
+        
+        show_figure_cards = sum(1 for card in figure_cards if card.show)
+        if show_figure_cards == 1:
+            return False
+
+        # if figureInfo.figure[0].figure_type != figure_card.type:
+        #     return False
+        board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
+
+        if not self.check_valid_figure( figureInfo.figure, figure_card.type, board, db):
+            return False
+
+        return True
+    
+
+    async def block_figure_card(self, figureInfo: BlockFigureCardInput, db):
+        valid = self.check_valid_block(figureInfo, db)
+    
+        if valid:
+            self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, db)
+            self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, db)
+            
+            message = {
+                "type": f"{figureInfo.game_id}:BLOCK_CARD"
+            }
+            
+            await manager.broadcast(message)
+
+            return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
                     
     def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> Union[bool, int]:
         cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)

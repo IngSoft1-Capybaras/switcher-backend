@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 from fastapi import HTTPException
 
+from board.models import ColorEnum
 from gameState.game_state_repository import GameStateRepository
 from gameState.models import GameState, StateEnum
 from game.models import Game
@@ -194,3 +195,11 @@ def test_get_current_player_no_current_player(game_state_repository: GameStateRe
         game_state_repository.get_current_player(res['game'].id, session)
     assert excinfo.value.status_code == 404
     assert "Current player not found" in str(excinfo.value.detail)
+
+@pytest.mark.integration_test
+def test_update_forbidden_color(game_state_repository: GameStateRepository, session):
+
+    game_state_repository.update_forbidden_color(1, "RED", session)
+    game_state = game_state_repository.get_game_state_by_id(1, session)
+    
+    assert game_state.forbidden_color == ColorEnum.RED

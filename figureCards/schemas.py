@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Optional, Tuple
 from pydantic import BaseModel, ConfigDict
 from .models import typeEnum, DifficultyEnum
-from board.schemas import BoxIn
+from board.schemas import BoxIn, BoxOut
 
 # Schema de cartas de figura
 class FigureCardSchema(BaseModel):
@@ -24,3 +24,11 @@ class PlayFigureCardInput(BaseModel):
     game_id: int
     card_id: int
     figure: List[BoxIn]
+
+
+class BlockFigureCardInput(BaseModel):
+    blocked_player_id: int
+    blocker_player_id: int
+    game_id: int
+    card_id: int
+    figure: List[BoxOut]

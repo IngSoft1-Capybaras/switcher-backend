@@ -5,14 +5,15 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from figureCards.figure_cards_repository import FigureCardsRepository
-from figureCards.schemas import FigureCardSchema, PlayFigureCardInput
+from figureCards.schemas import FigureCardSchema, PlayFigureCardInput, BlockFigureCardInput
 from figureCards.models import typeEnum, DifficultyEnum
 from figureCards.figure_cards_logic import FigureCardsLogic, get_fig_cards_logic
 
-from board.schemas import ColorEnum, BoxIn
+from board.schemas import ColorEnum, BoxIn, BoxOut
 
 from database.db import get_db
 from main import app
+
 
 client = TestClient(app)
 
@@ -111,3 +112,24 @@ async def test_play_figure_card(mock_fig_cards_logic, mock_db):
     response = client.post("/deck/figure/play_card", json=figureInfo.model_dump())
 
     assert response.status_code == 200
+
+
+def test_block_figure_card(mock_fig_cards_logic, mock_db):
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
+    
+    mock_fig_cards_logic.block_figure_card.return_value = {"message": "The figure cards was successfully blocked"}
+
+    response = client.post(
+        f"/deck/figure/block_card/", json=figureInfo.model_dump()
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "The figure cards was successfully blocked"}
+
+    mock_fig_cards_logic.block_figure_card.assert_called_once_with(figureInfo, mock_db)
