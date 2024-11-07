@@ -401,9 +401,13 @@ class FigureCardsLogic:
         if show_figure_cards == 1:
             return False
 
-        if figureInfo.figure[0].figure_type != figure_card.type:
+        # if figureInfo.figure[0].figure_type != figure_card.type:
+        #     return False
+        board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
+
+        if not self.check_valid_figure( figureInfo.figure, figure_card.type, board, db):
             return False
-        
+
         return True
     
 
