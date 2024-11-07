@@ -270,6 +270,11 @@ class FigureCardsLogic:
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
 
+        #chequear que no se este adquiriendo una figura del color prohibido
+        if gameState.forbidden_color is not None:
+            if gameState.forbidden_color.name == figureInfo.figure[0].color:
+                return {"message": "No se puede adquirir una figura del color prohibido"}
+
         # chequear que sea el turno del jugador
         if player.id != gameState.current_player:
             return {"message": "It is not the player's turn"}
@@ -295,6 +300,9 @@ class FigureCardsLogic:
             
             self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, db)
             self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, db)
+
+            # Actualizar color prohibido
+            self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
 
             # Avisar por websocket que se jugo una carta de figura
             game_id = figureInfo.game_id

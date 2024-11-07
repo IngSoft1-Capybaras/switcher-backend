@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from game.models import Game
 from gameState.models import GameState, StateEnum
+from board.models import ColorEnum
 
 # Schema del estado de la partida  
 class GameStateInDB(BaseModel):
@@ -10,6 +11,7 @@ class GameStateInDB(BaseModel):
     state        : StateEnum
     game_id       : int
     current_player: Optional[int]
+    forbidden_color: Optional[ColorEnum] = None
     #mazo movimiento falta
 
     model_config = ConfigDict(from_attributes = True)
