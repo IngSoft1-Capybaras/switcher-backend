@@ -314,7 +314,7 @@ class FigureCardsLogic:
             game_logic = get_game_logic(self.game_repo , self.game_state_repo, self.player_repo, self.fig_card_repo)
             if game_logic.check_win_condition_no_figure_cards(figureInfo.game_id, figureInfo.player_id, db):
                 await game_logic.handle_win(game_id, figureInfo.player_id, db)
-            
+            print("HERE")
             message = {
                     "type":f"{game_id}:FIGURE_UPDATE"
                 }
@@ -444,15 +444,18 @@ class FigureCardsLogic:
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
                     
-    def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> Union[bool, int]:
+    def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> bool:
+        unblock = False
         cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
         
         cards_in_hand = [card for card in cards_left if card.show]
 
         if len(cards_in_hand) == 1 and cards_in_hand[0].blocked:
+            unblock = True
             self.fig_card_repo.unblock_figure_card(cards_in_hand[0].id, db)
             self.fig_card_repo.soft_block_figure_card(cards_in_hand[0].id, db)
 
+        return unblock
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 

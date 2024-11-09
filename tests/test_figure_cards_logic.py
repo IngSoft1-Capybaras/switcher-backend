@@ -339,8 +339,9 @@ def test_check_need_to_unblock_card_one_card_blocked(fig_cards_logic):
         FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=True)
     ]
 
-    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+    unblocked = fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
+    assert unblocked
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_called_once_with(1, mock_db)
     fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_called_once_with(1, mock_db)
 
@@ -354,8 +355,9 @@ def test_check_need_to_unblock_card_one_card_not_blocked(fig_cards_logic):
         FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
     ]
 
-    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+    unblocked = fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
+    assert not unblocked
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
     fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
 
@@ -371,10 +373,29 @@ def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
         FigureCard(id=2, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
     ]
 
-    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+    unblocked = fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
 
+    assert not unblocked
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
     fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
+
+    
+def test_check_need_to_unblock_multiple_cards_none_blocked(fig_cards_logic):
+    game_id = 1
+    player_id = 1
+    mock_db = MagicMock(spec=Session)
+
+    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
+        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False),
+        FigureCard(id=2, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
+    ]
+
+    unblocked = fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
+
+    assert not unblocked
+    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
+    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
+
 
 def test_check_need_to_unblock_no_cards(fig_cards_logic):
     game_id = 1

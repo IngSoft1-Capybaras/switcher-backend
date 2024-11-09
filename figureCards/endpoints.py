@@ -1,3 +1,4 @@
+from email import message
 from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 from database.db import get_db
@@ -32,8 +33,13 @@ async def get_figure_card_by_id(game_id: int, player_id: int,
 async def play_figure_card(figureInfo: PlayFigureCardInput, logic: FigureCardsLogic = Depends(get_fig_cards_logic), db: Session = Depends(get_db)):
     response = await logic.play_figure_card(figureInfo, db)
     
-    logic.check_need_to_unblock_card(figureInfo.game_id, figureInfo.player_id, db)
-        
+    unblocked = logic.check_need_to_unblock_card(figureInfo.game_id, figureInfo.player_id, db)
+    
+    if unblocked:
+        message = {
+                    "type":f"{figureInfo.game_id}:UNDOBLOCK_CARD"
+                }
+        await manager.broadcast(message)
     return response
 
 
