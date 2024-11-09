@@ -107,11 +107,38 @@ async def test_play_figure_card(mock_fig_cards_logic, mock_db):
 
     mock_fig_cards_logic.play_figure_card = AsyncMock(return_value={"message": "Figure card played"})
     
-    mock_fig_cards_logic.check_need_to_unblock_card.return_value = None
+    mock_fig_cards_logic.check_need_to_unblock_card.return_value = False
 
     response = client.post("/deck/figure/play_card", json=figureInfo.model_dump())
 
     assert response.status_code == 200
+    
+@pytest.mark.asyncio
+async def test_play_figure_card_unblocked_true(mock_fig_cards_logic, mock_db):
+    figureInfo = PlayFigureCardInput(
+        game_id=1,
+        player_id=1,
+        card_id=1,
+        figure=[{"pos_x": 0, "pos_y": 0, "color": ColorEnum.RED}]
+    )
+
+    mock_fig_cards_logic.play_figure_card = AsyncMock(return_value={"message": "Figure card played"})
+
+    mock_fig_cards_logic.check_need_to_unblock_card.return_value = True
+
+    with client.websocket_connect("/ws") as websocket:
+        response = client.post("/deck/figure/play_card", json=figureInfo.model_dump())
+
+        # Assert the response
+        assert response.status_code == 200
+        assert response.json() == {"message": "Figure card played"}
+
+        mock_fig_cards_logic.play_figure_card.assert_called_once_with(figureInfo, mock_db)
+        mock_fig_cards_logic.check_need_to_unblock_card.assert_called_once_with(figureInfo.game_id, figureInfo.player_id, mock_db)
+
+
+        board_update = websocket.receive_json()
+        assert board_update["type"] == f"{figureInfo.game_id}:UNDOBLOCK_CARD"
 
 
 def test_block_figure_card(mock_fig_cards_logic, mock_db):
