@@ -368,6 +368,9 @@ class FigureCardsLogic:
         figures = []
         figure_or_bool = False
         figure_id = 0
+        
+        possible_paths = self.fig_card_repo.fetch_shown_figure_card_types(game_id, db)
+        filtered_figure_paths = [fp for fp in FigurePaths if fp.type in possible_paths]
 
         for i, row in enumerate(board.boxes):
             for j, box in enumerate(row):
@@ -382,7 +385,7 @@ class FigureCardsLogic:
                 if not self.has_minimum_length(pointer, board, color, db, min_length=4):
                     continue
                 
-                for path in FigurePaths:
+                for path in filtered_figure_paths:
                     for _ in range(4): # 4 rotaciones del path
                         figure_or_bool = self.check_path_blind(path.path, pointer, board, color,figure_id, path.type, db)
                         if figure_or_bool is not False :
