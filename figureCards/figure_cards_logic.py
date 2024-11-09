@@ -1,7 +1,7 @@
 import random
 from typing import Optional, Union
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from board.board_repository import BoardRepository
@@ -18,8 +18,10 @@ from partial_movement.partial_movement_repository import PartialMovementReposito
 from player.player_repository import PlayerRepository
 
 from .figure_cards_repository import FigureCardsRepository
-from .schemas import PlayFigureCardInput
+from .schemas import PlayFigureCardInput, BlockFigureCardInput
 from .models import (DirectionEnum, FigurePaths, direction_map, typeEnum)
+
+from connection_manager import manager
 
 SHOW_LIMIT = 3
 
@@ -71,13 +73,14 @@ class FigureCardsLogic:
             for index, figure in enumerate(player_cards):
                 if index == SHOW_LIMIT:
                     show = False
-                self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, db)
+                self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, False, db)
 
         return {"message": "Figure deck created"}
-    
+
     def check_game_exists(self, game_id: int, db: Session) -> None:
         self.game_repo.get_game_by_id(game_id, db)
     
+
     def check_game_in_progress(self, game_id: int, db: Session) -> None:
         game = self.game_state_repo.get_game_state_by_id(game_id, db)
         
@@ -86,11 +89,13 @@ class FigureCardsLogic:
         if game.state != "PLAYING":
             raise HTTPException(status_code=404, detail="Game not in progress when getting formed figures")
 
+
     def get_board_or_404(self, game_id: int, db: Session) ->  BoardAndBoxesOut :
         board = self.board_repo.get_configured_board(game_id, db)
         if board is None:
             raise HTTPException(status_code=404, detail="Board not found when getting formed figures")
         return board
+
 
     def is_valid_pointer(self, pointer: tuple[int, int]) -> bool:
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
@@ -110,11 +115,11 @@ class FigureCardsLogic:
                 if (box_color == color) and not bel_to_fig:
                     return False
                 
-
             # retrotraer el pointer    
             pointer = pointerBefore
                 
         return True
+
 
     def move_pointer(self, pointer: tuple[int,int], direction: DirectionEnum) -> tuple[int,int]:
         if direction == DirectionEnum.UP:
@@ -127,11 +132,13 @@ class FigureCardsLogic:
             pointer = (pointer[0] + 1, pointer[1])
         return pointer
 
+
     def belongs_to_figure(self, pointer: tuple[int,int], figure: list[BoxOut]) -> bool:
         for fig_box in figure:
             if fig_box.pos_x == pointer[0] and fig_box.pos_y == pointer[1]:
                 return True
         return False
+
 
     def check_path_blind(self, path: list[DirectionEnum], pointer: tuple[int, int], board: BoardAndBoxesOut, color: ColorEnum, figure_id: int, figure_type: str, db: Session, board_figure: Optional[list[BoxOut]] = None) -> Union[bool, list[BoxOut]]:
         result = True
@@ -185,6 +192,7 @@ class FigureCardsLogic:
 
         return result
 
+
     def get_pointer_from_figure(self, figure: list[BoxOut], rot: int) -> tuple[int,int]:
         if len(figure) == 0:
             raise HTTPException(status_code=404, detail="Empty figure")
@@ -224,6 +232,7 @@ class FigureCardsLogic:
 
         return (x,y)
 
+
     def check_valid_figure(self, figure: list[BoxOut], figure_type: str, board: BoardAndBoxesOut, db: Session) -> bool:
         pointer = self.get_pointer_from_figure(figure,0)
         color = board.boxes[pointer[1]][pointer[0]].color
@@ -256,6 +265,7 @@ class FigureCardsLogic:
 
         return result
 
+
     async def play_figure_card(self, figureInfo: PlayFigureCardInput, db: Session) -> dict:
 
         # chequear que el juego exista y este en progreso
@@ -264,6 +274,11 @@ class FigureCardsLogic:
 
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
+
+        #chequear que no se este adquiriendo una figura del color prohibido
+        if gameState.forbidden_color is not None:
+            if gameState.forbidden_color.name == figureInfo.figure[0].color:
+                return {"message": "No se puede adquirir una figura del color prohibido"}
 
         # chequear que sea el turno del jugador
         if player.id != gameState.current_player:
@@ -277,6 +292,8 @@ class FigureCardsLogic:
             return {"message": "The figure card does not belong to the player"}
         if not figure_card.show:
             return {"message": "The card is not shown"}
+        if figure_card.blocked:
+            return {"message": "CARD BLOCKED!!!"}
         
         # chequear que la figura es valida (compara con la figura de la carta)
         valid = self.check_valid_figure( figureInfo.figure, figure_card.type, board, db)
@@ -288,13 +305,16 @@ class FigureCardsLogic:
             self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.player_id, db)
             self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.player_id, db)
 
+            # Actualizar color prohibido
+            self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
+
             # Avisar por websocket que se jugo una carta de figura
             game_id = figureInfo.game_id
 
             game_logic = get_game_logic(self.game_repo , self.game_state_repo, self.player_repo, self.fig_card_repo)
             if game_logic.check_win_condition_no_figure_cards(figureInfo.game_id, figureInfo.player_id, db):
                 await game_logic.handle_win(game_id, figureInfo.player_id, db)
-            
+
             message = {
                     "type":f"{game_id}:FIGURE_UPDATE"
                 }
@@ -305,6 +325,7 @@ class FigureCardsLogic:
             return {"message": "Invalid figure"}
 
     # Logica de resaltar figuras formadas
+
 
     def has_minimum_length(self, pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session, min_length: int) -> bool:
         length = 0
@@ -327,6 +348,7 @@ class FigureCardsLogic:
                         queue.append(next_pointer)
         return False
 
+
     def is_pointer_different_from_formed_figures(self, pointer: tuple[int,int], figures: list[list[BoxOut]]) -> Union[bool, tuple[int,int]]:
         for figure in figures:
             for fig_box in figure:
@@ -334,6 +356,7 @@ class FigureCardsLogic:
                     return False
         return pointer
     
+
     async def get_formed_figures(self, game_id: int, db: Session) -> None:
         # Chequear que el juego exista y este en progreso
         self.check_game_exists(game_id, db)
@@ -373,6 +396,69 @@ class FigureCardsLogic:
                     
                     if figure_or_bool is not False:
                         break
+
+    
+    def check_valid_block(self, figureInfo: BlockFigureCardInput, db) -> bool:
+        figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.blocked_player_id, figureInfo.card_id, db)
+        if not figure_card.show:
+            return False
+
+        figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.blocked_player_id, db)
+
+        has_blocked = any(card.blocked and card.show for card in figure_cards)
+        
+        if has_blocked:
+            return False
+        
+        show_figure_cards = sum(1 for card in figure_cards if card.show)
+        if show_figure_cards == 1:
+            return False
+
+        board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
+
+        if not self.check_valid_figure( figureInfo.figure, figure_card.type, board, db):
+            return False
+
+        gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
+
+        #chequear que no se este bloqueando una figura del color prohibido
+        if gameState.forbidden_color is not None:
+            if gameState.forbidden_color.name == figureInfo.figure[0].color:
+                return False
+
+        return True
+    
+
+    async def block_figure_card(self, figureInfo: BlockFigureCardInput, db):
+        valid = self.check_valid_block(figureInfo, db)
+
+        if valid:
+            self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, db)
+            self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, db)
+            self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
+
+            message = {
+                "type": f"{figureInfo.game_id}:BLOCK_CARD"
+            }
+            
+            await manager.broadcast(message)
+
+            return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blocking")
+                    
+    def check_need_to_unblock_card(self, game_id,  player_id, db: Session) -> bool:
+        unblock = False
+        cards_left = self.fig_card_repo.get_figure_cards(game_id, player_id, db)
+        
+        cards_in_hand = [card for card in cards_left if card.show]
+
+        if len(cards_in_hand) == 1 and cards_in_hand[0].blocked:
+            unblock = True
+            self.fig_card_repo.unblock_figure_card(cards_in_hand[0].id, db)
+            self.fig_card_repo.soft_block_figure_card(cards_in_hand[0].id, db)
+
+        return unblock
                     
 
 def get_fig_cards_logic(fig_card_repo: FigureCardsRepository = Depends(), 
