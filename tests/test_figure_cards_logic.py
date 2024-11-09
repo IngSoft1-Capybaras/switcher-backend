@@ -224,9 +224,9 @@ def test_belongs_to_figure(fig_cards_logic):
     pointer_inside = (1, 1)
     pointer_outside = (3, 3)
 
-    assert fig_cards_logic.belongs_to_figure(pointer_inside, figure) == True
+    assert fig_cards_logic.belongs_to_figure(pointer_inside, figure) is True
 
-    assert fig_cards_logic.belongs_to_figure(pointer_outside, figure) == False
+    assert fig_cards_logic.belongs_to_figure(pointer_outside, figure) is False
 
 
 def test_get_pointer_from_figure(fig_cards_logic):
@@ -376,24 +376,6 @@ def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
     fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
     fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
 
-    
-
-def test_check_need_to_unblock_multiple_cards_one_blocked(fig_cards_logic):
-    game_id = 1
-    player_id = 1
-    mock_db = MagicMock(spec=Session)
-
-    fig_cards_logic.fig_card_repo.get_figure_cards.return_value = [
-        FigureCard(id=1, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False),
-        FigureCard(id=2, player_id=player_id, game_id=game_id, type="FIG01", show=True, blocked=False)
-    ]
-
-    fig_cards_logic.check_need_to_unblock_card(game_id, player_id, mock_db)
-
-    fig_cards_logic.fig_card_repo.unblock_figure_card.assert_not_called()
-    fig_cards_logic.fig_card_repo.soft_block_figure_card.assert_not_called()
-
-
 def test_check_need_to_unblock_no_cards(fig_cards_logic):
     game_id = 1
     player_id = 1
@@ -487,6 +469,32 @@ def test_check_valid_block_wrong_figure(fig_cards_logic, fig_card_repo, mock_db)
     is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
     assert not is_valid
 
+def test_check_valid_block_forbidden_color(fig_cards_logic, fig_card_repo, mock_db):
+    figureInfo = BlockFigureCardInput(
+        game_id=1,
+        blocker_player_id=2,
+        blocked_player_id=1,
+        card_id=1,
+        figure=[ BoxOut(pos_x = 0,  pos_y = 0, color = ColorEnum.RED, highlighted=True, figure_id=1, figure_type=typeEnum.FIG01)]
+    )
+
+    fig_card_repo.get_figure_card_by_id.return_value = MagicMock(show=True, type=typeEnum.FIG01)
+    
+    fig_card_repo.get_figure_cards.return_value = [
+        MagicMock(blocked=False, show=True),
+        MagicMock(blocked=False, show=True),
+    ]
+    
+    fig_cards_logic.board_repo.get_configured_board.return_value = MagicMock()
+    fig_cards_logic.check_valid_figure = MagicMock()
+    fig_cards_logic.check_valid_figure.return_value = True
+    fig_cards_logic.game_state_repo.get_game_state_by_id.return_value = MagicMock(state="PLAYING", forbidden_color=ColorEnum.RED)
+    mock_game_state = MagicMock(state="PLAYING")
+    mock_game = MagicMock(game_state=mock_game_state)
+    mock_db.query.return_value.filter.return_value.first.return_value = mock_game
+
+    is_valid = fig_cards_logic.check_valid_block(figureInfo, mock_db)
+    assert not is_valid
 
 def test_check_valid_block_success(fig_cards_logic, fig_card_repo, mock_db):
     figureInfo = BlockFigureCardInput(
