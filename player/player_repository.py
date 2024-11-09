@@ -133,7 +133,7 @@ class PlayerRepository:
         finally:
             db.close()
             
-        return {"player_id": player_id}
+        return player_id
     
     def assign_winner_of_game(self, game_id: int, player_id: int, db: Session):
         try:

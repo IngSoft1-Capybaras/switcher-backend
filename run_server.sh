@@ -13,6 +13,9 @@ show_help() {
 ENVIRONMENT="development"
 NO_PERSISTENCE=false
 PYTHONPATH=$(pwd)
+SECRET_KEY=capybaras_se_2024
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -52,6 +55,10 @@ sleep 1
 
 # Export environment variable
 export ENVIRONMENT
+export SECRET_KEY=capybaras_se_2024
+export ALGORITHM=HS256
+export ACCESS_TOKEN_EXPIRE_MINUTES=60
+
 
 # Start Uvicorn
 uvicorn main:app --reload

@@ -39,7 +39,10 @@ pip install -r requirements.txt
 ### Levantar el servidor
 ```bash
 export ENVIRONMENT="production"
-export PYTHONPATH="/path/to/this/project/
+export PYTHONPATH="/path/to/this/project/"
+export SECRET_KEY="YOUR_SECRET_KEY"
+export ALGORITHM=HS256
+export ACCESS_TOKEN_EXPIRE_MINUTES=60
 uvicorn main:app --reload
 ```
 

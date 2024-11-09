@@ -12,6 +12,7 @@ from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository, get_game_repository
 from board.board_repository import BoardRepository
 from connection_manager import manager
+from player.player_logic import PlayerLogic, get_player_logic
 
 game_router = APIRouter(
     tags=['Game']
@@ -22,9 +23,18 @@ game_router = APIRouter(
 async def create_game(game: GameCreate, 
                       player: PlayerCreateMatch, 
                       db: Session = Depends(get_db), 
-                      repo: GameRepository = Depends(get_game_repository)):
+                      repo: GameRepository = Depends(get_game_repository),
+                      player_logic: PlayerLogic = Depends(get_player_logic)
+                      ):
     
         res = repo.create_game(game, player, db)
+        
+        player_id = res["player"]["id"]
+
+        token = player_logic.create_access_token(player_id) # esto creo q no
+
+        res["player"]["token"] = token
+
         games_list_update = {
             "type": "GAMES_LIST_UPDATE"
         }

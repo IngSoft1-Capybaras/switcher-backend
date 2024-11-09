@@ -12,6 +12,8 @@ from connection_manager import manager
 
 from game.game_logic import get_game_logic, GameLogic
 from partial_movement.partial_movement_logic import PartialMovementLogic, get_partial_movement_logic
+from player.player_logic import get_player_logic, PlayerLogic
+
 
 player_router = APIRouter()
 
@@ -33,8 +35,19 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
                      repo: PlayerRepository = Depends(), game_logic: GameLogic = Depends(get_game_logic),
                      game_repo: GameRepository = Depends(), game_state_repo: GameStateRepository = Depends(),
                      partial_movement_logic: PartialMovementLogic = Depends(get_partial_movement_logic),
-                     mov_card_repo: MovementCardsRepository = Depends()):
+                     mov_card_repo: MovementCardsRepository = Depends(),
+                     token= Depends(PlayerLogic.verify_token)
+                     ):
     
+    user_data = token  # This is the decoded payload from the JWT token
+    
+    # Check if the player in the token matches the player making the request
+    if int(user_data['sub']) != player_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform this action"
+        )
+
     #Revertir movimientos parciales si es necesario
     reverted_movements = partial_movement_logic.revert_partial_movements(game_id, player_id,db)
 
@@ -82,7 +95,7 @@ async def join_game(game_id: int,
                     db: Session = Depends(get_db), 
                     repo: PlayerRepository = Depends(), 
                     game_repo: GameRepository = Depends(),
-                    game_logic: GameLogic = Depends(get_game_logic)
+                    player_logic: PlayerLogic = Depends(get_player_logic)
                     ):
 
     #Verificar que no se supere el maximo de jugadores
@@ -92,7 +105,10 @@ async def join_game(game_id: int,
     if game.get('max_players') == players_in_game:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="The game is full.")
     
-    res = repo.create_player(game_id, player_name.player_name, db)
+    player_id = repo.create_player(game_id, player_name.player_name, db)
+    token = player_logic.create_access_token(player_id)
+
+    res = { "player_id": player_id , "token": token}
     
     player_list_update = {
             "type":f"{game_id}:GAME_INFO_UPDATE"
@@ -102,6 +118,7 @@ async def join_game(game_id: int,
     player_list_update = {
             "type": "GAMES_LIST_UPDATE"
     }
+
     await manager.broadcast(player_list_update)
 
         

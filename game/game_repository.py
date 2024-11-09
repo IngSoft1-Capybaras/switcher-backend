@@ -92,9 +92,9 @@ class GameRepository:
         db.refresh(player_instance)
 
         return {
-            "game": GameInDB.model_validate(game_instance),
-            "player": PlayerInDB.model_validate(player_instance),
-            "gameState": GameStateInDB.model_validate(game_status_instance)
+            "game": GameInDB.model_validate(game_instance).dict(),
+            "player": PlayerInDB.model_validate(player_instance).dict(),
+            "gameState": GameStateInDB.model_validate(game_status_instance).dict()
         }
     
 
