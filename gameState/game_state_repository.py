@@ -116,7 +116,7 @@ class GameStateRepository:
             detail="Current player not found"
             )
 
-        return {"current_player_id": current_player_id}
+        return {"current_player_id": current_player_id, "forbidden_color": game_state_instance.forbidden_color}
 
     def update_forbidden_color(self, game_id: int, color: str, db : Session):
         game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
