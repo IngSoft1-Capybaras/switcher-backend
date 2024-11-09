@@ -314,7 +314,7 @@ class FigureCardsLogic:
             game_logic = get_game_logic(self.game_repo , self.game_state_repo, self.player_repo, self.fig_card_repo)
             if game_logic.check_win_condition_no_figure_cards(figureInfo.game_id, figureInfo.player_id, db):
                 await game_logic.handle_win(game_id, figureInfo.player_id, db)
-            print("HERE")
+
             message = {
                     "type":f"{game_id}:FIGURE_UPDATE"
                 }
