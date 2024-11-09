@@ -74,7 +74,7 @@ class FigureCardsRepository:
                                                     FigureCard.show == True
                                                     ).all()
         
-        if any(card.blocked for card in figure_cards):
+        if any(card.blocked or card.soft_blocked for card in figure_cards):
             grab = False
         
         cards_needed = 3 - len(figure_cards)
