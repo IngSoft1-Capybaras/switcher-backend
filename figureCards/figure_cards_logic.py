@@ -403,7 +403,7 @@ class FigureCardsLogic:
         figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.blocked_player_id, db)
 
         has_blocked = any(card.blocked and card.show for card in figure_cards)
-
+        
         if has_blocked:
             return False
         
@@ -411,23 +411,29 @@ class FigureCardsLogic:
         if show_figure_cards == 1:
             return False
 
-        # if figureInfo.figure[0].figure_type != figure_card.type:
-        #     return False
         board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
 
         if not self.check_valid_figure( figureInfo.figure, figure_card.type, board, db):
             return False
+
+        gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
+
+        #chequear que no se este bloqueando una figura del color prohibido
+        if gameState.forbidden_color is not None:
+            if gameState.forbidden_color.name == figureInfo.figure[0].color:
+                return False
 
         return True
     
 
     async def block_figure_card(self, figureInfo: BlockFigureCardInput, db):
         valid = self.check_valid_block(figureInfo, db)
-    
+
         if valid:
             self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, db)
             self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, db)
-            
+            self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
+
             message = {
                 "type": f"{figureInfo.game_id}:BLOCK_CARD"
             }
