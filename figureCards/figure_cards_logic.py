@@ -399,7 +399,7 @@ class FigureCardsLogic:
         figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.blocked_player_id, figureInfo.card_id, db)
         if not figure_card.show:
             return False
-        print(f"Figure card: {figure_card}")
+
         figure_cards = self.fig_card_repo.get_figure_cards(figureInfo.game_id, figureInfo.blocked_player_id, db)
 
         has_blocked = any(card.blocked and card.show for card in figure_cards)
@@ -428,7 +428,7 @@ class FigureCardsLogic:
 
     async def block_figure_card(self, figureInfo: BlockFigureCardInput, db):
         valid = self.check_valid_block(figureInfo, db)
-        print(f"Valid block: {valid}")
+
         if valid:
             self.partial_mov_repo.delete_all_partial_movements_by_player(figureInfo.blocker_player_id, db)
             self.mov_card_repo.discard_all_player_partially_used_cards(figureInfo.blocker_player_id, db)
