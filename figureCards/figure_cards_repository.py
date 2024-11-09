@@ -147,7 +147,8 @@ class FigureCardsRepository:
         if not figure_cards:
             return []
         
-        types_list = [figure_card.type for figure_card in figure_cards]
+        types_set = {figure_card.type for figure_card in figure_cards}
+        types_list = list(types_set)
         
         return types_list
 
