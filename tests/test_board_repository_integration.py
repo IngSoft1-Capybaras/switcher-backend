@@ -60,9 +60,24 @@ def test_get_board(board_repository: BoardRepository, session):
     
 
 @pytest.mark.integration_test
-def test_create_new_board_for_existing_game(game_repository: GameRepository, board_repository: BoardRepository, session):
+def test_create_new_board_for_existing_private_game(game_repository: GameRepository, board_repository: BoardRepository, session):
     # creo un nuevo juego sin tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password="password", is_private=True),
+                                PlayerCreateMatch(name="Test Player"),
+                                session)
+    new_game = res.get('game')
+
+    # le creo un tablero al juego
+    board = board_repository.create_new_board(new_game.id, session)
+    
+    assert isinstance(board, BoardOut)
+    assert board.game_id == new_game.id
+
+
+@pytest.mark.integration_test
+def test_create_new_board_for_existing_public_game(game_repository: GameRepository, board_repository: BoardRepository, session):
+    # creo un nuevo juego sin tablero
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -95,7 +110,7 @@ def test_get_configured_board_for_non_existing_game(board_repository: BoardRepos
 @pytest.mark.integration_test
 def test_get_configured_board_for_game_not_started(board_repository: BoardRepository, game_repository: GameRepository, session):
     # creo un nuevo juego sin tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -113,7 +128,7 @@ def test_get_configured_board_for_game_with_no_board(   board_repository: BoardR
                                                         game_state_repository: GameStateRepository, 
                                                         session):
     # creo un nuevo juego sin tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -133,7 +148,7 @@ def test_get_configured_board_for_game_board_with_no_boxes(   board_repository: 
                                                         game_state_repository: GameStateRepository, 
                                                         session):
 
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -151,7 +166,7 @@ def test_get_configured_board_for_game_board_with_no_boxes(   board_repository: 
 @pytest.mark.integration_test
 def test_get_configured_board_for_board_not_configured(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, session):
     # creo un nuevo juego sin tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -172,7 +187,7 @@ def test_get_configured_board_for_board_not_configured(board_repository: BoardRe
 
 @pytest.mark.integration_test
 def test_get_configured_board(board_repository: BoardRepository, game_repository: GameRepository, game_state_repository: GameStateRepository, board_logic: BoardLogic, session):
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     new_game = res.get('game')
@@ -210,7 +225,7 @@ def test_get_not_configured_board(  board_repository: BoardRepository,
                                     session):
 
     # crear partida sin tablero configurado
-    new_game = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    new_game = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session).get('game')
 
@@ -240,7 +255,7 @@ def test_add_box_to_existing_board(board_repository: BoardRepository, session):
 @pytest.mark.integration_test
 def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRepository, session):
     # Crear una partida y un tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     game = res.get('game')
@@ -271,7 +286,7 @@ def test_switch_boxes(game_repository: GameRepository, board_repository: BoardRe
 @pytest.mark.integration_test
 def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, game_repository: GameRepository, session):
     # Crear una partida y un tablero
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     game = res.get('game')
@@ -293,7 +308,7 @@ def test_switch_boxes_inexistent_box_from(board_repository: BoardRepository, gam
 
 @pytest.mark.integration_test
 def test_switch_boxes_inexistent_box_to(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     game = res.get('game')
@@ -331,7 +346,7 @@ def test_switch_boxes_inexistent_game(board_repository: BoardRepository, session
     
 @pytest.mark.integration_test
 def test_get_box_by_position(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     game = res.get('game')
@@ -348,7 +363,7 @@ def test_get_box_by_position(board_repository: BoardRepository, game_repository:
     
 @pytest.mark.integration_test
 def test_get_box_by_position_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     game = res.get('game')
@@ -363,7 +378,7 @@ def test_get_box_by_position_no_box(board_repository: BoardRepository, game_repo
 
 @pytest.mark.integration_test
 def test_highlight_box(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -379,7 +394,7 @@ def test_highlight_box(board_repository: BoardRepository, game_repository: GameR
     
 @pytest.mark.integration_test
 def test_highlight_box_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -393,7 +408,7 @@ def test_highlight_box_no_box(board_repository: BoardRepository, game_repository
 
 @pytest.mark.integration_test
 def test_reset_highlight_for_all_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -420,7 +435,7 @@ def test_reset_highlight_for_all_boxes(board_repository: BoardRepository, game_r
 
 @pytest.mark.integration_test
 def test_reset_highlight_for_all_boxes_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -435,7 +450,7 @@ def test_reset_highlight_for_all_boxes_no_boxes(board_repository: BoardRepositor
 
 @pytest.mark.integration_test
 def test_update_figure_id_box(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -455,7 +470,7 @@ def test_update_figure_id_box(board_repository: BoardRepository, game_repository
 @pytest.mark.integration_test
 def test_update_figure_id_box_no_box(board_repository: BoardRepository, game_repository: GameRepository, session):
     # Setup: Create a game and a board
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -473,7 +488,7 @@ def test_update_figure_id_box_no_box(board_repository: BoardRepository, game_rep
 
 @pytest.mark.integration_test
 def test_reset_figure_for_all_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -507,7 +522,7 @@ def test_reset_figure_for_all_boxes(board_repository: BoardRepository, game_repo
     
 @pytest.mark.integration_test
 def test_reset_figure_for_all_boxes_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -523,7 +538,7 @@ def test_reset_figure_for_all_boxes_no_boxes(board_repository: BoardRepository, 
 @pytest.mark.integration_test
 def test_get_figures(board_repository: BoardRepository, game_repository: GameRepository, session: Session):
 
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')
@@ -548,7 +563,7 @@ def test_get_figures(board_repository: BoardRepository, game_repository: GameRep
 @pytest.mark.integration_test
 def test_get_figures_no_boxes(board_repository: BoardRepository, game_repository: GameRepository, session: Session):
 
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2),
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False),
                                       PlayerCreateMatch(name="Test Player"),
                                       session)
     game = res.get('game')

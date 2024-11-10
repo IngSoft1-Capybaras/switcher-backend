@@ -565,8 +565,10 @@ async def test_block_figure_card_success(fig_cards_logic, mock_db):
             figureInfo, mock_db
         )
         
-        mock_broadcast.assert_called_once_with({"type": f"{game_id}:BLOCK_CARD", 'type': f'{game_id}:BOARD_UPDATE'} )
+        mock_broadcast.assert_any_call({"type": f"{game_id}:BLOCK_CARD"})
         
+        mock_broadcast.assert_any_call({"type": f"{game_id}:BOARD_UPDATE"})
+
         fig_cards_logic.fig_card_repo.block_figure_card.assert_called_once_with(
             figureInfo.game_id, figureInfo.card_id, mock_db
         )
