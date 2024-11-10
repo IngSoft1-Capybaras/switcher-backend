@@ -314,7 +314,7 @@ class FigureCardsLogic:
             game_logic = get_game_logic(self.game_repo , self.game_state_repo, self.player_repo, self.fig_card_repo)
             if game_logic.check_win_condition_no_figure_cards(figureInfo.game_id, figureInfo.player_id, db):
                 await game_logic.handle_win(game_id, figureInfo.player_id, db)
-            print("HERE")
+
             message = {
                     "type":f"{game_id}:FIGURE_UPDATE"
                 }
@@ -368,6 +368,9 @@ class FigureCardsLogic:
         figures = []
         figure_or_bool = False
         figure_id = 0
+        
+        possible_paths = self.fig_card_repo.fetch_shown_figure_card_types(game_id, db)
+        filtered_figure_paths = [fp for fp in FigurePaths if fp.type in possible_paths]
 
         for i, row in enumerate(board.boxes):
             for j, box in enumerate(row):
@@ -382,7 +385,7 @@ class FigureCardsLogic:
                 if not self.has_minimum_length(pointer, board, color, db, min_length=4):
                     continue
                 
-                for path in FigurePaths:
+                for path in filtered_figure_paths:
                     for _ in range(4): # 4 rotaciones del path
                         figure_or_bool = self.check_path_blind(path.path, pointer, board, color,figure_id, path.type, db)
                         if figure_or_bool is not False :
@@ -435,7 +438,8 @@ class FigureCardsLogic:
             self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
 
             message = {
-                "type": f"{figureInfo.game_id}:BLOCK_CARD"
+                "type": f"{figureInfo.game_id}:BLOCK_CARD",
+                "type": f"{figureInfo.game_id}:BOARD_UPDATE",
             }
             
             await manager.broadcast(message)
