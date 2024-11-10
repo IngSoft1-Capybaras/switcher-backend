@@ -12,25 +12,37 @@ from gameState.schemas import GameStateInDB
 from .game_repository import GameRepository, get_game_repository
 from board.board_repository import BoardRepository
 from connection_manager import manager
+import bcrypt
+
 
 game_router = APIRouter(
     tags=['Game']
 )
 
-# Crear partida
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt()
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed_password.decode('utf-8')
+
+
 @game_router.post("/games", status_code=status.HTTP_201_CREATED)
 async def create_game(game: GameCreate, 
                       player: PlayerCreateMatch, 
                       db: Session = Depends(get_db), 
                       repo: GameRepository = Depends(get_game_repository)):
-    
-        res = repo.create_game(game, player, db)
-        games_list_update = {
-            "type": "GAMES_LIST_UPDATE"
-        }
-        await manager.broadcast(games_list_update)
+    # game.is_private = False
+    if game.password:
+        game.password = hash_password(game.password) 
+        game.is_private = True
 
-        return res    
+    res = repo.create_game(game, player, db)
+
+    games_list_update = {
+        "type": "GAMES_LIST_UPDATE"
+    }
+    await manager.broadcast(games_list_update)
+    return res
+ 
 
 # Obtener todas las partidas
 @game_router.get("/games")
