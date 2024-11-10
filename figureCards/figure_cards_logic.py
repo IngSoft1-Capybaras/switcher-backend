@@ -438,10 +438,16 @@ class FigureCardsLogic:
             self.game_state_repo.update_forbidden_color(figureInfo.game_id, figureInfo.figure[0].color, db)
 
             message = {
-                "type": f"{figureInfo.game_id}:BLOCK_CARD",
+                
                 "type": f"{figureInfo.game_id}:BOARD_UPDATE",
             }
             
+            await manager.broadcast(message)
+
+            message = {
+                "type": f"{figureInfo.game_id}:BLOCK_CARD",
+            }
+
             await manager.broadcast(message)
 
             return self.fig_card_repo.block_figure_card(figureInfo.game_id, figureInfo.card_id, db)
