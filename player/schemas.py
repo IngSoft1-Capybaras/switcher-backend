@@ -32,3 +32,4 @@ class PlayerCreateMatch(BaseModel):
 
 class PlayerJoinRequest(BaseModel):
     player_name : str
+    password: str | None = None

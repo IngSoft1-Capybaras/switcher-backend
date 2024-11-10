@@ -81,7 +81,6 @@ async def leave_game(game_id: int, player_id: int, db: Session = Depends(get_db)
 async def join_game(
     game_id: int, 
     player_name: PlayerJoinRequest, 
-    password: str, 
     db: Session = Depends(get_db), 
     repo: PlayerRepository = Depends(), 
     game_repo: GameRepository = Depends(),
@@ -90,7 +89,7 @@ async def join_game(
     game = game_repo.get_game_by_id(game_id, db)
     players_in_game = game_repo.count_players_in_game(game_id, db)
     
-    print(password)
+    print(player_name.password)
     print(game_id)
     print(player_name)
 
@@ -100,12 +99,12 @@ async def join_game(
     if game.get('is_private') and game.get('password'):
         stored_password_hash = game.get('password').encode('utf-8')
         print("Stored password hash:", stored_password_hash)  # Log stored hash
-        print("Entered password:", password)  # Log entered password
+        print("Entered password:", player_name.password)  # Log entered password
 
-        if not password:  # No password entered
+        if not player_name.password:  # No password entered
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Password required for private games.")
         
-        if not bcrypt.checkpw(password.encode('utf-8'), stored_password_hash):
+        if not bcrypt.checkpw(player_name.password.encode('utf-8'), stored_password_hash):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password.")
         
     # Create player and update player list
