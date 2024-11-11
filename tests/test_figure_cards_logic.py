@@ -1,13 +1,15 @@
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, call, patch, AsyncMock
 
 from sqlalchemy.orm import Session
 
 from figureCards.figure_cards_logic import FigureCardsLogic
 from figureCards.models import typeEnum, DirectionEnum, FigureCard
-from figureCards.schemas import BlockFigureCardInput
+from figureCards.schemas import BlockFigureCardInput, PlayFigureCardInput
 
-
+from game.game_logic import GameLogic
+from gameState.models import GameState
+from player.models import Player
 from player.player_logic import PlayerLogic
 
 from board.schemas import ColorEnum, BoxOut, BoardAndBoxesOut
@@ -61,6 +63,10 @@ def mock_fig_cards_logic():
 @pytest.fixture
 def player_logic(player_repo):
     return PlayerLogic(player_repo= player_repo)
+
+@pytest.fixture
+def game_logic(game_repo, game_state_repo, player_repo, fig_card_repo):
+    return GameLogic(game_repository=game_repo, game_state_repository=game_state_repo, player_repository=player_repo, figure_cards_repo=fig_card_repo)
 
 @pytest.fixture
 def mock_manager():
@@ -424,26 +430,190 @@ def test_check_path_blind(fig_cards_logic):
         BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False)
     ]
 
-def test_is_pointer_different_from_formed_figures(fig_cards_logic):
-    pointer = (2, 3)
-    
-    figures = [
-        [
-            BoxOut(id=1, color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01),
-            BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01)
+def test_check_path_blind_invalid_path(fig_cards_logic):
+    path = [DirectionEnum.RIGHT, DirectionEnum.RIGHT, DirectionEnum.UP]
+    pointer = (1, 1)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
         ],
-        [
-            BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02),
-            BoxOut(id=4, color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02)
-        ]
-    ]
+        formed_figures=[]
+    )
+    color = ColorEnum.RED
+    figure_id = 1
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+    result = fig_cards_logic.check_path_blind(path, pointer, board, color, figure_id, figure_type, db)
     
-    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
     assert result is False
 
-    pointer = (4, 4)
-    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
-    assert result == pointer
+def test_check_path_blind_invalid_pointer(fig_cards_logic):
+    path = [DirectionEnum.RIGHT, DirectionEnum.RIGHT, DirectionEnum.DOWN]
+    pointer = (1, 4)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+    color = ColorEnum.RED
+    figure_id = 1
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+    result = fig_cards_logic.check_path_blind(path, pointer, board, color, figure_id, figure_type, db)
+
+    assert result is False
+
+def test_check_path_blind_invalid_color(fig_cards_logic):
+    path = [DirectionEnum.RIGHT, DirectionEnum.RIGHT, DirectionEnum.DOWN]
+    pointer = (1, 1)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+    color = ColorEnum.BLUE
+    figure_id = 1
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+    result = fig_cards_logic.check_path_blind(path, pointer, board, color, figure_id, figure_type, db)
+    
+    assert result is False
+
+def test_check_path_blind_invalid_board_figure(fig_cards_logic):
+    path = [DirectionEnum.RIGHT, DirectionEnum.RIGHT, DirectionEnum.DOWN]
+    pointer = (1, 1)
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.GREEN, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.GREEN, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.GREEN, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.GREEN, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+
+    color = ColorEnum.RED
+    figure_id = 1
+    figure_type = "FIGE05"
+    board_figure = [
+        BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=3, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=3, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=3, highlighted=False),
+        BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=4, highlighted=False)
+    ]
+    db = MagicMock()
+
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_path_blind(path, pointer, board, color, figure_id, figure_type, db, board_figure)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Boxes given out of type figure bounds"
 
 def test_get_pointer_from_figure(fig_cards_logic):
     figure = [
@@ -483,7 +653,284 @@ def test_get_pointer_from_figure_invalid_rotation(fig_cards_logic):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Invalid rotation"
+
+def test_check_valid_figure_success(fig_cards_logic):
+    figure = [
+        BoxOut(id=1, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=2, color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05)
+    ]
+
+    fig_cards_logic.get_pointer_from_figure = MagicMock(side_effect=lambda figure, rotation: (figure[0].pos_x, figure[0].pos_y) if rotation == 0 else (figure[1].pos_x, figure[1].pos_y) if rotation == 1 else (figure[2].pos_x, figure[2].pos_y) if rotation == 2 else (figure[3].pos_x, figure[3].pos_y))
+    fig_cards_logic.is_valid_pointer = MagicMock(side_effect=lambda pointer: True)
+    fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
+    fig_cards_logic.check_path_blind = MagicMock(side_effect=lambda path, pointer, board, color, figure_id, figure_type, db, board_figure: True)
+
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+    figure_type = "FIGE05"
+    db = MagicMock()
     
+    result = fig_cards_logic.check_valid_figure(figure, figure_type, board, db)
+    assert result is True
+
+def test_check_valid_figure_invalid_figure_color(fig_cards_logic):
+    figure = [
+        BoxOut(id=1, color=ColorEnum.GREEN, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=2, color=ColorEnum.GREEN, pos_x=2, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.GREEN, pos_x=3, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.GREEN, pos_x=3, pos_y=2, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05)
+    ]
+
+    fig_cards_logic.get_pointer_from_figure = MagicMock(side_effect=lambda figure, rotation: (figure[0].pos_x, figure[0].pos_y) if rotation == 0 else (figure[1].pos_x, figure[1].pos_y) if rotation == 1 else (figure[2].pos_x, figure[2].pos_y) if rotation == 2 else (figure[3].pos_x, figure[3].pos_y))
+    fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
+    fig_cards_logic.check_path_blind = MagicMock(side_effect=lambda path, pointer, board, color, figure_id, figure_type, db, board_figure: True)
+
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_valid_figure(figure, figure_type, board, db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Color of figure does not match with color in board"
+
+def test_check_valid_figure_invalid_figure(fig_cards_logic):
+    figure = [
+        BoxOut(id=1, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=2, color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=4, pos_y=2, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05)
+    ]
+
+    fig_cards_logic.get_pointer_from_figure = MagicMock(side_effect=lambda figure, rotation: (figure[0].pos_x, figure[0].pos_y) if rotation == 0 else (figure[1].pos_x, figure[1].pos_y) if rotation == 1 else (figure[2].pos_x, figure[2].pos_y) if rotation == 2 else (figure[3].pos_x, figure[3].pos_y))
+    fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
+    fig_cards_logic.check_path_blind = MagicMock(side_effect=lambda path, pointer, board, color, figure_id, figure_type, db, board_figure: {'message': "Boxes given out of type figure bounds"})
+
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+
+    figure_type = "FIGE05"
+    db = MagicMock()
+
+
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_valid_figure(figure, figure_type, board, db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Boxes given out of type figure bounds"
+
+def test_check_valid_figure_invalid_figure_type(fig_cards_logic):
+    figure = [
+        BoxOut(id=1, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG05),
+        BoxOut(id=2, color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False, figure_id=1, figure_type=typeEnum.FIG05)
+    ]
+
+    fig_cards_logic.get_pointer_from_figure = MagicMock(side_effect=lambda figure, rotation: (figure[0].pos_x, figure[0].pos_y) if rotation == 0 else (figure[1].pos_x, figure[1].pos_y) if rotation == 1 else (figure[2].pos_x, figure[2].pos_y) if rotation == 2 else (figure[3].pos_x, figure[3].pos_y))
+    fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
+    fig_cards_logic.check_path_blind = MagicMock(side_effect=lambda path, pointer, board, color, figure_id, figure_type, db, board_figure: False)
+
+    board = BoardAndBoxesOut(
+        game_id=1,
+        board_id=1,
+        boxes=[
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=0, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=0, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=1, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=2, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=3, highlighted=False)],
+            [BoxOut(color=ColorEnum.BLUE, pos_x=0, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=1, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=2, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=3, pos_y=4, highlighted=False),
+            BoxOut(color=ColorEnum.BLUE, pos_x=4, pos_y=4, highlighted=False)]
+        ],
+        formed_figures=[]
+    )
+
+    figure_type = "FIG050"
+    db = MagicMock()
+
+
+    with pytest.raises(HTTPException) as exc_info:
+        fig_cards_logic.check_valid_figure(figure, figure_type, board, db)
+
+    assert exc_info.value.status_code == 404
+    assert exc_info.value.detail == "Invalid figure type"
+
+@pytest.mark.asyncio
+async def test_play_figure_card_success(fig_cards_logic, game_logic):
+    game_id = 1
+    figure_card = FigureCard(id=1, player_id=1, game_id=1, type="FIGE05", show=True, blocked=False)
+    figure = [
+        BoxOut(id=1, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=2, color=ColorEnum.RED, pos_x=2, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05),
+        BoxOut(id=3, color=ColorEnum.RED, pos_x=3, pos_y=2, highlighted=False, figure_id=1, figure_type=typeEnum.FIGE05)
+    ]
+
+    figureInfo = PlayFigureCardInput(player_id=1, game_id=1, card_id=1, figure=figure)
+
+    fig_cards_logic.check_game_exists = MagicMock(side_effect=lambda game_id, db: True)
+    fig_cards_logic.check_game_exists = MagicMock(side_effect=lambda game_id, db: True)
+    fig_cards_logic.game_state_repo.get_game_state_by_id = MagicMock(side_effect=lambda game_id, db: GameStateInDB(id=1, game_id=1, state=StateEnum.PLAYING, current_player=1))
+    fig_cards_logic.player_repo.get_player_by_id = MagicMock(side_effect=lambda game_id, player_id, db: Player(id=1, name='Coco', game_id=1, game_state_id=1,turn=True, host=True, winner=False))
+
+    fig_cards_logic.check_valid_figure = MagicMock(side_effect=lambda figure, figure_type, board, db: True)
+    fig_cards_logic.get_pointer_from_figure = MagicMock(side_effect=lambda figure, rotation: (figure[0].pos_x, figure[0].pos_y) if rotation == 0 else (figure[1].pos_x, figure[1].pos_y) if rotation == 1 else (figure[2].pos_x, figure[2].pos_y) if rotation == 2 else (figure[3].pos_x, figure[3].pos_y))
+    fig_cards_logic.is_valid_pointer = MagicMock(side_effect=lambda pointer: True)
+    fig_cards_logic.belongs_to_figure = MagicMock(side_effect=lambda pointer, figure: any(box["pos_x"] == pointer[0] and box["pos_y"] == pointer[1] for box in figure))
+    fig_cards_logic.check_path_blind = MagicMock(side_effect=lambda path, pointer, board, color, figure_id, figure_type, db, board_figure: True)
+    fig_cards_logic.fig_card_repo.get_figure_card_by_id.return_value = figure_card
+    fig_cards_logic.fig_card_repo.update_figure_card.return_value = figure_card
+    db = MagicMock()
+    
+
+    game_logic.check_win_condition_no_figure_cards = MagicMock(side_effect=lambda game_id, player_id, db: False) # no funciona el mock
+
+    with patch('game.game_logic.get_game_logic', return_value=game_logic): # no funciona el mock
+        with patch('connection_manager.ConnectionManager.broadcast', new_callable=AsyncMock) as mock_broadcast:
+            result = await fig_cards_logic.play_figure_card(figureInfo, db)
+            assert result['message'] == "Figure card played"
+            mock_broadcast.assert_has_calls([
+                call({'type': 'PLAYER_WINNER', 'game_id': 1, 'winner_id': 1, 'winner_name': 'Coco'}), # como no puedo mockear el game logic, uso el retorno de True
+                call({'type': f"{figureInfo.game_id}:FIGURE_UPDATE"})
+            ])
+
+def test_is_pointer_different_from_formed_figures(fig_cards_logic):
+    pointer = (2, 3)
+    
+    figures = [
+        [
+            BoxOut(id=1, color=ColorEnum.RED, pos_x=0, pos_y=0, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01),
+            BoxOut(id=2, color=ColorEnum.RED, pos_x=1, pos_y=1, highlighted=False, figure_id=1, figure_type=typeEnum.FIG01)
+        ],
+        [
+            BoxOut(id=3, color=ColorEnum.BLUE, pos_x=2, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02),
+            BoxOut(id=4, color=ColorEnum.BLUE, pos_x=3, pos_y=3, highlighted=False, figure_id=2, figure_type=typeEnum.FIG02)
+        ]
+    ]
+    
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result is False
+
+    pointer = (4, 4)
+    result = fig_cards_logic.is_pointer_different_from_formed_figures(pointer, figures)
+    assert result == pointer
+
+
 def test_check_need_to_unblock_card_one_card_blocked(fig_cards_logic):
     game_id = 1
     player_id = 1
