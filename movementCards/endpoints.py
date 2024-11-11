@@ -19,6 +19,15 @@ movement_cards_router = APIRouter(
     tags=['MovementCards']
 )
 
+@movement_cards_router.get("/{game_id}")
+async def get_players_movement_cards(game_id: int, 
+                                     db: Session = Depends(get_db), 
+                                     repo: MovementCardsRepository = Depends(get_movement_cards_repository)
+                                    ):
+    
+    return repo.get_players_movement_cards(game_id, db)
+
+
 # Obtener cartas de movimiento
 @movement_cards_router.get("/{game_id}/{player_id}")
 async def get_movement_cards(game_id: int, player_id: int, 

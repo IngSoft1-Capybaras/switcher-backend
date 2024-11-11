@@ -149,7 +149,7 @@ def test_get_players_in_game_no_game(player_repo: PlayerRepository, session):
 
 @pytest.mark.integration_test     
 def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerRepository, session):    
-    res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
+    res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
     
@@ -165,7 +165,7 @@ def test_assign_turn_player(game_repo: GameRepository, player_repo: PlayerReposi
 
 @pytest.mark.integration_test     
 def test_assign_turn_player_no_player(game_repo: GameRepository, player_repo: PlayerRepository, session):    
-    res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2), 
+    res = game_repo.create_game(GameCreate(name="Test Player Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
     
@@ -181,7 +181,7 @@ def test_assign_turn_player_no_player(game_repo: GameRepository, player_repo: Pl
 
 @pytest.mark.integration_test
 def test_create_player_success(player_repo: PlayerRepository,game_repo: GameRepository, session):
-    res = game_repo.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repo.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), 
                                       session)
     

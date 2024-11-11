@@ -117,3 +117,15 @@ class GameStateRepository:
             )
 
         return {"current_player_id": current_player_id}
+
+    def update_forbidden_color(self, game_id: int, color: str, db : Session):
+        game_state_instance = db.query(GameState).filter(GameState.game_id == game_id).first()
+
+        if not game_state_instance:
+            raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Game State not found"
+            )
+
+        game_state_instance.forbidden_color = color
+        db.commit()

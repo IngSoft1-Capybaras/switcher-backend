@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import NoResultFound
 from fastapi import HTTPException
 
+from board.models import ColorEnum
 from gameState.game_state_repository import GameStateRepository
 from gameState.models import GameState, StateEnum
 from game.models import Game
@@ -123,7 +124,7 @@ def test_get_next_player_id_no_players(game_state_repository: GameStateRepositor
 def test_get_next_player_id_no_current_player(game_state_repository: GameStateRepository, 
                                               game_repository: GameRepository, session):
     
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
 
     game_id = res['game'].id
@@ -159,7 +160,7 @@ def test_get_next_player_id_no_current_player(game_state_repository: GameStateRe
 def test_get_current_player_success(game_state_repository: GameStateRepository, 
                             game_repository: GameRepository, session):
 
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
     game_id = res['game'].id
     player_id = res["player"].id
@@ -187,10 +188,18 @@ def test_get_current_player_no_game_state(game_state_repository: GameStateReposi
 @pytest.mark.integration_test
 def test_get_current_player_no_current_player(game_state_repository: GameStateRepository, 
                             game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
     
     with pytest.raises(HTTPException) as excinfo:
         game_state_repository.get_current_player(res['game'].id, session)
     assert excinfo.value.status_code == 404
     assert "Current player not found" in str(excinfo.value.detail)
+
+@pytest.mark.integration_test
+def test_update_forbidden_color(game_state_repository: GameStateRepository, session):
+
+    game_state_repository.update_forbidden_color(1, "RED", session)
+    game_state = game_state_repository.get_game_state_by_id(1, session)
+    
+    assert game_state.forbidden_color == ColorEnum.RED

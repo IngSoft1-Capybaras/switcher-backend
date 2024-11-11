@@ -22,6 +22,38 @@ Session = sessionmaker(bind=engine)
 def movement_cards_repository():
     return MovementCardsRepository()
 
+@pytest.mark.integration_test
+def test_get_players_movement_cards(movement_cards_repository: MovementCardsRepository, session):
+    N_cards = session.query(MovementCard).filter(MovementCard.game_id == 1, 
+                                                MovementCard.player_id.is_not(None)).count()
+
+    list_of_cards = movement_cards_repository.get_players_movement_cards(1, session)
+    
+    assert len(list_of_cards) == N_cards
+    
+@pytest.mark.integration_test
+def test_get_players_movement_cards_no_cards(movement_cards_repository: MovementCardsRepository, session):
+    
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+    
+    with pytest.raises(HTTPException) as excinfo:
+        movement_cards_repository.get_players_movement_cards(game.id, session)
+
+    assert excinfo.value.status_code == 404
+    assert "There no movement cards associated with this game" in str(excinfo.value.detail)
+
+@pytest.mark.integration_test
+def test_get_players_movement_cards_no_game(movement_cards_repository: MovementCardsRepository, session):
+    nonexistent__game_id = 213363565
+    
+    with pytest.raises(HTTPException) as excinfo:
+        movement_cards_repository.get_players_movement_cards(nonexistent__game_id, session)
+
+    assert excinfo.value.status_code == 404
+    assert "Game not found" in str(excinfo.value.detail)
+
 
 @pytest.mark.integration_test
 def test_get_movement_cards(movement_cards_repository: MovementCardsRepository, session):

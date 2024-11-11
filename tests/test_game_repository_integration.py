@@ -84,15 +84,15 @@ def test_count_players_in_game(game_repository: GameRepository, session):
 @pytest.mark.integration_test
 def test_get_games_paging(game_repository: GameRepository, session):
     # creo 5 partidas mas la que ya existe para tener mas de 5
-    game2 = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2), 
+    game2 = game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False), 
                                         PlayerCreateMatch(name="Test Player"), session)
-    game3 = game_repository.create_game(GameCreate(name="Test Game 3", max_players=4, min_players=2),
+    game3 = game_repository.create_game(GameCreate(name="Test Game 3", max_players=4, min_players=2, password=None, is_private=False),
                                         PlayerCreateMatch(name="Test Player"), session)
-    game4 = game_repository.create_game(GameCreate(name="Test Game 4", max_players=4, min_players=2), 
+    game4 = game_repository.create_game(GameCreate(name="Test Game 4", max_players=4, min_players=2, password=None, is_private=False), 
                                         PlayerCreateMatch(name="Test Player"), session)
-    game5 = game_repository.create_game(GameCreate(name="Test Game 5", max_players=4, min_players=2), 
+    game5 = game_repository.create_game(GameCreate(name="Test Game 5", max_players=4, min_players=2, password=None, is_private=False), 
                                         PlayerCreateMatch(name="Test Player"), session)
-    game6 = game_repository.create_game(GameCreate(name="Test Game 6", max_players=4, min_players=2), 
+    game6 = game_repository.create_game(GameCreate(name="Test Game 6", max_players=4, min_players=2, password=None, is_private=False), 
                                         PlayerCreateMatch(name="Test Player"), session)
     
     games_page_1 = game_repository.get_games(session, limit=5, offset=0).get('games')
@@ -165,7 +165,7 @@ def test_get_game_by_id(game_repository: GameRepository, session):
 def test_create_game(game_repository: GameRepository, session):
     N_games = session.query(Game).count()
 
-    game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2),
+    game_repository.create_game(GameCreate(name="Test Game 2", max_players=4, min_players=2, password=None, is_private=False),
                                 PlayerCreateMatch(name="Test Player"),
                                 session)
     
@@ -223,15 +223,6 @@ def test_delete_game(game_repository: GameRepository, game_state_repository: Gam
     assert game_state == None
     assert board == None
     assert boxes == None
-
-
-# @pytest.mark.integration_test
-# def test_delete_game_not_finished(game_repository: GameRepository, game_state_repository: GameStateRepository, session):
-#     game_id = 2
-
-#     res = game_repository.delete_game(game_id, session)
-
-#     assert res == {"message": "Only FINISHED games can be deleted."}
 
 
 @pytest.mark.integration_test

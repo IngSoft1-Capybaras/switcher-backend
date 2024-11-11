@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from player.schemas import turnEnum, PlayerCreateMatch
 from game.game_repository import GameRepository
+from game.endpoints import hash_password
 from game.models import Game
 from game.schemas import GameInDB, GameCreate
 from database.db import get_db
@@ -37,13 +38,15 @@ def setup_dependency_override(mock_repo, mock_db):
     app.dependency_overrides = {}  # Clean up overrides after test
 
 
-def test_create_game_and_broadcast(mock_repo, mock_db):
-    mock_repo.create_game.return_value = {
+def test_create_public_game_and_broadcast(mock_repo, mock_db):
+    mock_game = {
         "game": {
             "name": "my game",
             "id": 1,
             "max_players": 3,
-            "min_players": 3
+            "min_players": 3,
+            "password": None,
+            "is_private": False
         },
         "player": {
             "name": "PlayerOne",
@@ -56,13 +59,13 @@ def test_create_game_and_broadcast(mock_repo, mock_db):
             "game_id": 1
         }
     }
+    mock_repo.create_game.return_value = mock_game
     
     with client.websocket_connect("/ws") as websocket:
         response = client.post(
             "/games",
             json={
-                "game": {"name": "my game","max_players": 3,"min_players": 3},
-                "player": {"name": "PlayerOne", "host": True, "turn":turnEnum.PRIMERO}
+                "game": mock_game["game"], "player": mock_game["player"]
             }
         )
         
@@ -70,8 +73,10 @@ def test_create_game_and_broadcast(mock_repo, mock_db):
         
         response_data =  response.json()
         assert response_data["game"]["name"] == "my game"
+        assert response_data["game"]["password"] == None
+        assert response_data["game"]["is_private"] == False
         
-        game_expected = GameCreate(name="my game", max_players=3, min_players=3)
+        game_expected = GameCreate(name="my game", max_players=3, min_players=3, password=None, is_private=False)
         player_expected = PlayerCreateMatch(name="PlayerOne", host= True, turn = turnEnum.PRIMERO)
         mock_repo.create_game.assert_called_once_with(game_expected, player_expected, mock_db)
         
@@ -79,10 +84,54 @@ def test_create_game_and_broadcast(mock_repo, mock_db):
         assert game_list_update["type"] == "GAMES_LIST_UPDATE"
 
 
+def test_create_private_game_and_broadcast(mock_repo, mock_db):
+    mock_game = {
+        "game": {
+            "name": "my game",
+            "id": 1,
+            "max_players": 3,
+            "min_players": 3,
+            "password": "password",
+            "is_private": True
+        },
+        "player": {
+            "name": "PlayerOne",
+            "host": True,
+            "turn": turnEnum.PRIMERO
+        },
+        "gameState": {
+            "id": 1, 
+            "state": "WAITING",
+            "game_id": 1
+        }
+    }
+    mock_repo.create_game.return_value = mock_game
+    
+    with client.websocket_connect("/ws") as websocket:
+        response = client.post(
+            "/games",
+            json={
+                "game": mock_game["game"], "player": mock_game["player"]
+            }
+        )
+        
+        assert response.status_code == status.HTTP_201_CREATED
+        
+        response_data =  response.json()
+        assert response_data["game"]["name"] == "my game"
+        assert response_data["game"]["password"] == "password"
+        assert response_data["game"]["is_private"] == True
+        
+        mock_repo.create_game.assert_called_once()
+        
+        game_list_update = websocket.receive_json()
+        assert game_list_update["type"] == "GAMES_LIST_UPDATE"
+
+
 def test_get_games_success(mock_repo, mock_db):
     mock_games = [
-        GameCreate(name="Test game 1", max_players=4, min_players=2),
-        GameCreate(name="Test game 2", max_players=4, min_players=2)
+        GameCreate(name="Test game 1", max_players=4, min_players=2, password="password", is_private=True),
+        GameCreate(name="Test game 2", max_players=4, min_players=2, password=None, is_private=False)
     ]
 
     default_offset = 0
@@ -123,8 +172,8 @@ def test_get_games_not_found(mock_repo, mock_db):
                                                 )
 
 
-def test_get_game_by_id_success(mock_repo, mock_db):
-    mock_game = GameCreate(name="test game", max_players=4, min_players=2)
+def test_get_public_game_by_id_success(mock_repo, mock_db):
+    mock_game = GameCreate(name="test game", max_players=4, min_players=2, password=None, is_private=False)
 
     mock_repo.get_game_by_id.return_value = mock_game
     
@@ -134,6 +183,17 @@ def test_get_game_by_id_success(mock_repo, mock_db):
     assert response.json() == mock_game.model_dump()
     mock_repo.get_game_by_id.assert_called_once_with(1, mock_db)
 
+
+def test_get_public_game_by_id_success(mock_repo, mock_db):
+    mock_game = GameCreate(name="test game", max_players=4, min_players=2, password="password", is_private=True)
+
+    mock_repo.get_game_by_id.return_value = mock_game
+    
+    response = client.get(f"/games/1")
+    
+    assert response.status_code == 200
+    assert response.json() == mock_game.model_dump()
+    mock_repo.get_game_by_id.assert_called_once_with(1, mock_db)
 
 
 def test_get_game_by_id_not_found(mock_repo, mock_db):
