@@ -7,8 +7,8 @@ class GameInDB(BaseModel):
     name: str
     max_players: int 
     min_players: int
-    # private: bool
-    # password: str | None = None
+    is_private: bool
+    password: str | None
     
     model_config = ConfigDict(from_attributes = True)
 
@@ -16,5 +16,5 @@ class GameCreate(BaseModel):
     name: str
     max_players: int
     min_players: int
-    # private: bool
-    # password: str | None = None
+    is_private: bool | None = None 
+    password: str | None

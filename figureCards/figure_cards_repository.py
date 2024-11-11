@@ -139,6 +139,19 @@ class FigureCardsRepository:
         db.commit()
 
         return {"message": "The figure cards was successfully blocked"}
+    
+    def fetch_shown_figure_card_types(self, game_id: int, db: Session):
+        
+        figure_cards = db.query(FigureCard).filter(FigureCard.game_id == game_id, FigureCard.show == True, FigureCard.blocked == False).all()
+        
+        if not figure_cards:
+            return []
+        
+        types_set = {figure_card.type for figure_card in figure_cards}
+        types_list = list(types_set)
+        
+        return types_list
+
 
 
 

@@ -532,3 +532,97 @@ def test_block_inexistent_figure_card(figure_cards_repository, session):
 
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == f"There no figure card associated with id {figure_card_id} in game {game_id}"
+
+@pytest.mark.integration_test
+def test_fetch_shown_figure_card_types(figure_cards_repository: FigureCardsRepository, session):
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+
+    session.add(player1)
+    session.add(player2)
+    session.commit()
+
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG02, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG03, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player2.id, game_id=game.id, type=typeEnum.FIG04, show=True, blocked=True , soft_blocked=False),
+        FigureCard(player_id=player2.id, game_id=game.id, type=typeEnum.FIG05, show=True, blocked=False, soft_blocked=False)
+    ])
+    session.commit()
+
+    # Call the method to fetch shown figure card types
+    result = figure_cards_repository.fetch_shown_figure_card_types(game.id, session)
+
+    # Assert the result
+    assert sorted(result) == sorted([typeEnum.FIG01, typeEnum.FIG02, typeEnum.FIG03, typeEnum.FIG05])
+
+
+@pytest.mark.integration_test
+def test_fetch_shown_figure_card_types_no_duplicates(figure_cards_repository: FigureCardsRepository, session):
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+
+    session.add(player1)
+    session.add(player2)
+    session.commit()
+
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG01, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG02, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG03, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player2.id, game_id=game.id, type=typeEnum.FIG04, show=True, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player2.id, game_id=game.id, type=typeEnum.FIG04, show=True, blocked=False, soft_blocked=False)
+    ])
+    session.commit()
+
+    # Call the method to fetch shown figure card types
+    result = figure_cards_repository.fetch_shown_figure_card_types(game.id, session)
+
+    # Assert the result
+    assert sorted(result) == sorted([typeEnum.FIG01, typeEnum.FIG02, typeEnum.FIG03, typeEnum.FIG04])
+
+
+@pytest.mark.integration_test
+def test_fetch_shown_figure_card_types_no_shown_cards(figure_cards_repository: FigureCardsRepository, session):
+    game = Game(name="Test Game", max_players=4, min_players=2)
+    session.add(game)
+    session.commit()
+
+    game_state = GameState(game_id=game.id, state=StateEnum.PLAYING)
+    session.add(game_state)
+    session.commit()
+
+    player1 = Player(name="Player1", game_id=game.id, game_state_id=game_state.id, host=True, winner=False)
+    player2 = Player(name="Player2", game_id=game.id, game_state_id=game_state.id, host=False, winner=False)
+
+    session.add(player1)
+    session.add(player2)
+
+    session.commit()
+
+    session.add_all([
+        FigureCard(player_id=player1.id, game_id=game.id, type=typeEnum.FIG01, show=False, blocked=False, soft_blocked=False),
+        FigureCard(player_id=player2.id, game_id=game.id, type=typeEnum.FIG02, show=False, blocked=False, soft_blocked=False),
+    ])
+    session.commit()
+
+    result = figure_cards_repository.fetch_shown_figure_card_types(game.id, session)
+
+    assert result == []

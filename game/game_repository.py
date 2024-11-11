@@ -61,7 +61,7 @@ class GameRepository:
         # game_schema = GameInDB.model_validate(game)
         return {"id": game.id, "players_count": game.players_count(), 
                 "max_players": game.max_players, "min_players": game.min_players, 
-                "name": game.name, "is_private": game.is_private }
+                "name": game.name, "is_private": game.is_private, "password": game.password }
         
         # return game_schema
     
