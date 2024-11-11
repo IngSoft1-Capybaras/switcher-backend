@@ -76,11 +76,9 @@ class FigureCardsLogic:
                 self.fig_card_repo.create_figure_card(player.id, game_id, figure, show, False, db)
 
         return {"message": "Figure deck created"}
-    
 
-    def check_game_exists(self, game_id: int, db: Session) -> GameInDB:
-        game = self.game_repo.get_game_by_id(game_id, db)
-        return game
+    def check_game_exists(self, game_id: int, db: Session) -> None:
+        self.game_repo.get_game_by_id(game_id, db)
     
 
     def check_game_in_progress(self, game_id: int, db: Session) -> None:
@@ -102,8 +100,9 @@ class FigureCardsLogic:
     def is_valid_pointer(self, pointer: tuple[int, int]) -> bool:
         return pointer[0] >= 0 and pointer[0] <= 5 and pointer[1] >= 0 and pointer[1] <= 5
 
-
-    def check_surroundings(self, path: list[DirectionEnum], figure: list[BoxOut], pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session) -> bool:
+    def check_surroundings(self, figure: list[BoxOut], pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session) -> bool:
+        if color != board.boxes[pointer[1]][pointer[0]].color:
+            return False
         # chequear que las casillas de alrededor del pointer dado sean de distinto color
         for direction in DirectionEnum:
             # chequear que la casilla de alrededor de la figura sea del color de la figura
@@ -150,8 +149,6 @@ class FigureCardsLogic:
             inBounds = self.belongs_to_figure(pointer, board_figure)
             if not inBounds:
                 raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
-                result = False
-                return result
 
         # Agregamos la casilla inicial a la figura formada
         first_box = board.boxes[pointer[1]][pointer[0]]
@@ -178,7 +175,7 @@ class FigureCardsLogic:
         # si obtuvimos una figura valida, chequear que no sea contigua a ningun otro color de su mismo tipo
         if result:
             for fig_box in figure:
-                if not self.check_surroundings(path, figure, (fig_box.pos_x, fig_box.pos_y), board, color, db):
+                if not self.check_surroundings(figure, (fig_box.pos_x, fig_box.pos_y), board, color, db):
                     return False
             
             if (figure_type is not None) and (figure_id is not None):
@@ -240,6 +237,7 @@ class FigureCardsLogic:
         if color != figure[0].color:
             raise HTTPException(status_code=404, detail="Color of figure does not match with color in board")
         validType = False
+        partial_result = False
         result = False
         for path in FigurePaths:
             if path.type == figure_type:
@@ -268,7 +266,9 @@ class FigureCardsLogic:
 
 
     async def play_figure_card(self, figureInfo: PlayFigureCardInput, db: Session) -> dict:
-
+        # chequear que el juego exista y este en progreso
+        self.check_game_exists(figureInfo.game_id, db)
+        self.check_game_in_progress(figureInfo.game_id, db)
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
 
@@ -281,7 +281,7 @@ class FigureCardsLogic:
         if player.id != gameState.current_player:
             return {"message": "It is not the player's turn"}
 
-        board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
+        board = self.board_repo.get_configured_board(figureInfo.game_id, db)
         figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
 
         # chequear que la carta de figura sea del jugador
@@ -291,9 +291,6 @@ class FigureCardsLogic:
             return {"message": "The card is not shown"}
         if figure_card.blocked:
             return {"message": "CARD BLOCKED!!!"}
-
-        # lets modify the existing board to have a figure to test this validation
-        # board = self.modifiyBoardTest(board, db)
         
         # chequear que la figura es valida (compara con la figura de la carta)
         valid = self.check_valid_figure( figureInfo.figure, figure_card.type, board, db)
@@ -325,8 +322,7 @@ class FigureCardsLogic:
             return {"message": "Invalid figure"}
 
     # Logica de resaltar figuras formadas
-
-
+    
     def has_minimum_length(self, pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session, min_length: int) -> bool:
         length = 0
         queue = [pointer]
@@ -358,7 +354,10 @@ class FigureCardsLogic:
     
 
     async def get_formed_figures(self, game_id: int, db: Session) -> None:
+        # Chequear que el juego exista y este en progreso
+        self.check_game_exists(game_id, db)
         self.check_game_in_progress(game_id, db)
+
         board = self.get_board_or_404(game_id, db)
 
         # Reset del tablero
