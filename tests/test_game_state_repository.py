@@ -124,7 +124,7 @@ def test_get_next_player_id_no_players(game_state_repository: GameStateRepositor
 def test_get_next_player_id_no_current_player(game_state_repository: GameStateRepository, 
                                               game_repository: GameRepository, session):
     
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
 
     game_id = res['game'].id
@@ -160,7 +160,7 @@ def test_get_next_player_id_no_current_player(game_state_repository: GameStateRe
 def test_get_current_player_success(game_state_repository: GameStateRepository, 
                             game_repository: GameRepository, session):
 
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
     game_id = res['game'].id
     player_id = res["player"].id
@@ -188,7 +188,7 @@ def test_get_current_player_no_game_state(game_state_repository: GameStateReposi
 @pytest.mark.integration_test
 def test_get_current_player_no_current_player(game_state_repository: GameStateRepository, 
                             game_repository: GameRepository, session):
-    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2), 
+    res = game_repository.create_game(GameCreate(name="Test Game", max_players=4, min_players=2, password=None, is_private=False), 
                                       PlayerCreateMatch(name="Test Player"), session)
     
     with pytest.raises(HTTPException) as excinfo:
