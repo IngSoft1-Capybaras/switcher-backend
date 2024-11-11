@@ -149,8 +149,6 @@ class FigureCardsLogic:
             inBounds = self.belongs_to_figure(pointer, board_figure)
             if not inBounds:
                 raise HTTPException(status_code=404, detail="Boxes given out of type figure bounds")
-                result = False
-                return result
 
         # Agregamos la casilla inicial a la figura formada
         first_box = board.boxes[pointer[1]][pointer[0]]
@@ -239,6 +237,7 @@ class FigureCardsLogic:
         if color != figure[0].color:
             raise HTTPException(status_code=404, detail="Color of figure does not match with color in board")
         validType = False
+        partial_result = False
         result = False
         for path in FigurePaths:
             if path.type == figure_type:
@@ -267,11 +266,9 @@ class FigureCardsLogic:
 
 
     async def play_figure_card(self, figureInfo: PlayFigureCardInput, db: Session) -> dict:
-
         # chequear que el juego exista y este en progreso
         self.check_game_exists(figureInfo.game_id, db)
         self.check_game_in_progress(figureInfo.game_id, db)
-
         player = self.player_repo.get_player_by_id(figureInfo.game_id, figureInfo.player_id, db)
         gameState = self.game_state_repo.get_game_state_by_id(figureInfo.game_id, db)
 
@@ -284,7 +281,7 @@ class FigureCardsLogic:
         if player.id != gameState.current_player:
             return {"message": "It is not the player's turn"}
 
-        board = BoardRepository.get_configured_board(self.board_repo, figureInfo.game_id, db)
+        board = self.board_repo.get_configured_board(figureInfo.game_id, db)
         figure_card = self.fig_card_repo.get_figure_card_by_id(figureInfo.game_id, figureInfo.player_id, figureInfo.card_id, db)
 
         # chequear que la carta de figura sea del jugador
@@ -325,8 +322,7 @@ class FigureCardsLogic:
             return {"message": "Invalid figure"}
 
     # Logica de resaltar figuras formadas
-
-
+    
     def has_minimum_length(self, pointer: tuple[int,int], board: BoardAndBoxesOut, color: ColorEnum, db: Session, min_length: int) -> bool:
         length = 0
         queue = [pointer]
