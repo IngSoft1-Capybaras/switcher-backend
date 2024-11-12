@@ -97,8 +97,16 @@ async def start_game(
 
     # Step 4: Notify players that the game has started
     message = {
+        "type": f"GAMES_LIST_UPDATE"
+    }
+
+
+    await manager.broadcast(message)
+
+    message = {
         "type": f"{game_id}:GAME_STARTED"
     }
+
     await manager.broadcast(message)
 
     return {"message": "Game status updated, you are playing!"}
