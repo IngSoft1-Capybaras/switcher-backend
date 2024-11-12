@@ -504,6 +504,7 @@ def test_soft_block_figure_card_not_found(figure_cards_repository: FigureCardsRe
     assert exc_info.value.status_code == 404
     assert exc_info.value.detail == "Figure card not found"
 
+@pytest.mark.integration_test
 def test_block_figure_card(figure_cards_repository, session):
     game_id = 1
     figure_card_id = 2
