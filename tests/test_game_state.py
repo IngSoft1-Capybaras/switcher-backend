@@ -186,7 +186,7 @@ def test_game_start(mock_player_random_sample, mock_mov_random_sample, mock_mov_
         assert response.json() == {"message": "Game status updated, you are playing!"}
         
         game_state_update = websocket.receive_json()
-        assert game_state_update["type"] == f"{game_id}:GAME_STARTED"
+        assert game_state_update["type"] == f"{game_id}:GAMES_LIST_UPDATE"
         
         mock_player_repo.get_players_in_game.assert_called_with(game_id, mock_db)
         
